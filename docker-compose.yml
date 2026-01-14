@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: iot-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-iot}
+      POSTGRES_USER: ${POSTGRES_USER:-iot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-iot} -d ${POSTGRES_DB:-iot}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [iot_net]
+
+  redis:
+    image: redis:8.4-alpine
+    container_name: iot-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [iot_net]
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    container_name: iot-mosquitto
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+      - "${MQTT_WS_PORT:-9001}:9001"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks: [iot_net]
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: iot-api
+    working_dir: /app
+    volumes:
+      - ./api:/app
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_KEY: ${APP_KEY:-}   # set this in your local .env (not committed)
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${POSTGRES_DB:-iot}
+      DB_USERNAME: ${POSTGRES_USER:-iot}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -lc "php artisan serve --host=0.0.0.0 --port=8000"
+    networks: [iot_net]
+
+networks:
+  iot_net:
+
+volumes:
+  pgdata:
+  mosquitto_data:
+  mosquitto_log:
