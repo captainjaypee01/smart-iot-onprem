@@ -71,6 +71,98 @@ services:
     command: sh -lc "php artisan serve --host=0.0.0.0 --port=8000"
     networks: [iot_net]
 
+  # ==========================
+  # Observability (optional)
+  # ==========================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: iot-prometheus
+    profiles: ["obs"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks: [iot_net]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: iot-grafana
+    profiles: ["obs"]
+    ports:
+      - "3000:3000"
+    environment:
+      # set these in your root .env later (don’t commit real passwords)
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks: [iot_net]
+
+  loki:
+    image: grafana/loki:latest
+    container_name: iot-loki
+    profiles: ["obs"]
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    networks: [iot_net]
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: iot-alloy
+    profiles: ["obs"]
+    command: run /etc/alloy/alloy-config.alloy
+    volumes:
+      - ./observability/alloy/alloy-config.alloy:/etc/alloy/alloy-config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      # Alloy exposes a local UI/HTTP endpoint (helpful for debugging)
+      - "12345:12345"
+    networks: [iot_net]
+    depends_on:
+      - loki
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: iot-postgres-exporter
+    profiles: ["obs"]
+    environment:
+      # same creds as your postgres container
+      DATA_SOURCE_NAME: ${POSTGRES_EXPORTER_DSN}
+    ports:
+      - "9187:9187"
+    networks: [iot_net]
+    depends_on:
+      - postgres
+
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: iot-redis-exporter
+    profiles: ["obs"]
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    ports:
+      - "9121:9121"
+    networks: [iot_net]
+    depends_on:
+      - redis
+
+  mosquitto_exporter:
+    image: sapcc/mosquitto-exporter:latest
+    container_name: iot-mosquitto-exporter
+    profiles: ["obs"]
+    command: ["--endpoint", "tcp://mosquitto:1883"]
+    ports:
+      - "9234:9234"
+    networks: [iot_net]
+    depends_on:
+      - mosquitto
+
 networks:
   iot_net:
 
@@ -78,3 +170,6 @@ volumes:
   pgdata:
   mosquitto_data:
   mosquitto_log:
+  prometheus_data:
+  grafana_data:
+  loki_data:
