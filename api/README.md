@@ -1,59 +1,162 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Smart IoT On-Prem API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel API service for the Smart IoT On-Prem product.
 
-## About Laravel
+## Quick Start
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Prerequisites
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.2+
+- Composer
+- PostgreSQL (via Docker Compose)
+- Redis (via Docker Compose)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Installation
 
-## Learning Laravel
+1. **Install dependencies:**
+   ```bash
+   composer install
+   ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+2. **Copy environment file:**
+   ```bash
+   cp .env.example .env
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3. **Generate application key:**
+   ```bash
+   php artisan key:generate
+   ```
 
-## Laravel Sponsors
+4. **Run migrations:**
+   ```bash
+   php artisan migrate
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+5. **Start services (via Docker Compose from project root):**
+   ```bash
+   docker compose up -d
+   ```
 
-### Premium Partners
+## Development
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Running Tests
 
-## Contributing
+```bash
+composer test
+# or
+php artisan test
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Code Style
 
-## Code of Conduct
+```bash
+composer pint
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Static Analysis
 
-## Security Vulnerabilities
+```bash
+composer analyse
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## API Endpoints
+
+### Public API (SPA)
+
+Base URL: `/api/v1`
+
+- `POST /api/v1/auth/login` - Login (creates session)
+- `POST /api/v1/auth/logout` - Logout
+- `GET /api/v1/auth/me` - Get current user
+- `POST /api/v1/commands` - Create command (requires auth)
+
+### Internal API (Backend Services)
+
+Base URL: `/internal`
+
+Requires `X-Internal-Token` header.
+
+- `POST /internal/commands/{id}/mark-dispatched` - Mark command as dispatched
+- `POST /internal/commands/{id}/mark-acked` - Mark command as acked
+- `POST /internal/commands/{id}/mark-completed` - Mark command as completed
+- `POST /internal/commands/{id}/mark-failed` - Mark command as failed
+
+## Architecture
+
+See [docs/API_GUIDELINES.md](docs/API_GUIDELINES.md) for detailed architecture and coding standards.
+
+## Security
+
+See [docs/SECURITY.md](docs/SECURITY.md) for security guidelines and configuration.
+
+## Architecture Decisions
+
+See [docs/DECISIONS.md](docs/DECISIONS.md) for ADRs (Architecture Decision Records).
+
+## Project Structure
+
+```
+app/
+├── Actions/              # Business logic (use cases)
+│   ├── Commands/         # Command-related actions
+│   └── Auth/             # Authentication actions (future)
+├── Contracts/            # Interfaces for dependency injection
+├── Console/              # Artisan commands
+│   └── Commands/         # Custom commands (e.g., outbox:publish)
+├── DTO/                  # Data Transfer Objects
+│   └── Commands/         # Command-related DTOs
+├── Enums/                # Type-safe enumerations
+├── Http/
+│   ├── Controllers/
+│   │   ├── Api/V1/       # Public API controllers
+│   │   └── Internal/     # Internal API controllers
+│   ├── Middleware/       # Custom middleware
+│   ├── Requests/         # FormRequest validation
+│   └── Resources/        # JSON API resources
+├── Models/               # Eloquent models
+└── Services/            # Service classes (e.g., OutboxPublisherService)
+
+routes/
+├── api.php               # Public API routes
+└── internal.php          # Internal API routes
+```
+
+## Outbox Publisher
+
+The API uses an outbox pattern for reliable event publishing. Unpublished events are stored in the `outbox_events` table and published to Redis Streams.
+
+**Publish events manually:**
+```bash
+php artisan outbox:publish
+```
+
+**Schedule automatic publishing (add to cron):**
+```bash
+* * * * * cd /path-to-api && php artisan outbox:publish --limit=100
+```
+
+## Environment Variables
+
+Key variables (see `env.example` for full list):
+
+- `APP_URL` - API base URL
+- `FRONTEND_URL` - SPA frontend URL (for CORS)
+- `SANCTUM_STATEFUL_DOMAINS` - Domains allowed for Sanctum cookies
+- `INTERNAL_API_TOKEN` - Token for internal API endpoints
+- `DB_*` - Database configuration
+- `REDIS_*` - Redis configuration
+- `SESSION_SECURE_COOKIE` - Set to `true` in production (HTTPS required)
+
+## Testing
+
+Tests use Pest (built on PHPUnit). See `tests/Feature/` for examples.
+
+Run tests:
+```bash
+composer test
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT

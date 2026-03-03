@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Internal API Token
+    |--------------------------------------------------------------------------
+    |
+    | This token is used to authenticate requests from backend services
+    | (IoT services) to internal API endpoints. Should be set in .env.
+    |
+    */
+
+    'internal_api_token' => env('INTERNAL_API_TOKEN'),
+
 ];

@@ -1,0 +1,20 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+
+    paths:
+        - app
+        - database/factories
+        - database/seeders
+
+    # Rule level (0 is the loosest and 9 is the strictest)
+    level: 5
+
+    ignoreErrors:
+        # Add baseline errors here (run phpstan with --generate-baseline first)
+
+    excludePaths:
+        - ./*/*/FileToIgnore.php
+
+    checkMissingIterableValueType: false
