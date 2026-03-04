@@ -88,3 +88,13 @@ npm install zustand axios
 # 5. Install lucide icons
 npm install lucide-react
 ```
+
+
+Adding Future Modules
+When you add Exit & Emergency Light or Water Meter, the pattern is just:
+
+Add to MODULE and MODULE_META in constants/modules.ts
+Add to constants/nodes.ts with sensor config
+Add to NAV_GROUPS in config/nav.ts
+Create api/exitLight.ts + hooks/useExitLight.ts + pages/modules/ExitLightPage.tsx
+A new ModuleCard appears on the Dashboard automatically

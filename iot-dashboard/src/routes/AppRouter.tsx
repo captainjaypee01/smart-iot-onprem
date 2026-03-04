@@ -9,6 +9,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 // Lazy-loaded pages — keeps initial bundle small
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const DashboardPage = lazy(() => import("@/pages/dashboard/DashboardPage"));
+const FireExtinguisherPage = lazy(() => import("@/pages/modules/FireExtinguisherPage"));
 const NodesPage = lazy(() => import("@/pages/modules/NodesPage"));
 const AlertsPage = lazy(() => import("@/pages/modules/AlertsPage"));
 
@@ -23,19 +24,20 @@ const AppRouter = () => (
     <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
             <Routes>
-                {/* Public routes */}
+                {/* Public */}
                 <Route path="/login" element={<LoginPage />} />
 
-                {/* Protected routes */}
+                {/* Protected — all wrapped in DashboardLayout */}
                 <Route element={<PrivateRoute />}>
                     <Route element={<DashboardLayout />}>
                         <Route path="/" element={<DashboardPage />} />
-                        <Route path="/nodes" element={<NodesPage />} />
+                        <Route path="/fire-extinguisher" element={<FireExtinguisherPage />} />
+                        <Route path="/devices" element={<NodesPage />} />
                         <Route path="/alerts" element={<AlertsPage />} />
                     </Route>
                 </Route>
 
-                {/* Fallback — redirect unknown paths to root */}
+                {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </Suspense>

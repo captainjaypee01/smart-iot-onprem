@@ -10,7 +10,7 @@ import {
     Settings,
     ShieldCheck,
     Activity,
-    FireExtinguisher
+    FireExtinguisher,
 } from "lucide-react";
 import type { NavGroup } from "@/types/nav";
 
@@ -18,68 +18,36 @@ export const NAV_GROUPS: NavGroup[] = [
     {
         title: "Overview",
         items: [
-            {
-                label: "Dashboard",
-                path: "/",
-                icon: LayoutDashboard,
-                end: true,
-            },
-            {
-                label: "Fire Extinguisher",
-                path: "/fire-extinguisher",
-                icon: FireExtinguisher,
-            },
-            {
-                label: "Live Monitor",
-                path: "/monitor",
-                icon: Activity,
-            },
+            { label: "Dashboard", path: "/", icon: LayoutDashboard, end: true },
+            { label: "Live Monitor", path: "/monitor", icon: Activity },
+        ],
+    },
+    {
+        title: "IoT Modules",
+        items: [
+            { label: "Fire Extinguisher", path: "/fire-extinguisher", icon: FireExtinguisher },
+            // future modules added here
         ],
     },
     {
         title: "IoT Management",
         items: [
-            {
-                label: "Nodes",
-                path: "/nodes",
-                icon: Cpu,
-            },
-            {
-                label: "Alerts",
-                path: "/alerts",
-                icon: BellRing,
-                badge: 0,   // populated dynamically from store/API
-            },
-            {
-                label: "Device Map",
-                path: "/device-map",
-                icon: Map,
-            },
+            { label: "Nodes", path: "/nodes", icon: Cpu },
+            { label: "Alerts", path: "/alerts", icon: BellRing, badge: 0 },
+            { label: "Device Map", path: "/device-map", icon: Map },
         ],
     },
     {
         title: "Analytics",
         items: [
-            {
-                label: "Reports",
-                path: "/reports",
-                icon: BarChart3,
-            },
+            { label: "Reports", path: "/reports", icon: BarChart3 },
         ],
     },
     {
         title: "System",
         items: [
-            {
-                label: "Access Control",
-                path: "/access-control",
-                icon: ShieldCheck,
-            },
-            {
-                label: "Settings",
-                path: "/settings",
-                icon: Settings,
-            },
+            { label: "Access Control", path: "/access-control", icon: ShieldCheck },
+            { label: "Settings", path: "/settings", icon: Settings },
         ],
     },
 ];

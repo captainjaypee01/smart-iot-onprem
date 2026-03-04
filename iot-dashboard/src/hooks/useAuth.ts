@@ -5,9 +5,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { login, logout as logoutApi } from "@/api/auth";
+import { mockLogin } from "@/mocks/handlers";
 import { useAuthStore } from "@/store/authStore";
 import type { LoginCredentials, ApiError } from "@/types";
 import { AxiosError } from "axios";
+
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 interface UseAuthReturn {
     isLoading: boolean;
@@ -28,7 +31,9 @@ export const useAuth = (): UseAuthReturn => {
         setError(null);
 
         try {
-            const { user, token } = await login(credentials);
+            const { user, token } = USE_MOCK
+                ? await mockLogin(credentials.email)
+                : await login(credentials);
             setAuth(user, token);
             toast.success(`Welcome back, ${user.name}.`);
             navigate("/", { replace: true });
