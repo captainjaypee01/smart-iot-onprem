@@ -27,6 +27,7 @@ src/
 │   ├── ui/           # shadcn auto-generated files only. Never edit manually.
 │   └── shared/       # Reusable custom components (cards, badges, tables)
 ├── context/          # React context providers (ThemeContext)
+├── constants/        # Constants values and strings that will be used in the project
 ├── hooks/            # Custom hooks only. Must start with "use"
 ├── layouts/          # Page layout shells (DashboardLayout, AuthLayout)
 ├── lib/              # Utilities. Only utils.ts (cn helper) lives here
@@ -242,6 +243,12 @@ import { useToast } from "@/components/ui/use-toast";
 import toast from "react-hot-toast";
 ```
 
+## Constants & Strings Rules
+- All user-facing strings live in `src/constants/strings.ts` — never hardcode display text in components
+- All domain constants (fault types, node types, sensor configs) live in `src/constants/`
+- Always import from the barrel: `import { FAULT_META, NODE_TYPE } from "@/constants"`
+- Never use magic strings like `"MISSING"` or `"Fire Extinguisher"` inline in components
+- When adding a new fault type or node type, update the constants files first before touching any UI
 ---
 
 ## What NOT to Do (Hard Rules)

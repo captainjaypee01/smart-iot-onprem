@@ -4,11 +4,12 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
+import DashboardLayout from "@/layouts/DashboardLayout";
 
 // Lazy-loaded pages — keeps initial bundle small
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const DashboardPage = lazy(() => import("@/pages/dashboard/DashboardPage"));
-const DevicesPage = lazy(() => import("@/pages/modules/DevicesPage"));
+const NodesPage = lazy(() => import("@/pages/modules/NodesPage"));
 const AlertsPage = lazy(() => import("@/pages/modules/AlertsPage"));
 
 // Minimal fallback shown during lazy load
@@ -27,9 +28,11 @@ const AppRouter = () => (
 
                 {/* Protected routes */}
                 <Route element={<PrivateRoute />}>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/devices" element={<DevicesPage />} />
-                    <Route path="/alerts" element={<AlertsPage />} />
+                    <Route element={<DashboardLayout />}>
+                        <Route path="/" element={<DashboardPage />} />
+                        <Route path="/nodes" element={<NodesPage />} />
+                        <Route path="/alerts" element={<AlertsPage />} />
+                    </Route>
                 </Route>
 
                 {/* Fallback — redirect unknown paths to root */}
