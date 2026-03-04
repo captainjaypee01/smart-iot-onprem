@@ -1,6 +1,6 @@
 # IoT Monitoring Dashboard — Project Rules & Guidelines
 
-## 1. Tech Stack (Strict Versions)
+## Tech Stack (Strict Versions)
 
 | Layer | Technology | Notes |
 |---|---|---|
@@ -18,7 +18,7 @@
 
 ---
 
-## 2. Project Structure Rules
+## Project Structure Rules
 
 ```
 src/
@@ -45,7 +45,7 @@ src/
 
 ---
 
-## 3. TypeScript Rules
+## TypeScript Rules
 
 - **No `any`** — ever. Use `unknown` and narrow it, or define a proper type.
 - All API response shapes must be defined in `src/types/`.
@@ -66,7 +66,7 @@ const DeviceCard = (props: any) => { ... }
 
 ---
 
-## 4. Styling Rules
+## Styling Rules
 
 - **Tailwind v4 only** — no inline styles, no CSS modules, no styled-components.
 - Use `cn()` from `src/lib/utils.ts` whenever classes are conditional.
@@ -91,7 +91,7 @@ const DeviceCard = (props: any) => { ... }
 
 ---
 
-## 5. Component Rules
+## Component Rules
 
 - **Always use shadcn components** where one exists before building custom.
   - e.g. use `<Button>`, `<Card>`, `<Dialog>`, `<Table>` from shadcn.
@@ -117,7 +117,7 @@ const DeviceTable = () => {
 
 ---
 
-## 6. API & Data Fetching Rules
+## API & Data Fetching Rules
 
 - **Always use** `src/api/axiosClient.ts` — never import `axios` directly in pages or components.
 - One API file per domain: `devices.ts`, `alerts.ts`, `auth.ts`, `metrics.ts`.
@@ -142,7 +142,7 @@ axios.get("http://localhost:8000/api/devices");
 
 ---
 
-## 7. State Management Rules
+## State Management Rules
 
 - **Zustand** is for global state only: authentication, theme preference.
 - **React `useState`** for local UI state (modals open/closed, form values).
@@ -163,7 +163,7 @@ const useAuthStore = create<AuthState>()(
 
 ---
 
-## 8. Routing Rules
+## Routing Rules
 
 - All routes are defined in `src/routes/AppRouter.tsx` only.
 - Protected routes use `<PrivateRoute />` which checks Zustand for a token.
@@ -178,7 +178,7 @@ const LoginPage     = React.lazy(() => import("@/pages/auth/LoginPage"));
 
 ---
 
-## 9. Naming Conventions
+## Naming Conventions
 
 | Thing | Convention | Example |
 |---|---|---|
@@ -193,7 +193,7 @@ const LoginPage     = React.lazy(() => import("@/pages/auth/LoginPage"));
 
 ---
 
-## 10. File Header Comment (Required on every file)
+## File Header Comment (Required on every file)
 
 Every file must start with a short comment stating its purpose:
 
@@ -204,7 +204,7 @@ Every file must start with a short comment stating its purpose:
 
 ---
 
-## 11. Dark / Light Mode Rules
+## Dark / Light Mode Rules
 
 - Dark mode is toggled by `ThemeContext` which adds/removes `dark` on `<html>`.
 - Always write **both** light and dark variants for custom styles.
@@ -220,9 +220,31 @@ Every file must start with a short comment stating its purpose:
 <div className="bg-white text-gray-900">
 ```
 
+## Notifications / Toast Rules
+- **Sonner is the only toast library** — never use `react-hot-toast`, `react-toastify`, or shadcn's own `useToast`.
+- The `<Toaster />` is mounted once in `App.tsx` — never add another instance.
+- Always import `toast` from `sonner` directly, never from a wrapper.
+- Use the correct variant per situation:
+  - `toast.success()` — action completed (device saved, login success)
+  - `toast.error()` — something failed (API error, validation)
+  - `toast.warning()` — needs attention but not blocking
+  - `toast.info()` — neutral system message
+  - `toast.loading()` + `toast.dismiss()` — for async operations with feedback
+
+```ts
+// ✅ Correct
+import { toast } from "sonner";
+toast.success("Device saved successfully.");
+toast.error("Failed to connect. Check your network.");
+
+// ❌ Wrong
+import { useToast } from "@/components/ui/use-toast";
+import toast from "react-hot-toast";
+```
+
 ---
 
-## 12. What NOT to Do (Hard Rules)
+## What NOT to Do (Hard Rules)
 
 - ❌ No `any` in TypeScript
 - ❌ No inline styles
