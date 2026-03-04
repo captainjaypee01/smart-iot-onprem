@@ -70,18 +70,32 @@ export const mockGetFeHeatmap = async (): Promise<TempBuilding[]> => {
 // ─── Nodes ────────────────────────────────────────────────────────
 export const mockGetNodes = async (
     page = 1,
-    perPage = 25,
-    search = ""
+    perPage = 10,
+    search = "",
+    nodeType = "",
+    status = ""
 ): Promise<PaginatedResponse<MockNode>> => {
     await delay();
-    const filtered = search
-        ? MOCK_NODES.filter(
+
+    let filtered = MOCK_NODES;
+
+    if (search) {
+        const q = search.toLowerCase();
+        filtered = filtered.filter(
             (n) =>
-                n.name.toLowerCase().includes(search.toLowerCase()) ||
-                n.location.toLowerCase().includes(search.toLowerCase()) ||
-                n.node_type.toLowerCase().includes(search.toLowerCase())
-        )
-        : MOCK_NODES;
+                n.name.toLowerCase().includes(q) ||
+                n.location.toLowerCase().includes(q) ||
+                n.node_type.toLowerCase().includes(q)
+        );
+    }
+
+    if (nodeType) {
+        filtered = filtered.filter((n) => n.node_type === nodeType);
+    }
+
+    if (status) {
+        filtered = filtered.filter((n) => n.status === status);
+    }
 
     const total = filtered.length;
     const last_page = Math.max(1, Math.ceil(total / perPage));

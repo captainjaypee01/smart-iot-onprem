@@ -10,7 +10,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const DashboardPage = lazy(() => import("@/pages/dashboard/DashboardPage"));
 const FireExtinguisherPage = lazy(() => import("@/pages/modules/FireExtinguisherPage"));
-const NodesPage = lazy(() => import("@/pages/modules/NodesPage"));
+const NodesPage = lazy(() => import("@/pages/nodes/NodesPage"));
 const AlertsPage = lazy(() => import("@/pages/modules/AlertsPage"));
 
 // Minimal fallback shown during lazy load
@@ -32,8 +32,9 @@ const AppRouter = () => (
                     <Route element={<DashboardLayout />}>
                         <Route path="/" element={<DashboardPage />} />
                         <Route path="/fire-extinguisher" element={<FireExtinguisherPage />} />
-                        <Route path="/devices" element={<NodesPage />} />
+                        <Route path="/nodes" element={<NodesPage />} />
                         <Route path="/alerts" element={<AlertsPage />} />
+
                     </Route>
                 </Route>
 

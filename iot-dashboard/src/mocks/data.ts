@@ -47,7 +47,7 @@ export interface MockNode {
     id: string;
     name: string;
     node_type: string;
-    fe_config: string;
+    config: string;
     building: string;
     sector: string;
     location: string;  // formatted "Building / Sector"
@@ -67,7 +67,7 @@ const makeNode = (
     id: `node-${String(idx).padStart(4, "0")}`,
     name: `FE-${String(idx).padStart(4, "0")}`,
     node_type: nodeType,
-    fe_config: feConfig,
+    config: feConfig,
     building,
     sector,
     location: `${building} / ${sector}`,

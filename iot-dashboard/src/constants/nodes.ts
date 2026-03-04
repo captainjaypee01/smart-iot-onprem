@@ -20,8 +20,8 @@ export const NODE_TYPE_LABEL: Record<NodeType, string> = {
 
 // ─── Fire Extinguisher — Sensor Config IDs ────────────────────────
 export const FE_CONFIG = {
-    CONFIG_0001: "0001",   // FX_LOGIC  — Sensor 6 carries fault logic
-    CONFIG_0002: "0002",   // FX_LOGIC_G — Sensor 7 carries gram-based fault logic
+    CONFIG_0001: "0001 (Points)",   // FX_LOGIC  — Sensor 6 carries fault logic
+    CONFIG_0002: "0002 (Grams)",   // FX_LOGIC_G — Sensor 7 carries gram-based fault logic
 } as const;
 
 export type FeConfig = typeof FE_CONFIG[keyof typeof FE_CONFIG];
