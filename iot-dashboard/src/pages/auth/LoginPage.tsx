@@ -1,8 +1,10 @@
 // src/pages/auth/LoginPage.tsx
 // Public login page — authenticates user and redirects to dashboard
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Wifi, Moon, Sun, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/context/ThemeContext";
+import { SSO_ERROR_MESSAGES } from "@/constants/auth";
 import type { LoginCredentials } from "@/types";
 
 // ─── SSO Provider Config ─────────────────────────────────────────
@@ -26,9 +29,8 @@ const SSO_PROVIDERS: SsoProvider[] = [
     {
         id: "microsoft",
         label: "Microsoft",
-        enabled: false,   // flip to true once your Laravel Socialite is ready
+        enabled: true,   // flip to false to show "Coming soon" while Socialite is not ready
         icon: (
-            // Official Microsoft logo SVG (simplified)
             <svg viewBox="0 0 21 21" className="h-4 w-4" fill="none">
                 <rect x="1" y="1" width="9" height="9" fill="#F25022" />
                 <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
@@ -53,14 +55,23 @@ const SSO_PROVIDERS: SsoProvider[] = [
 ];
 
 const LoginPage = () => {
-    const { handleLogin, isLoading, error } = useAuth();
+    const { handleLogin, handleMicrosoftLogin, isLoading, isMicrosoftLoading, error } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const [searchParams] = useSearchParams();
 
     const [credentials, setCredentials] = useState<LoginCredentials>({
         email: "",
         password: "",
     });
     const [showPassword, setShowPassword] = useState(false);
+
+    // Show SSO error messages that come back via ?error= from the Laravel callback
+    useEffect(() => {
+        const ssoError = searchParams.get("error");
+        if (ssoError && SSO_ERROR_MESSAGES[ssoError]) {
+            toast.error(SSO_ERROR_MESSAGES[ssoError]);
+        }
+    }, [searchParams]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,12 +82,18 @@ const LoginPage = () => {
         setCredentials((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    // Called when an SSO button is clicked.
-    // Redirects to your Laravel Socialite OAuth endpoint.
-    // Replace the URL pattern to match your backend routes.
+    // Routes each SSO provider to its handler.
+    // Add more cases here as you add providers to the backend.
     const handleSso = (providerId: string) => {
-        window.location.href = `/api/auth/sso/${providerId}/redirect`;
+        if (providerId === "microsoft") {
+            handleMicrosoftLogin();
+            return;
+        }
+        // Fallback for future providers not yet wired to a dedicated handler
+        window.location.href = `/api/v1/auth/${providerId}/redirect`;
     };
+
+    const isFormDisabled = isLoading || isMicrosoftLoading;
 
     return (
         <div className="relative flex min-h-screen w-full">
@@ -167,7 +184,7 @@ const LoginPage = () => {
                             </p>
                         </div>
 
-                        {/* Error banner */}
+                        {/* Error banner — shows both login failures and SSO errors */}
                         {error && (
                             <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3">
                                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
@@ -183,12 +200,19 @@ const LoginPage = () => {
                                         key={provider.id}
                                         type="button"
                                         variant="outline"
-                                        disabled={!provider.enabled || isLoading}
+                                        disabled={!provider.enabled || isFormDisabled}
                                         onClick={() => handleSso(provider.id)}
                                         className="w-full h-11 gap-3 font-medium"
                                     >
-                                        {provider.icon}
-                                        Continue with {provider.label}
+                                        {/* Show spinner only on the button that is actively loading */}
+                                        {provider.id === "microsoft" && isMicrosoftLoading
+                                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                                            : provider.icon
+                                        }
+                                        {provider.id === "microsoft" && isMicrosoftLoading
+                                            ? "Redirecting to Microsoft..."
+                                            : `Continue with ${provider.label}`
+                                        }
                                         {!provider.enabled && (
                                             <span className="ml-auto text-xs text-muted-foreground font-normal">
                                                 Coming soon
@@ -225,7 +249,7 @@ const LoginPage = () => {
                                     placeholder="you@company.com"
                                     value={credentials.email}
                                     onChange={onChange}
-                                    disabled={isLoading}
+                                    disabled={isFormDisabled}
                                     className={cn(
                                         "h-11",
                                         error && "border-destructive focus-visible:ring-destructive"
@@ -248,7 +272,7 @@ const LoginPage = () => {
                                         placeholder="••••••••"
                                         value={credentials.password}
                                         onChange={onChange}
-                                        disabled={isLoading}
+                                        disabled={isFormDisabled}
                                         className={cn(
                                             "h-11 pr-11",
                                             error && "border-destructive focus-visible:ring-destructive"
@@ -271,7 +295,7 @@ const LoginPage = () => {
                             {/* Submit */}
                             <Button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isFormDisabled}
                                 className={cn(
                                     "w-full h-11 text-white font-semibold transition-opacity",
                                     "disabled:opacity-70"

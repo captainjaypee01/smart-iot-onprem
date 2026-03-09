@@ -2,6 +2,13 @@
 docker compose up -d
 docker compose ps
 
+## Frontend
+docker compose up -d dashboard
+# Open http://localhost:5173
+
+## Verify frontend is proxying to the API container
+docker compose logs dashboard
+
 ## Verify Postgres
 docker exec -it iot-postgres psql -U iot -d iot -c "select now();"
 

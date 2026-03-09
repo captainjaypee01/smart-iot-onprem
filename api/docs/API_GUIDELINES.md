@@ -8,15 +8,19 @@ This document outlines the coding standards, architecture patterns, and best pra
 app/
 ├── Actions/              # Use-case classes (business logic)
 │   ├── Commands/         # Command-related actions
-│   └── Auth/             # Authentication actions (future)
+│   └── Auth/             # Authentication actions
 ├── Contracts/            # Interfaces for dependency injection
 ├── DTO/                  # Data Transfer Objects (immutable input/output)
 │   └── Commands/         # Command-related DTOs
 ├── Enums/                # Type-safe enumerations
 ├── Services/             # Service classes (e.g., OutboxPublisherService)
+├── Notifications/        # Laravel notification classes (e.g., WelcomeUserNotification)
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Api/V1/       # Public API controllers (SPA)
+│   │   │   ├── Auth/     # Auth controllers (Login, Logout, Me, MicrosoftRedirect, SetPassword)
+│   │   │   └── Users/    # User controllers (UserController, ResendInviteController, DisableUserController)
+│   │   ├── Auth/         # Web-route controllers (MicrosoftCallbackController)
 │   │   └── Internal/     # Internal API controllers (backend services)
 │   ├── Middleware/       # Custom middleware
 │   ├── Requests/
@@ -28,8 +32,61 @@ app/
 
 routes/
 ├── api.php               # Public API routes (/api/v1/*)
+├── web.php               # Browser-facing routes (Microsoft OAuth callback)
 └── internal.php          # Internal API routes (/internal/*)
 ```
+
+---
+
+## Controller Patterns
+
+### Single-Action Controllers (`__invoke`)
+
+Use for routes that do **one isolated thing** and don't share logic with sibling routes.
+This is the preferred pattern for auth routes and one-off state-change actions.
+
+```php
+// ✅ Use __invoke for isolated actions
+class LoginController extends Controller
+{
+    public function __invoke(LoginRequest $request): JsonResponse { ... }
+}
+
+// Route registration is clean — no method name needed
+Route::post('/auth/login', LoginController::class);
+```
+
+**Use `__invoke` for:**
+- All auth controllers (Login, Logout, Me, MicrosoftRedirect, SetPassword, MicrosoftCallback)
+- One-off user actions: `ResendInviteController`, `DisableUserController`
+- Any action that doesn't belong in a standard CRUD flow
+
+### Resource Controllers (Named Methods)
+
+Use for modules with standard CRUD operations. Register with `Route::apiResource`.
+
+```php
+// ✅ Use named methods for CRUD modules
+class UserController extends Controller
+{
+    public function index(): AnonymousResourceCollection { ... }   // GET    /users
+    public function show(User $user): UserResource { ... }         // GET    /users/{user}
+    public function store(StoreUserRequest $request): JsonResponse { ... } // POST   /users
+    public function update(UpdateUserRequest $request, User $user): UserResource { ... } // PUT /users/{user}
+    public function destroy(Request $request, User $user): JsonResponse { ... } // DELETE /users/{user}
+}
+
+// One line registers all 5 routes
+Route::apiResource('users', UserController::class);
+
+// One-off actions that don't fit CRUD get their own single-action controllers
+Route::post('/users/{user}/resend-invite', ResendInviteController::class);
+Route::post('/users/{user}/disable', DisableUserController::class);
+```
+
+**Use resource controllers for:** `UserController`, `CompanyController`, `NetworkController`, `RoleController`, and any future CRUD modules.
+
+---
 
 ## Adding a New Endpoint
 
@@ -37,12 +94,12 @@ routes/
 
 ```php
 <?php
-// app/Http/Requests/Api/V1/CreateDeviceRequest.php
-namespace App\Http\Requests\Api\V1;
+// app/Http/Requests/Api/V1/Users/StoreUserRequest.php
+namespace App\Http\Requests\Api\V1\Users;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateDeviceRequest extends FormRequest
+class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -52,8 +109,10 @@ class CreateDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'device_id' => ['required', 'string', 'unique:devices'],
+            'name'       => ['required', 'string', 'max:255'],
+            'email'      => ['required', 'email', 'unique:users,email'],
+            'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'role_id'    => ['required', 'integer', 'exists:roles,id'],
         ];
     }
 }
@@ -63,15 +122,17 @@ class CreateDeviceRequest extends FormRequest
 
 ```php
 <?php
-// app/DTO/CreateDeviceDTO.php
-namespace App\DTO;
+// app/DTO/Users/StoreUserDTO.php
+namespace App\DTO\Users;
 
-readonly class CreateDeviceDTO
+readonly class StoreUserDTO
 {
     public function __construct(
         public string $name,
-        public string $deviceId,
-        public ?string $userId = null,
+        public string $email,
+        public int $companyId,
+        public int $roleId,
+        public int $assignedBy,
     ) {}
 }
 ```
@@ -80,21 +141,25 @@ readonly class CreateDeviceDTO
 
 ```php
 <?php
-// app/Actions/CreateDeviceAction.php
-namespace App\Actions;
+// app/Actions/Users/StoreUserAction.php
+namespace App\Actions\Users;
 
-use App\DTO\CreateDeviceDTO;
-use App\Models\Device;
+use App\DTO\Users\StoreUserDTO;
+use App\Models\User;
+use App\Notifications\WelcomeUserNotification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
-class CreateDeviceAction
+class StoreUserAction
 {
-    public function execute(CreateDeviceDTO $dto): Device
+    public function execute(StoreUserDTO $dto): User
     {
-        return Device::create([
-            'name' => $dto->name,
-            'device_id' => $dto->deviceId,
-            'user_id' => $dto->userId,
-        ]);
+        return DB::transaction(function () use ($dto): User {
+            $user = User::create([...]);
+            $user->userRole()->create([...]);
+            // send invite email
+            return $user;
+        });
     }
 }
 ```
@@ -103,21 +168,26 @@ class CreateDeviceAction
 
 ```php
 <?php
-// app/Http/Resources/Api/V1/DeviceResource.php
+// app/Http/Resources/Api/V1/UserResource.php
 namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DeviceResource extends JsonResource
+class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'device_id' => $this->device_id,
-            'created_at' => $this->created_at->toIso8601String(),
+            'id'           => $this->id,
+            'name'         => $this->name,
+            'email'        => $this->email,
+            'is_superadmin' => $this->is_superadmin,
+            'is_active'    => $this->is_active,
+            'company'      => $this->whenLoaded('company', fn () => [...]),
+            'role'         => $this->whenLoaded('userRole', fn () => [...]),
+            'last_login_at' => $this->last_login_at?->toIso8601String(),
+            'created_at'   => $this->created_at->toIso8601String(),
         ];
     }
 }
@@ -127,33 +197,25 @@ class DeviceResource extends JsonResource
 
 ```php
 <?php
-// app/Http/Controllers/Api/V1/DeviceController.php
-namespace App\Http\Controllers\Api\V1;
+// app/Http/Controllers/Api/V1/Users/UserController.php
+namespace App\Http\Controllers\Api\V1\Users;
 
-use App\Actions\CreateDeviceAction;
-use App\DTO\CreateDeviceDTO;
-use App\Http\Requests\Api\V1\CreateDeviceRequest;
-use App\Http\Resources\Api\V1\DeviceResource;
-
-class DeviceController extends Controller
+class UserController extends Controller
 {
-    public function __construct(
-        private readonly CreateDeviceAction $createDeviceAction
-    ) {}
-
-    public function store(CreateDeviceRequest $request)
+    public function store(StoreUserRequest $request): JsonResponse
     {
-        $dto = new CreateDeviceDTO(
-            name: $request->input('name'),
-            deviceId: $request->input('device_id'),
-            userId: (string) $request->user()?->id,
+        $dto = new StoreUserDTO(
+            name: $request->name,
+            email: $request->email,
+            companyId: $request->company_id,
+            roleId: $request->role_id,
+            assignedBy: $request->user()->id,
         );
 
-        $device = $this->createDeviceAction->execute($dto);
+        $user = (new StoreUserAction)->execute($dto);
+        $user->load(['company', 'userRole.role.permissions']);
 
-        return response()->json([
-            'data' => new DeviceResource($device),
-        ], 201);
+        return response()->json(new UserResource($user), 201);
     }
 }
 ```
@@ -163,9 +225,68 @@ class DeviceController extends Controller
 ```php
 // routes/api.php
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/devices', [DeviceController::class, 'store']);
+    Route::apiResource('users', UserController::class);
+    Route::post('/users/{user}/resend-invite', ResendInviteController::class);
+    Route::post('/users/{user}/disable', DisableUserController::class);
 });
 ```
+
+---
+
+## Microsoft SSO Callback (Special Case)
+
+The Microsoft OAuth callback is a **web route**, not an API route. This is because Microsoft redirects the browser directly to it — no Bearer token exists at this point.
+
+```php
+// routes/web.php — NOT routes/api.php
+Route::get('/auth/microsoft/callback', MicrosoftCallbackController::class)
+    ->name('auth.microsoft.callback');
+```
+
+The callback controller must:
+1. Exchange the OAuth code via Socialite (stateless)
+2. Find the existing user by email — **never auto-create**
+3. Return `account_not_found` redirect if no user exists
+4. Return `account_disabled` redirect if `is_active = false`
+5. Upsert `social_accounts` row
+6. Issue a Sanctum plain-text token
+7. Redirect to `{FRONTEND_URL}/auth/callback?token={token}&user={base64(UserResource)}`
+
+---
+
+## User Management Rules
+
+- **Admins create users** — there is no self-registration endpoint.
+- `POST /api/v1/users` always sends a welcome email with an invite link.
+- Invite links use the `password_reset_tokens` table with a 60-minute expiry.
+- `ResendInviteController` only works on users with `password = null` (never set).
+- `DisableUserController` toggles `is_active` — it does not delete the user.
+- Superadmin accounts cannot be deleted or disabled via any endpoint.
+- A user cannot delete or disable their own account.
+
+---
+
+## Authorization Model
+
+### Superadmin
+- `is_superadmin = true` on the `users` table
+- Can access all companies, all users, all networks
+- Can edit system roles
+
+### Company Admin
+- Has a role with admin-level permissions scoped to their `company_id`
+- Can only manage users within their own company
+- Cannot access other companies' data
+
+### Role + Permission System
+- `roles` table: named roles, `is_system_role` flag
+- `permissions` table: keyed strings e.g. `user.create`, `node.view`
+- `role_permissions` pivot: which permissions a role has
+- `user_roles` table: one role per user (enforced by `UNIQUE(user_id)`)
+- `role_companies` pivot: which companies a role is scoped to
+- `role_networks` pivot: which networks a role can access
+
+---
 
 ## Adding Internal Endpoints
 
@@ -176,12 +297,12 @@ Internal endpoints are for backend services (IoT services) and use token-based a
 3. Routes automatically protected by `internal.token` middleware
 4. Backend services must send `X-Internal-Token` header
 
-Example:
-
 ```php
 // routes/internal.php
 Route::post('/devices/{id}/sync', [DeviceController::class, 'sync']);
 ```
+
+---
 
 ## Command State Machine
 
@@ -201,23 +322,29 @@ TIMEOUT   TIMEOUT   TIMEOUT     TIMEOUT
 - Terminal states (COMPLETED, FAILED, TIMEOUT) cannot transition
 - Duplicate transitions are safe (idempotent)
 
+---
+
 ## Coding Standards
 
 ### SOLID Principles
 
-- **Single Responsibility**: Each Action handles one use case
-- **Open/Closed**: Extend via new Actions, don't modify existing ones
-- **Liskov Substitution**: Resources and DTOs are interchangeable
-- **Interface Segregation**: Keep interfaces focused
-- **Dependency Inversion**: Controllers depend on Actions, not models directly
+- **Single Responsibility**: Each Action handles one use case. Each `__invoke` controller handles one route.
+- **Open/Closed**: Extend via new Actions, don't modify existing ones.
+- **Liskov Substitution**: Resources and DTOs are interchangeable.
+- **Interface Segregation**: Keep interfaces focused.
+- **Dependency Inversion**: Controllers depend on Actions, not models directly.
 
 ### Naming Conventions
 
-- **Controllers**: `{Resource}Controller` (e.g., `DeviceController`)
-- **Actions**: `{Verb}{Resource}Action` (e.g., `CreateDeviceAction`)
-- **DTOs**: `{Verb}{Resource}DTO` (e.g., `CreateDeviceDTO`)
-- **Resources**: `{Resource}Resource` (e.g., `DeviceResource`)
-- **Requests**: `{Verb}{Resource}Request` (e.g., `CreateDeviceRequest`)
+| Thing | Convention | Example |
+|---|---|---|
+| Resource controllers | `{Resource}Controller` | `UserController` |
+| Single-action controllers | `{Verb}{Resource}Controller` | `DisableUserController` |
+| Actions | `{Verb}{Resource}Action` | `StoreUserAction` |
+| DTOs | `{Verb}{Resource}DTO` | `StoreUserDTO` |
+| Resources | `{Resource}Resource` | `UserResource` |
+| Form Requests | `{Verb}{Resource}Request` | `StoreUserRequest`, `UpdateUserRequest` |
+| Notifications | `{Adjective}{Resource}Notification` | `WelcomeUserNotification` |
 
 ### Type Safety
 
@@ -232,11 +359,15 @@ Use transactions for operations that must be atomic:
 
 ```php
 DB::transaction(function () {
-    $command = Command::create([...]);
-    OutboxEvent::create([...]);
-    return $command;
+    $user = User::create([...]);
+    $user->userRole()->create([...]);
+    DB::table('password_reset_tokens')->upsert([...]);
+    $user->notify(new WelcomeUserNotification($token));
+    return $user;
 });
 ```
+
+---
 
 ## Testing Standards
 
@@ -246,40 +377,45 @@ DB::transaction(function () {
 - Test validation errors
 - Test authorization (401/403)
 - Test state machine transitions
+- Test SSO flows (mock Socialite)
 - Use factories for test data
 
-Example:
-
 ```php
-test('user can create device', function () {
-    $user = User::factory()->create();
-    
-    $response = $this->actingAs($user)
-        ->postJson('/api/v1/devices', [
-            'name' => 'Test Device',
-            'device_id' => 'test-123',
+test('admin can create user and invite email is sent', function () {
+    $admin = User::factory()->create(['is_superadmin' => true]);
+    Notification::fake();
+
+    $response = $this->actingAs($admin, 'sanctum')
+        ->postJson('/api/v1/users', [
+            'name'       => 'John Doe',
+            'email'      => 'john@example.com',
+            'company_id' => 1,
+            'role_id'    => 1,
         ]);
-    
+
     $response->assertStatus(201);
-    expect(Device::count())->toBe(1);
+    Notification::assertSentTo(User::where('email', 'john@example.com')->first(), WelcomeUserNotification::class);
+});
+
+test('sso login fails gracefully for unknown email', function () {
+    Socialite::shouldReceive('driver->stateless->user')
+        ->andReturn((object)['email' => 'unknown@example.com', 'id' => '123']);
+
+    $response = $this->get('/auth/microsoft/callback');
+    $response->assertRedirect(config('app.frontend_url') . '/login?error=account_not_found');
 });
 ```
+
+---
 
 ## Logging & Correlation
 
 - Every request gets a correlation ID via `X-Request-Id` header
 - Log context includes: `request_id`, `user_id`, `command_id`, `device_id`
-- Never log secrets, passwords, or tokens
+- Never log secrets, passwords, tokens, or OAuth codes
 - Use structured logging (JSON format in production)
 
-Example:
-
-```php
-logger()->withContext([
-    'request_id' => $request->header('X-Request-Id'),
-    'command_id' => $command->id,
-])->info('Command created');
-```
+---
 
 ## Error Responses
 
@@ -290,9 +426,17 @@ All errors follow this format:
     "message": "The given data was invalid.",
     "errors": {
         "field": ["Error message"]
-    },
-    "request_id": "uuid-here"
+    }
 }
+```
+
+SSO errors are communicated as query parameters on the frontend redirect, not as JSON:
+
+```
+{FRONTEND_URL}/login?error=account_not_found
+{FRONTEND_URL}/login?error=account_disabled
+{FRONTEND_URL}/login?error=sso_failed
+{FRONTEND_URL}/login?error=no_email
 ```
 
 HTTP status codes:

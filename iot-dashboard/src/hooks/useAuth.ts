@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { login, logout as logoutApi } from "@/api/auth";
+import { login, logout as logoutApi, getMicrosoftRedirectUrl } from "@/api/auth";
 import { mockLogin } from "@/mocks/handlers";
 import { useAuthStore } from "@/store/authStore";
 import type { LoginCredentials, ApiError } from "@/types";
@@ -14,13 +14,16 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 interface UseAuthReturn {
     isLoading: boolean;
+    isMicrosoftLoading: boolean;
     error: string | null;
     handleLogin: (credentials: LoginCredentials) => Promise<void>;
     handleLogout: () => Promise<void>;
+    handleMicrosoftLogin: () => Promise<void>;
 }
 
 export const useAuth = (): UseAuthReturn => {
     const [isLoading, setIsLoading] = useState(false);
+    const [isMicrosoftLoading, setIsMicrosoftLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const setAuth = useAuthStore((s) => s.setAuth);
     const logout = useAuthStore((s) => s.logout);
@@ -42,7 +45,6 @@ export const useAuth = (): UseAuthReturn => {
             const msg =
                 axiosErr.response?.data?.message ??
                 "Unable to connect. Please try again.";
-            // Show inline error on the form AND a toast for visibility
             setError(msg);
             toast.error(msg);
         } finally {
@@ -62,5 +64,25 @@ export const useAuth = (): UseAuthReturn => {
         }
     };
 
-    return { isLoading, error, handleLogin, handleLogout };
+    const handleMicrosoftLogin = async () => {
+        // Mock mode has no SSO — fall back to a notice
+        if (USE_MOCK) {
+            toast.info("Microsoft SSO is not available in mock mode.");
+            return;
+        }
+
+        setIsMicrosoftLoading(true);
+        setError(null);
+
+        try {
+            const { redirect_url } = await getMicrosoftRedirectUrl();
+            // Browser navigates away to Microsoft — no cleanup needed
+            window.location.href = redirect_url;
+        } catch {
+            toast.error("Could not initiate Microsoft sign-in. Please try again.");
+            setIsMicrosoftLoading(false);
+        }
+    };
+
+    return { isLoading, isMicrosoftLoading, error, handleLogin, handleLogout, handleMicrosoftLogin };
 };

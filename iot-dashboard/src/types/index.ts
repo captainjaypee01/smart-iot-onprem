@@ -1,30 +1,20 @@
 // src/types/index.ts
 // Global TypeScript interfaces and types for the IoT Dashboard
 
-// ─── Auth ─────────────────────────────────────────────────────────
-export interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: "admin" | "operator" | "viewer";
-}
-
-export interface LoginCredentials {
-    email: string;
-    password: string;
-}
-
-export interface AuthResponse {
-    token: string;
-    user: User;
-}
+// ─── Auth — re-exported from auth.ts (single source of truth) ────
+export type {
+    User,
+    Company,
+    Role,
+    LoginCredentials,
+    AuthResponse,
+    SetPasswordPayload,
+    MicrosoftRedirectResponse,
+    SsoError,
+    ApiError,
+} from "./auth";
 
 // ─── API ──────────────────────────────────────────────────────────
-export interface ApiError {
-    message: string;
-    errors?: Record<string, string[]>;
-}
-
 export interface PaginatedResponse<T> {
     data: T[];
     meta: {

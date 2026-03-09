@@ -2,7 +2,7 @@
 // API functions for authentication endpoints
 
 import axiosClient from "./axiosClient";
-import type { AuthResponse, LoginCredentials } from "@/types";
+import type { AuthResponse, LoginCredentials, MicrosoftRedirectResponse, SetPasswordPayload } from "@/types";
 
 export const login = async (
     credentials: LoginCredentials
@@ -17,5 +17,17 @@ export const logout = async (): Promise<void> => {
 
 export const getMe = async (): Promise<AuthResponse["user"]> => {
     const res = await axiosClient.get<AuthResponse["user"]>("/auth/me");
+    return res.data;
+};
+
+// Returns the Microsoft OAuth redirect URL for the browser to follow
+export const getMicrosoftRedirectUrl = async (): Promise<MicrosoftRedirectResponse> => {
+    const res = await axiosClient.get<MicrosoftRedirectResponse>("/auth/microsoft/redirect");
+    return res.data;
+};
+
+// Used on the /set-password page — called when a new user sets their password via invite link
+export const setPassword = async (payload: SetPasswordPayload): Promise<AuthResponse> => {
+    const res = await axiosClient.post<AuthResponse>("/auth/set-password", payload);
     return res.data;
 };

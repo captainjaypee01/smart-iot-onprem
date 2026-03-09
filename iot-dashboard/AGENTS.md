@@ -31,6 +31,7 @@ src/
 ├── hooks/            # Custom hooks only. Must start with "use"
 ├── layouts/          # Page layout shells (DashboardLayout, AuthLayout)
 ├── lib/              # Utilities. Only utils.ts (cn helper) lives here
+├── mocks/            # Mock handlers for local development (VITE_USE_MOCK=true only)
 ├── pages/            # One folder per route. Page files only — no logic
 ├── routes/           # AppRouter.tsx and PrivateRoute.tsx only
 ├── store/            # Zustand stores only
@@ -43,6 +44,7 @@ src/
 - All API calls go through `src/api/`. Pages call hooks, hooks call API files.
 - Never create empty folders or placeholder files.
 - One component per file. Filename matches the component name exactly.
+- `src/mocks/` is for local development only — never import mock handlers in production code paths. Always guard with `VITE_USE_MOCK`.
 
 ---
 
@@ -53,6 +55,8 @@ src/
 - All component props must have an explicit interface defined above the component.
 - Use `type` for unions and primitives. Use `interface` for object shapes.
 - Always type the return value of custom hooks.
+- `src/types/auth.ts` is the **single source of truth** for all auth-related types (`User`, `Company`, `Role`, `AuthResponse`, `LoginCredentials`, etc.). Never redefine these in `index.ts`.
+- `src/types/index.ts` re-exports from domain type files — it does not define auth types itself.
 
 ```ts
 // ✅ Correct
@@ -63,6 +67,12 @@ interface DeviceCardProps {
 
 // ❌ Wrong
 const DeviceCard = (props: any) => { ... }
+
+// ✅ Correct — import auth types from the domain file
+import type { User } from "@/types/auth";
+
+// ❌ Wrong — do not redefine User in index.ts
+export interface User { id: string; role: "admin" | "viewer" }
 ```
 
 ---
@@ -81,12 +91,13 @@ const DeviceCard = (props: any) => { ... }
   - `bg-gradient-brand` → sidebar/header gradient
 - Use shadcn semantic tokens (`bg-primary`, `text-muted-foreground`) for components.
 - Use brand tokens (`bg-brand-blue`) only for hero elements, sidebar, and headers.
+- **Exception**: The login page left panel gradient uses `style={{ background: "linear-gradient(...)" }}` — this is the only permitted inline style and must not be changed to a class.
 
 ```tsx
 // ✅ Correct
 <div className={cn("rounded-lg bg-card p-4", isActive && "border-brand-blue")}>
 
-// ❌ Wrong
+// ❌ Wrong — anywhere except the login panel gradient
 <div style={{ backgroundColor: "#0033cc" }}>
 ```
 
@@ -121,10 +132,11 @@ const DeviceTable = () => {
 ## API & Data Fetching Rules
 
 - **Always use** `src/api/axiosClient.ts` — never import `axios` directly in pages or components.
-- One API file per domain: `devices.ts`, `alerts.ts`, `auth.ts`, `metrics.ts`.
+- One API file per domain: `auth.ts`, `users.ts`, `devices.ts`, `alerts.ts`, `metrics.ts`.
 - All API functions are `async` and return typed responses.
 - HTTP errors are handled globally in the Axios interceptor — do not duplicate in components.
 - The base URL is always `/api` — never hardcode ports or hostnames.
+- API path prefix is `/v1/` — all endpoints must follow `/api/v1/` convention.
 
 ```ts
 // src/api/devices.ts ✅ Correct
@@ -132,7 +144,7 @@ import axiosClient from "./axiosClient";
 import type { Device } from "@/types";
 
 export const getDevices = async (): Promise<Device[]> => {
-  const res = await axiosClient.get("/devices");
+  const res = await axiosClient.get("/v1/devices");
   return res.data;
 };
 
@@ -143,38 +155,55 @@ axios.get("http://localhost:8000/api/devices");
 
 ---
 
-## State Management Rules
+## Auth Rules
 
-- **Zustand** is for global state only: authentication, theme preference.
-- **React `useState`** for local UI state (modals open/closed, form values).
-- **No Redux, no Context for data** — context is only for theme.
-- Never store derived data in Zustand — compute it on the fly.
+- **`useAuth`** is the single hook for all authentication actions: `handleLogin`, `handleLogout`, `handleMicrosoftLogin`.
+- Never create a separate `useLogin` or `useMsal` hook — everything auth-related lives in `useAuth`.
+- The `useAuthStore` (Zustand) holds `user`, `token`, and `isAuthenticated`. Never add more fields without strong justification.
+- SSO flow: `useAuth.handleMicrosoftLogin()` → fetches redirect URL from API → `window.location.href` redirect → Laravel callback → `/auth/callback` page → `authStore.setAuth()` → `/dashboard`.
+- The `/auth/callback` page is the **only** place that reads `?token=` and `?user=` from the URL. It must clear these params immediately using `window.history.replaceState`.
+- The `/set-password` page handles the invite link flow for newly created users. It reads `?token=` and `?email=` from the URL.
+- SSO error codes arrive as `?error=` on `/login` and must be mapped through `SSO_ERROR_MESSAGES` from `src/constants/auth.ts`.
+- Mock mode (`VITE_USE_MOCK=true`) bypasses the real API. `handleMicrosoftLogin` shows an info toast in mock mode instead of redirecting.
 
 ```ts
-// ✅ Zustand for global auth state only
-const useAuthStore = create<AuthState>()(
-  persist((set) => ({
-    user: null,
-    token: null,
-    setAuth: (user, token) => set({ user, token }),
-    logout: () => set({ user: null, token: null }),
-  }), { name: "iot-auth" })
-);
+// ✅ Correct — one hook for all auth
+const { handleLogin, handleLogout, handleMicrosoftLogin, isLoading, error } = useAuth();
+
+// ❌ Wrong — split hooks
+const { handleLogin } = useLogin();
+const { handleMicrosoftLogin } = useMicrosoftAuth();
 ```
+
+---
+
+## SSO Provider Config (LoginPage)
+
+- SSO providers are defined in the `SSO_PROVIDERS` array inside `LoginPage.tsx`.
+- Set `enabled: false` to show "Coming soon" while the backend is not ready.
+- Set `enabled: true` once the Laravel Socialite route is live.
+- Microsoft is the primary provider. Google is secondary and disabled by default.
+- Never hardcode `window.location.href = "/api/auth/sso/..."` — always go through `useAuth.handleMicrosoftLogin()` which calls the API.
 
 ---
 
 ## Routing Rules
 
 - All routes are defined in `src/routes/AppRouter.tsx` only.
-- Protected routes use `<PrivateRoute />` which checks Zustand for a token.
+- Protected routes use `<PrivateRoute />` which checks Zustand `isAuthenticated`.
 - Route paths use kebab-case: `/device-groups`, `/alert-history`.
 - Lazy load pages using `React.lazy()` to keep the bundle small.
+- Auth routes that must exist:
+  - `/login` — public
+  - `/auth/callback` — public, handles SSO redirect from Laravel
+  - `/set-password` — public, handles invite email link
 
 ```tsx
 // ✅ Correct — lazy loaded pages
-const DashboardPage = React.lazy(() => import("@/pages/dashboard/DashboardPage"));
-const LoginPage     = React.lazy(() => import("@/pages/auth/LoginPage"));
+const DashboardPage    = React.lazy(() => import("@/pages/dashboard/DashboardPage"));
+const LoginPage        = React.lazy(() => import("@/pages/auth/LoginPage"));
+const AuthCallbackPage = React.lazy(() => import("@/pages/auth/AuthCallbackPage"));
+const SetPasswordPage  = React.lazy(() => import("@/pages/auth/SetPasswordPage"));
 ```
 
 ---
@@ -191,6 +220,7 @@ const LoginPage     = React.lazy(() => import("@/pages/auth/LoginPage"));
 | CSS / Tailwind | Never custom class names | Use Tailwind utilities only |
 | Route paths | kebab-case | `/device-groups` |
 | Env variables | SCREAMING_SNAKE_CASE | `VITE_API_BASE_URL` |
+| SSO error codes | kebab-case string literals | `"account_not_found"` |
 
 ---
 
@@ -221,7 +251,10 @@ Every file must start with a short comment stating its purpose:
 <div className="bg-white text-gray-900">
 ```
 
+---
+
 ## Notifications / Toast Rules
+
 - **Sonner is the only toast library** — never use `react-hot-toast`, `react-toastify`, or shadcn's own `useToast`.
 - The `<Toaster />` is mounted once in `App.tsx` — never add another instance.
 - Always import `toast` from `sonner` directly, never from a wrapper.
@@ -229,7 +262,7 @@ Every file must start with a short comment stating its purpose:
   - `toast.success()` — action completed (device saved, login success)
   - `toast.error()` — something failed (API error, validation)
   - `toast.warning()` — needs attention but not blocking
-  - `toast.info()` — neutral system message
+  - `toast.info()` — neutral system message (e.g. SSO not available in mock mode)
   - `toast.loading()` + `toast.dismiss()` — for async operations with feedback
 
 ```ts
@@ -243,18 +276,24 @@ import { useToast } from "@/components/ui/use-toast";
 import toast from "react-hot-toast";
 ```
 
+---
+
 ## Constants & Strings Rules
-- All user-facing strings live in `src/constants/strings.ts` — never hardcode display text in components
-- All domain constants (fault types, node types, sensor configs) live in `src/constants/`
-- Always import from the barrel: `import { FAULT_META, NODE_TYPE } from "@/constants"`
-- Never use magic strings like `"MISSING"` or `"Fire Extinguisher"` inline in components
-- When adding a new fault type or node type, update the constants files first before touching any UI
+
+- All user-facing strings live in `src/constants/strings.ts` — never hardcode display text in components.
+- All domain constants (fault types, node types, sensor configs) live in `src/constants/`.
+- Auth-specific strings and SSO error message maps live in `src/constants/auth.ts`.
+- Always import from the barrel: `import { FAULT_META, NODE_TYPE } from "@/constants"`.
+- Always import auth constants directly: `import { SSO_ERROR_MESSAGES } from "@/constants/auth"`.
+- Never use magic strings like `"MISSING"` or `"Fire Extinguisher"` inline in components.
+- When adding a new fault type or node type, update the constants files first before touching any UI.
+
 ---
 
 ## What NOT to Do (Hard Rules)
 
 - ❌ No `any` in TypeScript
-- ❌ No inline styles
+- ❌ No inline styles (except the login page left panel gradient — documented exception)
 - ❌ No direct `axios` imports outside of `src/api/`
 - ❌ No API calls inside components — always via a hook
 - ❌ No `tailwind.config.ts` — config is in `index.css`
@@ -265,3 +304,7 @@ import toast from "react-hot-toast";
 - ❌ No other UI libraries (MUI, Ant Design, Chakra) — shadcn only
 - ❌ No class components — functional components only
 - ❌ No `useEffect` for data fetching — use a custom hook that wraps the API call
+- ❌ No hardcoded `window.location.href` for SSO — always go through `useAuth.handleMicrosoftLogin()`
+- ❌ No reading `?token=` from the URL anywhere except `AuthCallbackPage` and `SetPasswordPage`
+- ❌ No duplicate type definitions — auth types live in `src/types/auth.ts` only
+- ❌ No mock imports outside of `VITE_USE_MOCK` guards

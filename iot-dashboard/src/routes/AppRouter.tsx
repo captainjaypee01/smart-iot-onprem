@@ -8,15 +8,19 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 
 // Lazy-loaded pages — keeps initial bundle small
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
+const AuthCallbackPage = lazy(() => import("@/pages/auth/AuthCallbackPage"));
+const SetPasswordPage = lazy(() => import("@/pages/auth/SetPasswordPage"));
 const DashboardPage = lazy(() => import("@/pages/dashboard/DashboardPage"));
-const FireExtinguisherPage = lazy(() => import("@/pages/modules/FireExtinguisherPage"));
+const FireExtinguisherPage = lazy(
+    () => import("@/pages/modules/FireExtinguisherPage"),
+);
 const NodesPage = lazy(() => import("@/pages/nodes/NodesPage"));
 const AlertsPage = lazy(() => import("@/pages/modules/AlertsPage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
-    <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-blue border-t-transparent" />
+    <div className="bg-background flex h-screen w-full items-center justify-center">
+        <div className="border-brand-blue h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
     </div>
 );
 
@@ -24,21 +28,29 @@ const AppRouter = () => (
     <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
             <Routes>
-                {/* Public */}
+                {/* ── Public ──────────────────────────────────────────── */}
                 <Route path="/login" element={<LoginPage />} />
 
-                {/* Protected — all wrapped in DashboardLayout */}
+                {/* Handles the redirect back from Microsoft OAuth */}
+                <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+                {/* Invite link from welcome email — lets new users set a password */}
+                <Route path="/set-password" element={<SetPasswordPage />} />
+
+                {/* ── Protected — all wrapped in DashboardLayout ──────── */}
                 <Route element={<PrivateRoute />}>
                     <Route element={<DashboardLayout />}>
                         <Route path="/" element={<DashboardPage />} />
-                        <Route path="/fire-extinguisher" element={<FireExtinguisherPage />} />
+                        <Route
+                            path="/fire-extinguisher"
+                            element={<FireExtinguisherPage />}
+                        />
                         <Route path="/nodes" element={<NodesPage />} />
                         <Route path="/alerts" element={<AlertsPage />} />
-
                     </Route>
                 </Route>
 
-                {/* Fallback */}
+                {/* ── Fallback ─────────────────────────────────────────── */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </Suspense>
