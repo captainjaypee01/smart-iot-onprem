@@ -1,0 +1,15 @@
+# observability/grafana/provisioning/dashboards/dashboards.yml
+# Tells Grafana to load dashboards from the dashboards folder
+
+apiVersion: 1
+
+providers:
+  - name: IoT Monitoring Dashboards
+    orgId: 1
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: true

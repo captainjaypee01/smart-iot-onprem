@@ -1,9 +1,15 @@
+// observability/alloy/alloy-config.alloy
+// Grafana Alloy — collects Docker container logs and ships to Loki,
+// and scrapes Prometheus metrics for local forwarding.
+
+// ── Docker log discovery ──────────────────────────────────────────────────────
 discovery.docker "containers" {
-  host             = "unix:///var/run/docker.sock"
-  refresh_interval = "5s"
+  host = "unix:///var/run/docker.sock"
+  refresh_interval = "10s"
 }
 
-discovery.relabel "containers" {
+// Relabel docker metadata into Loki labels
+discovery.relabel "docker_logs" {
   targets = discovery.docker.containers.targets
 
   rule {
@@ -13,21 +19,53 @@ discovery.relabel "containers" {
   }
 
   rule {
-    source_labels = ["__meta_docker_container_image"]
-    target_label  = "image"
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "stream"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
   }
 }
 
-loki.source.docker "containers" {
-  host             = "unix:///var/run/docker.sock"
-  targets          = discovery.docker.containers.targets
-  relabel_rules    = discovery.relabel.containers.rules
-  forward_to       = [loki.write.local.receiver]
-  refresh_interval = "5s"
+// ── Loki log sink ─────────────────────────────────────────────────────────────
+loki.source.docker "docker_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.docker_logs.output
+  forward_to = [loki.write.default.receiver]
+  refresh_interval = "10s"
 }
 
-loki.write "local" {
+loki.write "default" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
+  }
+  external_labels = {
+    env     = sys.env("ENV"),
+    project = "iot-monitoring",
+  }
+}
+
+// ── Host log files (optional) ─────────────────────────────────────────────────
+local.file_match "varlog" {
+  path_targets = [{"__path__" = "/var/log/*.log", "job" = "varlogs"}]
+}
+
+loki.source.file "varlog" {
+  targets    = local.file_match.varlog.targets
+  forward_to = [loki.write.default.receiver]
+}
+
+// ── Prometheus remote write (forward local scrape to Prometheus) ──────────────
+prometheus.scrape "alloy_self" {
+  targets = [{"__address__" = "localhost:12345"}]
+  forward_to = [prometheus.remote_write.default.receiver]
+  scrape_interval = "30s"
+}
+
+prometheus.remote_write "default" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
   }
 }

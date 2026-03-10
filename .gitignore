@@ -1,4 +1,7 @@
 .env
+.env.dev
+.env.uat
+.env.prod
 **/.env
 **/node_modules
 **/vendor

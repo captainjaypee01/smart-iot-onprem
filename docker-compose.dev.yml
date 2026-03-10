@@ -1,0 +1,84 @@
+# docker-compose.dev.yml — Development overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up -d --build
+
+services:
+
+  api:
+    build:
+      target: dev
+    env_file:
+      - ./api/.env.dev              # replaces ./api/.env from base
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    command: sh -lc "php artisan serve --host=0.0.0.0 --port=8000"
+    volumes:
+      - ./api:/app                  # live source mount — changes apply instantly
+      - api_storage:/app/storage
+    ports:
+      - "${API_PORT:-8000}:8000"
+      - "9003:9003"                 # Xdebug
+
+  queue:
+    build:
+      target: dev
+    env_file:
+      - ./api/.env.dev
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - ./api:/app
+      - api_storage:/app/storage
+
+  outbox:
+    build:
+      target: dev
+    env_file:
+      - ./api/.env.dev
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - ./api:/app
+      - api_storage:/app/storage
+
+  dashboard:
+    build:
+      target: dev
+    volumes:
+      - ./iot-dashboard:/app
+      - dashboard_node_modules:/app/node_modules
+    environment:
+      VITE_HOST:           0.0.0.0
+      VITE_PORT:           5173
+      CHOKIDAR_USEPOLLING: "true"
+      # Vite also auto-reads iot-dashboard/.env.development for VITE_* vars
+
+  postgres_exporter:
+    env_file:
+      - ./api/.env.dev
+
+  redis_exporter:
+    env_file:
+      - ./api/.env.dev
+
+  mosquitto_exporter:
+    env_file:
+      - ./api/.env.dev
+
+  grafana:
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED:  "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_LOG_LEVEL:               info
+
+  # Mailpit — catches all outbound email in dev (no real SMTP needed)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: iot-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks: [iot_net]

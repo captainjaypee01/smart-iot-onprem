@@ -1,0 +1,152 @@
+# docker-compose.prod.yml — Production overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build
+
+services:
+
+  api:
+    build:
+      target: production
+    env_file:
+      - ./api/.env.prod
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - api_storage:/app/storage
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+
+  queue:
+    build:
+      target: production
+    env_file:
+      - ./api/.env.prod
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - api_storage:/app/storage
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  outbox:
+    build:
+      target: production
+    env_file:
+      - ./api/.env.prod
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - api_storage:/app/storage
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  dashboard:
+    build:
+      target: production
+      # Vite reads iot-dashboard/.env.production at build time — no runtime env needed
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  postgres_exporter:
+    env_file:
+      - ./api/.env.prod
+
+  redis_exporter:
+    env_file:
+      - ./api/.env.prod
+
+  mosquitto_exporter:
+    env_file:
+      - ./api/.env.prod
+
+  prometheus:
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=90d"
+      - "--web.enable-lifecycle"
+      - "--web.listen-address=0.0.0.0:9090"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+
+  grafana:
+    environment:
+      GF_LOG_LEVEL:              error
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SERVER_ROOT_URL:        ${GRAFANA_ROOT_URL}
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  loki:
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+
+  alertmanager:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  # ── Caddy — TLS termination & reverse proxy (production only) ───────────────
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: iot-caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+      dashboard:
+        condition: service_started
+    networks: [iot_net]
+
+volumes:
+  caddy_data:
+  caddy_config:

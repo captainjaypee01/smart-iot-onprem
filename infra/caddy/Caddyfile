@@ -1,0 +1,70 @@
+# infra/caddy/Caddyfile
+# Production reverse proxy with automatic HTTPS (Let's Encrypt)
+# Replace all domain placeholders before deploying.
+
+# ── Main Dashboard ────────────────────────────────────────────────────────────
+your-domain.com {
+  reverse_proxy dashboard:5173
+
+  encode gzip zstd
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Frame-Options DENY
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    -Server
+  }
+}
+
+# ── Laravel API ───────────────────────────────────────────────────────────────
+api.your-domain.com {
+  reverse_proxy api:8000
+
+  encode gzip zstd
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    -Server
+  }
+}
+
+# ── Grafana ───────────────────────────────────────────────────────────────────
+grafana.your-domain.com {
+  reverse_proxy grafana:3000
+
+  encode gzip zstd
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    -Server
+  }
+}
+
+# ── Prometheus (IP-restricted — only internal or VPN IPs) ─────────────────────
+prometheus.your-domain.com {
+  @blocked not remote_ip 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+  abort @blocked
+
+  reverse_proxy prometheus:9090
+
+  basicauth {
+    # Generate with: caddy hash-password --plaintext YOUR_PASSWORD
+    admin REPLACE_BCRYPT_HASH
+  }
+}
+
+# ── Alertmanager (IP-restricted) ──────────────────────────────────────────────
+alertmanager.your-domain.com {
+  @blocked not remote_ip 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+  abort @blocked
+
+  reverse_proxy alertmanager:9093
+
+  basicauth {
+    admin REPLACE_BCRYPT_HASH
+  }
+}

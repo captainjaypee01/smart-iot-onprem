@@ -9,12 +9,15 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\MicrosoftRedirectController;
 use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
+use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
 use App\Http\Controllers\Api\V1\Users\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    // ─── Health (public) ─────────────────────────────────────────────
+    Route::get('/health', HealthController::class);
 
     // ─── Auth (public) ───────────────────────────────────────────────
     Route::prefix('auth')->group(function () {

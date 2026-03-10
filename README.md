@@ -30,3 +30,25 @@ docker exec -it iot-mosquitto sh -lc "mosquitto_pub -h localhost -t test/topic -
 
 // When working on infra
 "I am working on Docker/infra — apply root rules only."
+
+
+# DEV
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up -d --build
+
+# UAT
+docker compose -f docker-compose.yml -f docker-compose.uat.yml --env-file .env.uat up -d --build
+
+# PROD
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build
+
+# Tear down
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev down
+
+# Tail logs for a specific service
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev logs -f api
+
+# Shell into API container
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev exec api sh
+
+# Run migrations
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev exec api php artisan migrate

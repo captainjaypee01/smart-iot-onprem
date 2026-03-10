@@ -1,0 +1,76 @@
+# docker-compose.uat.yml — UAT / Staging overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.uat.yml --env-file .env.uat up -d --build
+
+services:
+
+  api:
+    build:
+      target: production
+    env_file:
+      - ./api/.env.uat
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - api_storage:/app/storage
+
+  queue:
+    build:
+      target: production
+    env_file:
+      - ./api/.env.uat
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - api_storage:/app/storage
+
+  outbox:
+    build:
+      target: production
+    env_file:
+      - ./api/.env.uat
+    environment:
+      DB_HOST:    postgres
+      REDIS_HOST: redis
+    volumes:
+      - api_storage:/app/storage
+
+  dashboard:
+    build:
+      target: production
+      # Vite reads iot-dashboard/.env.production at build time — no runtime env needed
+
+  postgres_exporter:
+    env_file:
+      - ./api/.env.uat
+
+  redis_exporter:
+    env_file:
+      - ./api/.env.uat
+
+  mosquitto_exporter:
+    env_file:
+      - ./api/.env.uat
+
+  prometheus:
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+
+  grafana:
+    environment:
+      GF_LOG_LEVEL:              info
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+
+  # Mailpit for UAT email testing
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: iot-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks: [iot_net]
