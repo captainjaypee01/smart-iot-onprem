@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/context/ThemeContext";
-import { SSO_ERROR_MESSAGES } from "@/constants/auth";
+import { AUTH_STRINGS, SSO_ERROR_MESSAGES } from "@/constants/auth";
 import type { LoginCredentials } from "@/types";
 
 // ─── SSO Provider Config ─────────────────────────────────────────
@@ -178,9 +178,11 @@ const LoginPage = () => {
 
                         {/* Heading */}
                         <div className="space-y-1">
-                            <h2 className="text-2xl font-bold text-foreground">Welcome back</h2>
+                            <h2 className="text-2xl font-bold text-foreground">
+                                {AUTH_STRINGS.login.title}
+                            </h2>
                             <p className="text-sm text-muted-foreground">
-                                Sign in to your account to continue
+                                {AUTH_STRINGS.login.subtitle}
                             </p>
                         </div>
 
@@ -210,8 +212,8 @@ const LoginPage = () => {
                                             : provider.icon
                                         }
                                         {provider.id === "microsoft" && isMicrosoftLoading
-                                            ? "Redirecting to Microsoft..."
-                                            : `Continue with ${provider.label}`
+                                            ? AUTH_STRINGS.login.microsoftLoading
+                                            : AUTH_STRINGS.login.microsoftButton
                                         }
                                         {!provider.enabled && (
                                             <span className="ml-auto text-xs text-muted-foreground font-normal">
@@ -225,7 +227,7 @@ const LoginPage = () => {
                                 <div className="flex items-center gap-3 py-1">
                                     <Separator className="flex-1" />
                                     <span className="text-xs text-muted-foreground">
-                                        or sign in with email
+                                        {AUTH_STRINGS.login.divider}
                                     </span>
                                     <Separator className="flex-1" />
                                 </div>
@@ -238,7 +240,7 @@ const LoginPage = () => {
                             {/* Email */}
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                                    Email address
+                                    {AUTH_STRINGS.login.emailLabel}
                                 </Label>
                                 <Input
                                     id="email"
@@ -246,7 +248,7 @@ const LoginPage = () => {
                                     type="email"
                                     autoComplete="email"
                                     required
-                                    placeholder="you@company.com"
+                                    placeholder={AUTH_STRINGS.login.emailPlaceholder}
                                     value={credentials.email}
                                     onChange={onChange}
                                     disabled={isFormDisabled}
@@ -260,7 +262,7 @@ const LoginPage = () => {
                             {/* Password */}
                             <div className="space-y-2">
                                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                                    Password
+                                    {AUTH_STRINGS.login.passwordLabel}
                                 </Label>
                                 <div className="relative">
                                     <Input
@@ -269,7 +271,7 @@ const LoginPage = () => {
                                         type={showPassword ? "text" : "password"}
                                         autoComplete="current-password"
                                         required
-                                        placeholder="••••••••"
+                                        placeholder={AUTH_STRINGS.login.passwordPlaceholder}
                                         value={credentials.password}
                                         onChange={onChange}
                                         disabled={isFormDisabled}
@@ -305,10 +307,10 @@ const LoginPage = () => {
                                 {isLoading ? (
                                     <span className="flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        Signing in…
+                                        {AUTH_STRINGS.login.submittingButton}
                                     </span>
                                 ) : (
-                                    "Sign in"
+                                    AUTH_STRINGS.login.submitButton
                                 )}
                             </Button>
                         </form>

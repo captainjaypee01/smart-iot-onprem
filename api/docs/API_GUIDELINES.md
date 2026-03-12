@@ -282,7 +282,7 @@ The callback controller must:
 - `roles` table: named roles, `is_system_role` flag
 - `permissions` table: keyed strings e.g. `user.create`, `node.view`
 - `role_permissions` pivot: which permissions a role has
-- `user_roles` table: one role per user (enforced by `UNIQUE(user_id)`)
+- `users.role_id`: one role per user (enforced by FK + validation)
 - `role_companies` pivot: which companies a role is scoped to
 - `role_networks` pivot: which networks a role can access
 

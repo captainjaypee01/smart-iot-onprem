@@ -1,7 +1,6 @@
 <?php
 
 // app/Http/Requests/Api/V1/Auth/SetPasswordRequest.php
-// Validates the set-password form from the welcome email link
 
 namespace App\Http\Requests\Api\V1\Auth;
 
@@ -14,12 +13,14 @@ class SetPasswordRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, list<string>> */
     public function rules(): array
     {
         return [
-            'email'    => ['required', 'email', 'exists:users,email'],
-            'token'    => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'email'                 => ['required', 'string', 'email'],
+            'token'                 => ['required', 'string'],
+            'password'              => ['required', 'string', 'min:8', 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
         ];
     }
 }

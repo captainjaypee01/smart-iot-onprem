@@ -1,0 +1,63 @@
+<?php
+
+// database/seeders/RoleSeeder.php
+// Creates the three system roles and assigns permissions to each.
+//
+// Role hierarchy:
+//   SuperAdmin  — is_superadmin flag on User, no role row needed (bypasses all checks)
+//   Admin       — full permissions on all modules (system role)
+//   Operator    — read + action permissions, no user management (non-system role)
+
+namespace Database\Seeders;
+
+use App\Models\Permission;
+use App\Models\Role;
+use Illuminate\Database\Seeder;
+
+class RoleSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // ── Admin — full access ───────────────────────────────────────────────
+        $admin = Role::firstOrCreate(
+            ['name' => 'Admin'],
+            ['description' => 'Full access to all features within the company.', 'is_system_role' => true]
+        );
+
+        $adminPermissions = Permission::pluck('id');
+        $admin->permissions()->sync($adminPermissions);
+
+        // ── Operator — operational access, no user/admin controls ─────────────
+        $operator = Role::firstOrCreate(
+            ['name' => 'Operator'],
+            ['description' => 'Can manage faults, nodes, and zones. Cannot manage users.', 'is_system_role' => false]
+        );
+
+        $operatorKeys = [
+            'fault.view',
+            'fault.investigate',
+            'fault.verify',
+            'fault.resolve',
+            'node.view',
+            'zone.view',
+            'alert.view',
+            'alert.acknowledge',
+            'report.view',
+        ];
+
+        $operatorPermissions = Permission::whereIn('key', $operatorKeys)->pluck('id');
+        $operator->permissions()->sync($operatorPermissions);
+
+        // ── Viewer — read-only ────────────────────────────────────────────────
+        $viewer = Role::firstOrCreate(
+            ['name' => 'Viewer'],
+            ['description' => 'Read-only access to dashboard and reports.', 'is_system_role' => false]
+        );
+
+        $viewerKeys = ['fault.view', 'node.view', 'zone.view', 'alert.view', 'report.view'];
+        $viewerPermissions = Permission::whereIn('key', $viewerKeys)->pluck('id');
+        $viewer->permissions()->sync($viewerPermissions);
+
+        $this->command->info('  ✓ Roles seeded (Admin, Operator, Viewer).');
+    }
+}

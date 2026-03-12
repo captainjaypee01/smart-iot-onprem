@@ -173,23 +173,50 @@ class PermissionSeeder extends Seeder
             $permissionKeys = $roleData['permissions'];
             unset($roleData['permissions']);
 
-            $roleData['created_at'] = now();
-            $roleData['updated_at'] = now();
+            $now = now();
 
-            $roleId = DB::table('roles')->insertGetId($roleData);
+            // Find existing role by name (no DB constraint required)
+            $existingId = DB::table('roles')
+                ->where('name', $roleData['name'])
+                ->value('id');
 
-            $pivotRows = collect($permissionKeys)
-                ->filter(fn($key) => $allPermissionIds->has($key))
-                ->map(fn($key) => [
-                    'role_id'       => $roleId,
-                    'permission_id' => $allPermissionIds[$key],
-                ])
-                ->values()
-                ->toArray();
+            if ($existingId) {
+                DB::table('roles')
+                    ->where('id', $existingId)
+                    ->update([
+                        'description'    => $roleData['description'] ?? null,
+                        'is_system_role' => $roleData['is_system_role'],
+                        'updated_at'     => $now,
+                    ]);
 
-            DB::table('role_permissions')->insert($pivotRows);
+                $roleId = (int) $existingId;
+            } else {
+                $roleId = (int) DB::table('roles')->insertGetId([
+                    'name'           => $roleData['name'],
+                    'description'    => $roleData['description'] ?? null,
+                    'is_system_role' => $roleData['is_system_role'],
+                    'created_at'     => $now,
+                    'updated_at'     => $now,
+                ]);
+            }
 
-            $this->command->info("Role seeded: {$roleData['name']} with " . count($pivotRows) . " permissions.");
+            $permissionIds = collect($permissionKeys)
+                ->filter(fn (string $key) => $allPermissionIds->has($key))
+                ->map(fn (string $key) => (int) $allPermissionIds[$key])
+                ->values();
+
+            DB::table('role_permissions')->where('role_id', $roleId)->delete();
+
+            if ($permissionIds->isNotEmpty()) {
+                DB::table('role_permissions')->insert(
+                    $permissionIds->map(fn (int $permissionId) => [
+                        'role_id' => $roleId,
+                        'permission_id' => $permissionId,
+                    ])->all()
+                );
+            }
+
+            $this->command->info("Role seeded: {$roleData['name']} with " . $permissionIds->count() . " permissions.");
         }
     }
 }

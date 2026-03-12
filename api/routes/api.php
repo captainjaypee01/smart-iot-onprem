@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
 use App\Http\Controllers\Api\V1\Users\UserController;
+use App\Http\Controllers\API\V1\Auth\MicrosoftCallbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -25,7 +26,12 @@ Route::prefix('v1')->group(function () {
         Route::post('/set-password', SetPasswordController::class);
 
         // Returns { redirect_url } for the SPA to follow
-        Route::get('/microsoft/redirect', MicrosoftRedirectController::class);
+        // Microsoft OAuth — redirect gives the SPA the URL to navigate to,
+        // callback is where Microsoft returns after the user approves.
+        Route::prefix('microsoft')->group(function () {
+            Route::get('redirect', MicrosoftRedirectController::class);
+            Route::get('callback', MicrosoftCallbackController::class);
+        });
     });
 
     // ─── Auth (protected) ────────────────────────────────────────────
@@ -34,13 +40,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/logout', LogoutController::class);
             Route::get('/me', MeController::class);
         });
-
+        
+        // ── Protected API routes go below this line ───────────────────────────
         // ─── Users ───────────────────────────────────────────────────
         // Standard CRUD
         Route::apiResource('users', UserController::class);
-
         // One-off actions — single-action controllers
         Route::post('/users/{user}/resend-invite', ResendInviteController::class);
         Route::post('/users/{user}/disable', DisableUserController::class);
+
+        // Route::apiResource('devices', DeviceController::class);
+        // Route::apiResource('alerts',  AlertController::class);
     });
 });

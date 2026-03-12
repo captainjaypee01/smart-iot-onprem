@@ -1,5 +1,10 @@
 // src/types/auth.ts
-// TypeScript interfaces for authentication domain
+// TypeScript interfaces for authentication domain.
+//
+// Note on `id` fields:
+//   User.id is a UUID string — the backend exposes the uuid column, not the
+//   integer primary key. This prevents enumeration attacks on public-facing IDs.
+//   Company.id and Role.id remain numbers as they are not user-enumerable resources.
 
 export interface Company {
     id: number;
@@ -15,7 +20,7 @@ export interface Role {
 }
 
 export interface User {
-    id: number;
+    id: string;          // UUID — maps to users.uuid, NOT users.id (integer)
     name: string;
     email: string;
     is_superadmin: boolean;
@@ -57,6 +62,3 @@ export interface ApiError {
     message: string;
     errors?: Record<string, string[]>;
 }
-
-
-

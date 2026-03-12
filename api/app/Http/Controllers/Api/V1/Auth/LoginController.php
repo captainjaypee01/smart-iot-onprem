@@ -1,7 +1,8 @@
 <?php
 
 // app/Http/Controllers/Api/V1/Auth/LoginController.php
-// Handles email + password login for the SPA
+// Handles email + password login for the SPA.
+// Returns a Sanctum token + UserResource on success.
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
@@ -16,8 +17,11 @@ class LoginController extends Controller
 {
     public function __invoke(LoginRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)
+            ->with(['company', 'role.permissions'])
+            ->first();
 
+        // No user found, no password set (SSO-only), or wrong password
         if (! $user || ! $user->password || ! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'These credentials do not match our records.',

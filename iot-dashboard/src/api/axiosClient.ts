@@ -4,9 +4,10 @@
 import axios, { AxiosError } from "axios";
 import { useAuthStore } from "@/store/authStore";
 import type { ApiError } from "@/types";
+import { API_BASE_URL } from "@/constants";
 
 const axiosClient = axios.create({
-    baseURL: "/api",
+    baseURL: API_BASE_URL,
     timeout: 15000,
     headers: {
         "Content-Type": "application/json",
@@ -33,8 +34,21 @@ axiosClient.interceptors.response.use(
     (response) => response,
     (error: AxiosError<ApiError>) => {
         if (error.response?.status === 401) {
-            useAuthStore.getState().logout();
-            window.location.href = "/login";
+            const url = error.config?.url ?? "";
+
+            // Don't hard-redirect on expected auth failures (e.g. bad credentials).
+            // Let the calling hook/page surface the message instead.
+            const isAuthAttempt =
+                url.includes("/auth/login") || url.includes("/auth/set-password");
+
+            if (!isAuthAttempt) {
+                useAuthStore.getState().logout();
+
+                // Avoid full reload loops if we're already on the login page.
+                if (window.location.pathname !== "/login") {
+                    window.location.href = "/login";
+                }
+            }
         }
         return Promise.reject(error);
     }

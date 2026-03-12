@@ -44,7 +44,7 @@ class DisableUserController extends Controller
         $action  = $user->is_active ? 'enabled' : 'disabled';
         $message = "User {$action} successfully.";
 
-        $user->load(['company', 'userRole.role.permissions']);
+        $user->load(['company', 'role.permissions']);
 
         return response()->json([
             'message' => $message,

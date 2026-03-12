@@ -10,12 +10,20 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid');
             $table->foreignId('company_id')
                 ->nullable()
                 ->constrained('companies')
                 ->nullOnDelete()
                 ->comment('Null only for superadmin accounts');
-            $table->string('name');
+            $table->foreignId('role_id')
+                ->nullable()
+                ->constrained('roles')
+                ->nullOnDelete();
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('middle_name')->nullable();
+            $table->string('name'); // denormalized full name for convenience / backward-compat
             $table->string('email')->unique();
             $table->string('username')->unique()->nullable();
             $table->string('password')->nullable()->comment('Null for SSO-only accounts');

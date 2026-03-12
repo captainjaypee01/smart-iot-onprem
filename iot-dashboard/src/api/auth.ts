@@ -1,6 +1,5 @@
 // src/api/auth.ts
 // API functions for authentication endpoints
-
 import axiosClient from "./axiosClient";
 import type { AuthResponse, LoginCredentials, MicrosoftRedirectResponse, SetPasswordPayload } from "@/types";
 

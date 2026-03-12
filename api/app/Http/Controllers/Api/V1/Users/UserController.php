@@ -26,7 +26,7 @@ class UserController extends Controller
         $authUser = $request->user();
 
         $users = User::query()
-            ->with(['company', 'userRole.role.permissions'])
+            ->with(['company', 'role.permissions'])
             ->when(! $authUser->is_superadmin, function ($query) use ($authUser) {
                 $query->where('company_id', $authUser->company_id);
             })
@@ -39,7 +39,7 @@ class UserController extends Controller
     // GET /api/v1/users/{user}
     public function show(User $user): UserResource
     {
-        $user->load(['company', 'userRole.role.permissions']);
+        $user->load(['company', 'role.permissions']);
 
         return new UserResource($user);
     }
@@ -51,15 +51,11 @@ class UserController extends Controller
         $user = DB::transaction(function () use ($request): User {
             $user = User::create([
                 'company_id' => $request->company_id,
+                'role_id'    => $request->role_id,
                 'name'       => $request->name,
                 'email'      => $request->email,
                 'password'   => null, // Set by the user via the welcome email link
                 'is_active'  => true,
-            ]);
-
-            $user->userRole()->create([
-                'role_id'     => $request->role_id,
-                'assigned_by' => $request->user()->id,
             ]);
 
             $token = Str::random(64);
@@ -94,16 +90,15 @@ class UserController extends Controller
                     ->toArray()
             );
 
-            // Update role if provided — userRole is guaranteed to exist (one per user)
+            // Update role if provided
             if ($request->has('role_id')) {
-                $user->userRole()->update([
-                    'role_id'     => $request->role_id,
-                    'assigned_by' => $request->user()->id,
+                $user->update([
+                    'role_id' => $request->role_id,
                 ]);
             }
         });
 
-        $user->load(['company', 'userRole.role.permissions']);
+        $user->load(['company', 'role.permissions']);
 
         return new UserResource($user);
     }
