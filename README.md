@@ -32,6 +32,8 @@ docker exec -it iot-mosquitto sh -lc "mosquitto_pub -h localhost -t test/topic -
 "I am working on Docker/infra — apply root rules only."
 
 
+# Env files: see docs/ENV_FILES.md (which .env is used by Compose vs API vs dashboard; Redis password must match).
+
 # DEV
 docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up -d --build
 

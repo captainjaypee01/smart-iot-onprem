@@ -1,5 +1,5 @@
 // src/api/axiosClient.ts
-// Shared Axios instance — all API calls must use this, never import axios directly
+// Shared Axios instance — cookie-based auth; all API calls must use this, never import axios directly
 
 import axios, { AxiosError } from "axios";
 import { useAuthStore } from "@/store/authStore";
@@ -9,19 +9,28 @@ import { API_BASE_URL } from "@/constants";
 const axiosClient = axios.create({
     baseURL: API_BASE_URL,
     timeout: 15000,
+    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
     },
 });
 
+function getCsrfTokenFromCookie(): string | null {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
 // ─── Request Interceptor ──────────────────────────────────────────
-// Attaches Bearer token to every outgoing request if available
+// Sends cookies (withCredentials) and CSRF token for state-changing methods
 axiosClient.interceptors.request.use(
     (config) => {
-        const token = useAuthStore.getState().token;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        const method = config.method?.toUpperCase();
+        if (method && ["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+            const csrf = getCsrfTokenFromCookie();
+            if (csrf) {
+                config.headers["X-XSRF-TOKEN"] = csrf;
+            }
         }
         return config;
     },
@@ -38,8 +47,11 @@ axiosClient.interceptors.response.use(
 
             // Don't hard-redirect on expected auth failures (e.g. bad credentials).
             // Let the calling hook/page surface the message instead.
+            // For /auth/me, AuthBootstrap handles 401 and uses navigate() (SPA navigation).
             const isAuthAttempt =
-                url.includes("/auth/login") || url.includes("/auth/set-password");
+                url.includes("/auth/login") ||
+                url.includes("/auth/set-password") ||
+                url.includes("/auth/me");
 
             if (!isAuthAttempt) {
                 useAuthStore.getState().logout();

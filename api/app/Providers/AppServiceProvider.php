@@ -21,6 +21,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Session lifetime is applied per-company at login (see LoginController, MicrosoftCallbackController, SetPasswordController).
     }
 }

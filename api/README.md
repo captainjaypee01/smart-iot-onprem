@@ -85,6 +85,10 @@ Base URL: `/api/v1`
 - `POST   /api/v1/users/{user}/resend-invite` — Resend welcome email (password-not-set users only)
 - `POST   /api/v1/users/{user}/disable` — Toggle user active/disabled status
 
+#### Settings (requires auth; per-company)
+- `GET   /api/v1/settings/session` — Get session duration for a company. Superadmin: optional `?company_id=` and response includes `companies` list; company admin gets their own company only.
+- `PATCH /api/v1/settings/session` — Update session duration for a company. Body: `session_lifetime_minutes` (required), `company_id` (required for superadmin). New logins for that company use this value.
+
 #### Commands (requires auth)
 - `POST /api/v1/commands` — Create command
 
@@ -170,6 +174,21 @@ routes/
 └── internal.php          # Internal API routes (/internal/*)
 ```
 
+## Which .env file is used (Docker)
+
+When you run the API via Docker Compose from the **repo root**, the API container’s env is determined by the compose file(s) you use:
+
+| How you start the stack | Env file loaded by the API container |
+|-------------------------|--------------------------------------|
+| `docker compose up -d` (base only) | `api/.env` |
+| `docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev up -d` | `api/.env.dev` |
+| UAT override + `--env-file .env.uat` | `api/.env.uat` |
+| Prod override + `--env-file .env.prod` | `api/.env.prod` |
+
+So in the `api/` folder you may have both `.env` and `.env.dev`: **`.env`** is used when no override is applied (base compose); **`.env.dev`** is used when you use the dev override. Ensure the file that matches your run has the correct `REDIS_PASSWORD`, `SESSION_DRIVER`, and `REDIS_HOST` (e.g. `redis` in Docker). See the repo root [docs/ENV_FILES.md](../docs/ENV_FILES.md) for the full picture.
+
+**Verify the API is using Redis:** Call `GET /api/v1/health`. The response includes `session_driver` and `redis_session_connected`. When Redis is used correctly you should see `"session_driver": "redis"` and `"redis_session_connected": true`.
+
 ## Environment Variables
 
 Key variables (see `env.example` for full list):
@@ -185,6 +204,15 @@ Key variables (see `env.example` for full list):
 - `DB_*` — Database configuration
 - `REDIS_*` — Redis configuration
 - `SESSION_SECURE_COOKIE` — Set to `true` in production (HTTPS required)
+- `SESSION_DRIVER` — Use `redis` (recommended; see `.env.example`) for fast session reads. Use `database` or `file` if Redis is not available.
+- `SESSION_CONNECTION` — When `SESSION_DRIVER=redis`, set to `session` to use the dedicated Redis DB (see `config/database.php`).
+- `REDIS_SESSION_DB` — Redis database number for sessions (default `2`), separate from default (`0`) and cache (`1`).
+- `SESSION_LIFETIME` — How long (in **minutes**) the session stays valid when idle. Examples: `120` = 2 hours, `1440` = 24 hours, `525600` = 1 year. Use `unlimited` (or `forever`) for a very long-lived session (10 years). Default: `120`.
+- `SESSION_EXPIRE_ON_CLOSE` — Set to `true` to make the session cookie a “session cookie” that expires when the browser is closed (server-side lifetime still applies for cleanup).
+
+## Performance: GET /auth/me
+
+`GET /api/v1/auth/me` is used on every app load (cookie-based auth). It is optimized with a single eager-loaded query. Sessions are stored in **Redis** by default (see `SESSION_DRIVER=redis` in `.env.example`), which keeps session read latency low. Ensure Redis is running (`docker compose up -d` includes Redis) and that `REDIS_HOST` matches your setup (e.g. `redis` when the API runs in Docker).
 
 ## Outbox Publisher
 

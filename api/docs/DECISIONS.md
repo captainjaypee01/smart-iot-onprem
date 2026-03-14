@@ -4,27 +4,28 @@ This document records key architectural decisions and their rationale.
 
 ---
 
-## ADR-001: Sanctum Token-Based SPA Authentication
+## ADR-001: Sanctum Cookie-Based SPA Authentication
 
 **Status**: Accepted
-**Date**: 2026-01-16 (revised 2026-03-10)
-**Context**: Need to authenticate React SPA with Laravel API, including SSO flows.
+**Date**: 2026-01-16 (revised 2026-03-14)
+**Context**: Need to authenticate React SPA with Laravel API, including SSO flows. Security hardening: avoid storing auth credentials in JS (XSS).
 
-**Decision**: Use Laravel Sanctum with **plain-text Bearer tokens** stored in the SPA (Zustand + localStorage), not cookie-based sessions.
+**Decision**: Use Laravel Sanctum **SPA authentication** with **httpOnly session cookies**. No token in the SPA; the API sets a session cookie on login and on Microsoft OAuth callback redirect. The frontend sends credentials (`withCredentials: true`) and a CSRF token on state-changing requests.
 
 **Rationale**:
-- **SSO Compatibility**: Cookie-based auth does not work cleanly with the Microsoft OAuth redirect flow. The callback is a browser redirect — there is no fetch request to attach a cookie to.
-- **Simplicity**: Token is issued after login or SSO callback, stored in Zustand, and attached to every request via `Authorization: Bearer <token>`.
-- **On-Prem Context**: XSS risk is lower on internal, controlled networks. localStorage is acceptable.
+- **Security**: httpOnly cookies are not readable by JavaScript; XSS cannot exfiltrate the session.
+- **SSO Compatibility**: The API sets the session cookie on the **redirect response** from the Microsoft callback, then redirects to the SPA. No token in the URL.
+- **Industry practice**: Cookie-based auth is standard for web SPAs when same-site or CORS credentials are available.
 
 **Alternatives Considered**:
-- **Cookie sessions**: Incompatible with the SSO redirect callback pattern without extra workarounds.
+- **Bearer token in localStorage**: Simpler but vulnerable to XSS; previously used, superseded by this ADR.
 - **JWT**: More complex, requires refresh logic, no built-in Laravel support.
 
 **Consequences**:
-- Token must be cleared from Zustand and localStorage on logout.
-- Axios interceptor handles token injection and 401 auto-logout globally.
-- `axiosClient.ts` reads token from `useAuthStore.getState().token` on every request.
+- SPA must call `GET /sanctum/csrf-cookie` before first POST/PUT/PATCH/DELETE and send `X-XSRF-TOKEN` header.
+- `axiosClient` uses `withCredentials: true`; no `Authorization` header.
+- Auth store holds only `user` (from `GET /auth/me`); no token persisted.
+- Sanctum `stateful` domains must include the SPA origin (e.g. `localhost:5173`).
 
 ---
 

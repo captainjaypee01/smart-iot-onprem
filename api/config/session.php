@@ -30,9 +30,19 @@ return [
     | to expire immediately when the browser is closed then you may
     | indicate that via the expire_on_close configuration option.
     |
+    | SESSION_LIFETIME: integer (minutes) or "unlimited" for a very long session
+    | (e.g. 120 = 2 hours, 1440 = 24 hours, 525600 = 1 year). "unlimited" uses
+    | 10 years in minutes so the session effectively does not expire by time.
+    |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    'lifetime' => (function () {
+        $v = env('SESSION_LIFETIME', 120);
+        if (in_array(strtolower((string) $v), ['unlimited', 'forever'], true)) {
+            return 5256000; // 10 years in minutes
+        }
+        return (int) $v;
+    })(),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 

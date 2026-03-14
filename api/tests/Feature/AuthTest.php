@@ -2,7 +2,6 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
@@ -15,16 +14,17 @@ test('user can login with valid credentials', function () {
     $response = $this->postJson('/api/v1/auth/login', [
         'email' => 'test@example.com',
         'password' => 'password',
+    ], [
+        'Referer' => 'http://localhost:5173/',
     ]);
 
     $response->assertStatus(200)
         ->assertJsonStructure([
             'user' => ['id', 'name', 'email'],
-            'token',
-        ]);
+        ])
+        ->assertJsonMissing(['token']);
 
     expect($response->json('user.email'))->toBe('test@example.com');
-    expect($response->json('token'))->toBeString();
 });
 
 test('user cannot login with invalid credentials', function () {
@@ -47,7 +47,7 @@ test('user cannot login with invalid credentials', function () {
 test('authenticated user can get their profile', function () {
     $user = User::factory()->create();
 
-    Sanctum::actingAs($user);
+    $this->actingAs($user, 'web');
 
     $response = $this->getJson('/api/v1/auth/me');
 
@@ -60,11 +60,21 @@ test('authenticated user can get their profile', function () {
 });
 
 test('user can logout', function () {
-    $user = User::factory()->create();
+    User::factory()->create([
+        'email' => 'logout@example.com',
+        'password' => bcrypt('password'),
+    ]);
 
-    Sanctum::actingAs($user);
+    $this->postJson('/api/v1/auth/login', [
+        'email' => 'logout@example.com',
+        'password' => 'password',
+    ], [
+        'Referer' => 'http://localhost:5173/',
+    ])->assertStatus(200);
 
-    $response = $this->postJson('/api/v1/auth/logout');
+    $response = $this->postJson('/api/v1/auth/logout', [], [
+        'Referer' => 'http://localhost:5173/',
+    ]);
 
     $response->assertStatus(200)
         ->assertJson(['message' => 'Logged out successfully']);

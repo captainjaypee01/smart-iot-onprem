@@ -159,7 +159,7 @@ const Navbar = () => {
                                         {user?.email}
                                     </p>
                                     <p className="text-[10px] text-muted-foreground capitalize mt-0.5">
-                                        Role: {user?.role}
+                                        Role: {user?.role?.name ?? "N/A"}
                                     </p>
                                 </div>
                             </DropdownMenuLabel>

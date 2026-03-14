@@ -36,9 +36,9 @@ export interface LoginCredentials {
     password: string;
 }
 
+/** API auth responses (cookie-based: no token in response). */
 export interface AuthResponse {
     user: User;
-    token: string;
 }
 
 export interface SetPasswordPayload {

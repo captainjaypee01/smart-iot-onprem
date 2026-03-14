@@ -1,22 +1,38 @@
 // src/api/auth.ts
-// API functions for authentication endpoints
+// API functions for authentication endpoints (cookie-based; no token in responses)
+import axios from "axios";
 import axiosClient from "./axiosClient";
 import type { AuthResponse, LoginCredentials, MicrosoftRedirectResponse, SetPasswordPayload } from "@/types";
+import { SANCTUM_CSRF_URL } from "@/constants";
+
+/** Call before first state-changing request so Laravel sets the CSRF cookie. */
+export const getCsrfCookie = async (): Promise<void> => {
+    const url = SANCTUM_CSRF_URL.startsWith("http")
+        ? SANCTUM_CSRF_URL
+        : `${window.location.origin}${SANCTUM_CSRF_URL}`;
+    await axios.get(url, { withCredentials: true });
+};
 
 export const login = async (
     credentials: LoginCredentials
 ): Promise<AuthResponse> => {
+    await getCsrfCookie();
     const res = await axiosClient.post<AuthResponse>("/auth/login", credentials);
     return res.data;
 };
 
 export const logout = async (): Promise<void> => {
+    await getCsrfCookie();
     await axiosClient.post("/auth/logout");
 };
 
+interface MeResponse {
+    user: AuthResponse["user"];
+}
+
 export const getMe = async (): Promise<AuthResponse["user"]> => {
-    const res = await axiosClient.get<AuthResponse["user"]>("/auth/me");
-    return res.data;
+    const res = await axiosClient.get<MeResponse>("/auth/me");
+    return res.data.user;
 };
 
 // Returns the Microsoft OAuth redirect URL for the browser to follow
@@ -27,6 +43,7 @@ export const getMicrosoftRedirectUrl = async (): Promise<MicrosoftRedirectRespon
 
 // Used on the /set-password page — called when a new user sets their password via invite link
 export const setPassword = async (payload: SetPasswordPayload): Promise<AuthResponse> => {
+    await getCsrfCookie();
     const res = await axiosClient.post<AuthResponse>("/auth/set-password", payload);
     return res.data;
 };

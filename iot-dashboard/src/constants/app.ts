@@ -23,6 +23,20 @@ export const API_BASE_URL = normalizeApiBaseUrl(
   import.meta.env.VITE_API_BASE_URL ?? "/api"
 );
 
+/** Full URL for Sanctum CSRF cookie (same host as API, path /sanctum/csrf-cookie). */
+export const SANCTUM_CSRF_URL = (() => {
+  const base = import.meta.env.VITE_API_BASE_URL?.trim() ?? "/api";
+  if (/^https?:\/\//.test(base)) {
+    try {
+      const u = new URL(base.replace(/\/+$/, ""));
+      return `${u.origin}/sanctum/csrf-cookie`;
+    } catch {
+      return "/sanctum/csrf-cookie";
+    }
+  }
+  return "/sanctum/csrf-cookie";
+})();
+
 // Pagination
 export const DEFAULT_PAGE_SIZE    = 25  as const;
 export const PAGE_SIZE_OPTIONS    = [10, 25, 50, 100] as const;

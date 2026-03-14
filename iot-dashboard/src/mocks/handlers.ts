@@ -108,16 +108,21 @@ export const mockGetNodes = async (
     };
 };
 
-// ─── Auth (mock login — accepts any email/password) ───────────────
+// ─── Auth (mock login — cookie-style: returns { user } only) ────────
 export const mockLogin = async (email: string) => {
     await delay(800);
+    const name = email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return {
-        token: "mock-jwt-token-abc123",
         user: {
             id: "user-001",
-            name: email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+            name,
             email,
-            role: "admin" as const,
+            is_superadmin: true,
+            is_active: true,
+            company: null,
+            role: { id: 1, name: "Admin", is_system_role: true, permissions: [] },
+            last_login_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
         },
     };
 };

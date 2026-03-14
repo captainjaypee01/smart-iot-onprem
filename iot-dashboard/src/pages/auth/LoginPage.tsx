@@ -2,7 +2,7 @@
 // Public login page — authenticates user and redirects to dashboard
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Wifi, Moon, Sun, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/authStore";
 import { useTheme } from "@/context/ThemeContext";
 import { AUTH_STRINGS, SSO_ERROR_MESSAGES } from "@/constants/auth";
 import type { LoginCredentials } from "@/types";
@@ -56,8 +57,11 @@ const SSO_PROVIDERS: SsoProvider[] = [
 
 const LoginPage = () => {
     const { handleLogin, handleMicrosoftLogin, isLoading, isMicrosoftLoading, error } = useAuth();
+    const authCheckDone = useAuthStore((s) => s.authCheckDone);
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
     const { theme, toggleTheme } = useTheme();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
 
     const [credentials, setCredentials] = useState<LoginCredentials>({
         email: "",
@@ -65,13 +69,21 @@ const LoginPage = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
 
-    // Show SSO error messages that come back via ?error= from the Laravel callback
+    // If session check finished and user is already logged in, redirect to dashboard
+    useEffect(() => {
+        if (authCheckDone && isAuthenticated) {
+            navigate("/", { replace: true });
+        }
+    }, [authCheckDone, isAuthenticated, navigate]);
+
+    // Show SSO error messages that come back via ?error= from the Laravel callback, then clear from URL so refresh does not re-show
     useEffect(() => {
         const ssoError = searchParams.get("error");
         if (ssoError && SSO_ERROR_MESSAGES[ssoError]) {
             toast.error(SSO_ERROR_MESSAGES[ssoError]);
+            navigate({ pathname: "/login", search: "" }, { replace: true });
         }
-    }, [searchParams]);
+    }, [searchParams, navigate]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -94,6 +106,15 @@ const LoginPage = () => {
     };
 
     const isFormDisabled = isLoading || isMicrosoftLoading;
+
+    // Show loader until session check is done — avoids flashing the login form when user is already logged in
+    if (!authCheckDone) {
+        return (
+            <div className="bg-background flex h-screen w-full items-center justify-center">
+                <div className="border-brand-blue h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
+            </div>
+        );
+    }
 
     return (
         <div className="relative flex min-h-screen w-full">

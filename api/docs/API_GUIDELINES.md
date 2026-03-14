@@ -8,10 +8,12 @@ This document outlines the coding standards, architecture patterns, and best pra
 app/
 ├── Actions/              # Use-case classes (business logic)
 │   ├── Commands/         # Command-related actions
-│   └── Auth/             # Authentication actions
+│   ├── Auth/             # Authentication actions
+│   └── Settings/         # Settings actions (GetSessionSettingsAction, UpdateSessionSettingsAction)
 ├── Contracts/            # Interfaces for dependency injection
 ├── DTO/                  # Data Transfer Objects (immutable input/output)
-│   └── Commands/         # Command-related DTOs
+│   ├── Commands/         # Command-related DTOs
+│   └── Settings/         # Settings DTOs (UpdateSessionSettingsDTO)
 ├── Enums/                # Type-safe enumerations
 ├── Services/             # Service classes (e.g., OutboxPublisherService)
 ├── Notifications/        # Laravel notification classes (e.g., WelcomeUserNotification)
@@ -19,12 +21,13 @@ app/
 │   ├── Controllers/
 │   │   ├── Api/V1/       # Public API controllers (SPA)
 │   │   │   ├── Auth/     # Auth controllers (Login, Logout, Me, MicrosoftRedirect, SetPassword)
+│   │   │   ├── Settings/ # SessionSettingsController (thin; delegates to Actions)
 │   │   │   └── Users/    # User controllers (UserController, ResendInviteController, DisableUserController)
 │   │   ├── Auth/         # Web-route controllers (MicrosoftCallbackController)
 │   │   └── Internal/     # Internal API controllers (backend services)
 │   ├── Middleware/       # Custom middleware
 │   ├── Requests/
-│   │   └── Api/V1/       # FormRequest validation classes
+│   │   └── Api/V1/       # FormRequest validation classes (Users/, Auth/, Settings/, etc.)
 │   └── Resources/
 │       └── Api/V1/       # JSON API resources
 ├── Models/               # Eloquent models

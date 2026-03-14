@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\MicrosoftRedirectController;
 use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
 use App\Http\Controllers\Api\V1\Users\UserController;
@@ -48,6 +49,10 @@ Route::prefix('v1')->group(function () {
         // One-off actions — single-action controllers
         Route::post('/users/{user}/resend-invite', ResendInviteController::class);
         Route::post('/users/{user}/disable', DisableUserController::class);
+
+        // Settings (superadmin only; enforced in controller)
+        Route::get('/settings/session', [SessionSettingsController::class, 'index']);
+        Route::patch('/settings/session', [SessionSettingsController::class, 'update']);
 
         // Route::apiResource('devices', DeviceController::class);
         // Route::apiResource('alerts',  AlertController::class);

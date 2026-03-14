@@ -7,8 +7,8 @@
 //   1. Microsoft redirects here with ?code=... after the user approves.
 //   2. We exchange the code for a Microsoft user profile via Socialite.
 //   3. We find the local user by email (no auto-creation — must be pre-provisioned).
-//   4. We issue a Sanctum token and redirect the browser to the SPA callback page
-//      with ?token=...&user=... so AuthCallbackPage.tsx can store them.
+//   4. We log the user in via session and redirect to the SPA. The redirect response
+//      includes Set-Cookie (session cookie). No token or user in the URL.
 //
 // On any failure we redirect to /login?error=<key> so the SPA can display
 // the appropriate message from SSO_ERROR_MESSAGES.
@@ -16,17 +16,19 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\V1\UserResource;
+use App\Models\Setting;
 use App\Models\SocialAccount;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
 class MicrosoftCallbackController extends Controller
 {
-    public function __invoke(): RedirectResponse
+    public function __invoke(Request $request): RedirectResponse
     {
         $frontendUrl = rtrim(config('app.frontend_url'), '/');
 
@@ -86,13 +88,12 @@ class MicrosoftCallbackController extends Controller
         $user->last_login_at = now();
         $user->save();
 
-        $token = $user->createToken('spa-microsoft')->plainTextToken;
+        $stored = Setting::get(Setting::KEY_SESSION_LIFETIME, $user->company_id);
+        config(['session.lifetime' => Setting::resolveSessionLifetimeMinutes($stored)]);
 
-        // UserResource handles the full shape consistently — uuid as id
-        $userPayload = base64_encode(json_encode(
-            (new UserResource($user))->resolve()
-        ));
+        Auth::guard('web')->login($user, true);
+        $request->session()->regenerate();
 
-        return redirect("{$frontendUrl}/auth/callback?token={$token}&user={$userPayload}");
+        return redirect("{$frontendUrl}/auth/callback");
     }
 }

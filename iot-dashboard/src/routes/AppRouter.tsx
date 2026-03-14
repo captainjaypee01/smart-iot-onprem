@@ -3,6 +3,7 @@
 
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AuthBootstrap from "@/components/auth/AuthBootstrap";
 import PrivateRoute from "./PrivateRoute";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
@@ -16,6 +17,7 @@ const FireExtinguisherPage = lazy(
 );
 const NodesPage = lazy(() => import("@/pages/nodes/NodesPage"));
 const AlertsPage = lazy(() => import("@/pages/modules/AlertsPage"));
+const SettingsPage = lazy(() => import("@/pages/settings/SettingsPage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -26,8 +28,9 @@ const PageLoader = () => (
 
 const AppRouter = () => (
     <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-            <Routes>
+        <AuthBootstrap>
+            <Suspense fallback={<PageLoader />}>
+                <Routes>
                 {/* ── Public ──────────────────────────────────────────── */}
                 <Route path="/login" element={<LoginPage />} />
 
@@ -47,13 +50,15 @@ const AppRouter = () => (
                         />
                         <Route path="/nodes" element={<NodesPage />} />
                         <Route path="/alerts" element={<AlertsPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
                     </Route>
                 </Route>
 
                 {/* ── Fallback ─────────────────────────────────────────── */}
                 <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-        </Suspense>
+                </Routes>
+            </Suspense>
+        </AuthBootstrap>
     </BrowserRouter>
 );
 

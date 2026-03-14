@@ -2,15 +2,17 @@
 
 // app/Http/Controllers/Api/V1/Auth/LoginController.php
 // Handles email + password login for the SPA.
-// Returns a Sanctum token + UserResource on success.
+// Logs the user in via session (cookie-based); returns { user } only. No token.
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
@@ -36,11 +38,14 @@ class LoginController extends Controller
 
         $user->update(['last_login_at' => now()]);
 
-        $token = $user->createToken('spa-password')->plainTextToken;
+        $stored = Setting::get(Setting::KEY_SESSION_LIFETIME, $user->company_id);
+        config(['session.lifetime' => Setting::resolveSessionLifetimeMinutes($stored)]);
+
+        Auth::guard('web')->login($user, true);
+        $request->session()->regenerate();
 
         return response()->json([
-            'user'  => new UserResource($user),
-            'token' => $token,
+            'user' => new UserResource($user),
         ]);
     }
 }

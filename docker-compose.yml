@@ -98,7 +98,7 @@ services:
       - ./api/.env                    # all Laravel config in one place
     environment:
       DB_HOST:    postgres            # override: Docker hostname, not localhost
-      REDIS_HOST: redis               # override: Docker hostname, not localhost
+      REDIS_HOST: redis               # use Redis from this stack (session/cache); must match REDIS_PASSWORD in env_file
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:

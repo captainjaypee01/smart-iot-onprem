@@ -24,6 +24,7 @@
 src/
 ├── api/              # Only Axios calls. One file per API domain.
 ├── components/
+│   ├── auth/         # Auth bootstrap / session (e.g. AuthBootstrap.tsx)
 │   ├── ui/           # shadcn auto-generated files only. Never edit manually.
 │   └── shared/       # Reusable custom components (cards, badges, tables)
 ├── context/          # React context providers (ThemeContext)
@@ -159,9 +160,11 @@ axios.get("http://localhost:8000/api/devices");
 
 - **`useAuth`** is the single hook for all authentication actions: `handleLogin`, `handleLogout`, `handleMicrosoftLogin`.
 - Never create a separate `useLogin` or `useMsal` hook — everything auth-related lives in `useAuth`.
-- The `useAuthStore` (Zustand) holds `user`, `token`, and `isAuthenticated`. Never add more fields without strong justification.
-- SSO flow: `useAuth.handleMicrosoftLogin()` → fetches redirect URL from API → `window.location.href` redirect → Laravel callback → `/auth/callback` page → `authStore.setAuth()` → `/dashboard`.
-- The `/auth/callback` page is the **only** place that reads `?token=` and `?user=` from the URL. It must clear these params immediately using `window.history.replaceState`.
+- The `useAuthStore` (Zustand) holds `user` and `isAuthenticated` (plus non-persisted `authCheckDone`, `rehydrated` for bootstrap). No token; auth is cookie-based.
+- **Session**: Session = httpOnly session cookie set by the API + user in the store (from `GET /auth/me`). The SPA never sees or stores a token; it uses `withCredentials: true` and sends the CSRF token (`X-XSRF-TOKEN`) on state-changing requests.
+- **Session rehydration**: On app load, `AuthBootstrap` runs once after Zustand rehydrates and calls `GET /auth/me` with credentials. Purpose of "me": (1) session check — "Do we already have a valid session?" (2) rehydration — put current user in the store; (3) called even when the first route is `/login` so we can redirect already-logged-in users. If 200, stores user; if 401, clears store and redirects to `/login`. Until that check completes, `PrivateRoute` shows a full-page loader. Public pages (`LoginPage`, `SetPasswordPage`) redirect to `/` when `authCheckDone && isAuthenticated` so a logged-in user never stays on login or set-password.
+- SSO flow: `useAuth.handleMicrosoftLogin()` → fetches redirect URL from API → `window.location.href` redirect → Laravel callback (sets session cookie and redirects) → `/auth/callback` page → `getMe()` with credentials → `authStore.setAuth(user)` → `/dashboard`. No token or user in the URL.
+- The `/auth/callback` page calls `GET /auth/me` with credentials to load the user after the API has set the session cookie.
 - The `/set-password` page handles the invite link flow for newly created users. It reads `?token=` and `?email=` from the URL.
 - SSO error codes arrive as `?error=` on `/login` and must be mapped through `SSO_ERROR_MESSAGES` from `src/constants/auth.ts`.
 - Mock mode (`VITE_USE_MOCK=true`) bypasses the real API. `handleMicrosoftLogin` shows an info toast in mock mode instead of redirecting.

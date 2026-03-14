@@ -2,18 +2,22 @@
 // Shown when a new user clicks the invite link from their welcome email.
 // Reads ?token=&email= from the URL and allows the user to set a password.
 
-import { useState } from "react";
-import { useSearchParams, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useSearchParams, useNavigate, Navigate } from "react-router-dom";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSetPassword } from "@/hooks/useSetPassword";
+import { useAuthStore } from "@/store/authStore";
 import { AUTH_STRINGS } from "@/constants/auth";
 
 const SetPasswordPage = () => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const { isLoading, handleSetPassword } = useSetPassword();
+    const authCheckDone = useAuthStore((s) => s.authCheckDone);
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
     const token = searchParams.get("token") ?? "";
     const email = searchParams.get("email") ?? "";
@@ -22,6 +26,13 @@ const SetPasswordPage = () => {
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+
+    // If session check finished and user is already logged in, redirect to dashboard
+    useEffect(() => {
+        if (authCheckDone && isAuthenticated) {
+            navigate("/", { replace: true });
+        }
+    }, [authCheckDone, isAuthenticated, navigate]);
 
     // Guard: if no token or email in URL, send to login
     if (!token || !email) {
