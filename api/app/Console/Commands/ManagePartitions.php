@@ -7,14 +7,15 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ManagePartitions extends Command
 {
-    protected $signature   = 'partitions:manage {--dry-run : Preview actions without executing}';
+    protected $signature = 'partitions:manage {--dry-run : Preview actions without executing}';
+
     protected $description = 'Create upcoming partitions and archive expired ones for time-series tables';
 
     // Tables managed by this command
@@ -57,8 +58,8 @@ class ManagePartitions extends Command
     private function createUpcomingPartition(string $table, bool $dryRun): void
     {
         $month = now()->addMonth()->startOfMonth();
-        $name  = $this->partitionName($table, $month);
-        $from  = $month->format('Y-m-01');
+        $name = $this->partitionName($table, $month);
+        $from = $month->format('Y-m-01');
         $until = $month->copy()->addMonth()->format('Y-m-01');
 
         $sql = "
@@ -69,6 +70,7 @@ class ManagePartitions extends Command
 
         if ($dryRun) {
             $this->line("  [DRY RUN] Would create partition: {$name} ({$from} → {$until})");
+
             return;
         }
 
@@ -88,19 +90,21 @@ class ManagePartitions extends Command
     // It can be queried directly or re-attached if needed.
     private function archiveExpiredPartitions(string $table, bool $dryRun): void
     {
-        $cutoff     = now()->subMonths($this->retentionMonths)->startOfMonth();
+        $cutoff = now()->subMonths($this->retentionMonths)->startOfMonth();
         $partitions = $this->getAttachedPartitionsOlderThan($table, $cutoff);
 
         if (empty($partitions)) {
-            $this->line("  No partitions to archive.");
+            $this->line('  No partitions to archive.');
+
             return;
         }
 
         foreach ($partitions as $partition) {
-            $archiveName = 'archive_' . $partition;
+            $archiveName = 'archive_'.$partition;
 
             if ($dryRun) {
                 $this->line("  [DRY RUN] Would archive: {$partition} → {$archiveName}");
+
                 continue;
             }
 
@@ -131,15 +135,16 @@ class ManagePartitions extends Command
 
         // Walk back 12 months from the cutoff to find old archive tables
         for ($i = 0; $i < 12; $i++) {
-            $month       = $cutoff->copy()->subMonths($i);
-            $archiveName = 'archive_' . $this->partitionName($table, $month);
+            $month = $cutoff->copy()->subMonths($i);
+            $archiveName = 'archive_'.$this->partitionName($table, $month);
 
-            if (!$this->tableExists($archiveName)) {
+            if (! $this->tableExists($archiveName)) {
                 continue;
             }
 
             if ($dryRun) {
                 $this->line("  [DRY RUN] Would purge archive: {$archiveName}");
+
                 continue;
             }
 
@@ -158,22 +163,23 @@ class ManagePartitions extends Command
 
     private function getAttachedPartitionsOlderThan(string $table, Carbon $cutoff): array
     {
-        $results = DB::select("
+        $results = DB::select('
             SELECT child.relname AS partition_name
             FROM pg_inherits
             JOIN pg_class parent ON pg_inherits.inhparent = parent.oid
             JOIN pg_class child  ON pg_inherits.inhrelid  = child.oid
             WHERE parent.relname = :table
-        ", ['table' => $table]);
+        ', ['table' => $table]);
 
         return collect($results)
             ->pluck('partition_name')
             ->filter(function (string $name) use ($table, $cutoff) {
                 // Extract the Y_m suffix from e.g. node_readings_2024_01
-                $suffix = str_replace($table . '_', '', $name);
+                $suffix = str_replace($table.'_', '', $name);
 
                 try {
                     $date = Carbon::createFromFormat('Y_m', $suffix);
+
                     return $date && $date->lt($cutoff);
                 } catch (\Throwable) {
                     return false;
@@ -191,11 +197,11 @@ class ManagePartitions extends Command
             AND table_name = :name
         ", ['name' => $name]);
 
-        return !empty($result);
+        return ! empty($result);
     }
 
     private function partitionName(string $table, Carbon $month): string
     {
-        return $table . '_' . $month->format('Y_m');
+        return $table.'_'.$month->format('Y_m');
     }
 }

@@ -34,16 +34,16 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    
+
     'microsoft' => [
-        'client_id'     => env('MICROSOFT_CLIENT_ID'),
+        'client_id' => env('MICROSOFT_CLIENT_ID'),
         'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
-        'redirect'      => env('MICROSOFT_REDIRECT_URI'),
+        'redirect' => env('MICROSOFT_REDIRECT_URI'),
         // tenant controls who can log in:
         //   'common'          → any Microsoft account (personal + work)
         //   'organizations'   → work/school accounts only (recommended for on-prem)
         //   '<tenant-id>'     → only your specific Azure AD tenant (most restrictive)
-        'tenant'        => env('MICROSOFT_TENANT_ID', 'organizations'),
+        'tenant' => env('MICROSOFT_TENANT_ID', 'organizations'),
     ],
 
 ];

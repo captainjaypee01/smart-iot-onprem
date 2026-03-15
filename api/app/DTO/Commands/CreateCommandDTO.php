@@ -12,6 +12,5 @@ readonly class CreateCommandDTO
         public string $type,
         public array $payload,
         public string $correlationId,
-    ) {
-    }
+    ) {}
 }

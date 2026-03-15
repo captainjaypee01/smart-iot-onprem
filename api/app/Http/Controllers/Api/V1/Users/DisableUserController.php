@@ -1,17 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 // app/Http/Controllers/Api/V1/Users/DisableUserController.php
 // Toggles a user's is_active status (disable or re-enable).
-// Single-action because it is a one-off state change, not part of standard CRUD.
+// Single-action controller — delegates to DisableUserAction.
 
-namespace App\Http\Controllers\API\V1\Users;
+namespace App\Http\Controllers\Api\V1\Users;
 
+use App\Actions\Users\DisableUserAction;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
+use Symfony\Component\HttpFoundation\Response;
 
 class DisableUserController extends Controller
 {
@@ -19,36 +22,28 @@ class DisableUserController extends Controller
     {
         $authUser = $request->user();
 
-        // Only superadmin or a company admin within the same company can toggle
-        if (! $authUser->is_superadmin && (int) $user->company_id !== (int) $authUser->company_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
+        if (! $authUser->hasPermission('user.disable')) {
+            return response()->json(['message' => 'Forbidden.'], Response::HTTP_FORBIDDEN);
         }
 
-        // Prevent disabling a superadmin account
-        if ($user->is_superadmin) {
-            return response()->json([
-                'message' => 'Superadmin accounts cannot be disabled.',
-            ], 403);
+        // Scope: company admin can only disable users in their company (allow through if target is superadmin so action returns specific message)
+        if (! $user->is_superadmin && ! $authUser->is_superadmin && (int) $user->company_id !== (int) $authUser->company_id) {
+            return response()->json(['message' => 'Unauthorized.'], Response::HTTP_FORBIDDEN);
         }
 
-        // Prevent self-disable
-        if ($user->id === $authUser->id) {
-            return response()->json([
-                'message' => 'You cannot disable your own account.',
-            ], 403);
+        $result = (new DisableUserAction)->execute($user, $authUser->id);
+
+        if ($result instanceof JsonResponse) {
+            return $result;
         }
 
-        // Toggle: disable if active, re-enable if disabled
-        $user->update(['is_active' => ! $user->is_active]);
-
-        $action  = $user->is_active ? 'enabled' : 'disabled';
-        $message = "User {$action} successfully.";
-
-        $user->load(['company', 'role.permissions']);
+        $updatedUser = $result;
+        $updatedUser->load(['company', 'role']);
+        $action = $updatedUser->is_active ? 'enabled' : 'disabled';
 
         return response()->json([
-            'message' => $message,
-            'user'    => new UserResource($user),
+            'message' => "User {$action} successfully.",
+            'user' => new UserResource($updatedUser),
         ]);
     }
 }

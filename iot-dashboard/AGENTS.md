@@ -180,6 +180,42 @@ const { handleMicrosoftLogin } = useMicrosoftAuth();
 
 ---
 
+## Permission-Based UI & RBAC (Frontend)
+
+- **Source of truth**: The API returns permission keys (e.g. `user.view`, `user.create`) in `/auth/me`, login, and set-password responses. The Zustand `authStore` holds both `user` and `permissions: string[]`. The setter is `setAuth(user, permissions)`.
+- **Generic checks**:
+  - Use `usePermission()` as the low-level hook for permission checks. It exposes:
+    - `permissions: string[]`
+    - `hasPermission(key: string): boolean`
+  - Never gate UI by hardcoded role names (e.g. `user.role?.name === "Admin"`). Use permission keys instead so API and UI stay aligned.
+- **Module-specific helpers**:
+  - For each domain (e.g. Users), create a dedicated hook that wraps `usePermission()` and exposes named helpers. Example: `useUserPermissions`:
+    - `canViewUsers()` → `hasPermission("user.view")`
+    - `canCreateUser()` → `hasPermission("user.create")`
+    - `canUpdateUser()` → `hasPermission("user.update")`
+    - `canDeleteUser()` → `hasPermission("user.delete")`
+    - `canDisableUser()` → `hasPermission("user.disable")`
+    - `canResendInvite()` → `hasPermission("user.resend_invite")`
+    - `canChangeStatus()` → `hasPermission("user.change_status")`
+    - `canChangeCompany()` → `hasPermission("user.change_company")`
+  - Use these helpers in pages, dialogs, and row actions so each action has a single, well-named permission you can reason about and adjust per role.
+- **Where to enforce**:
+  - **Page access**: Protected feature routes (e.g. `/users`) must guard entry using the corresponding `can*` helper (`canViewUsers()`), not just `isAdmin()`.
+  - **Navigation**: In `src/config/nav.ts`, use a `permission: "user.view"` (or similar) property for items that should only appear when the user has that permission. The sidebar checks `hasPermission(item.permission)` before rendering each item.
+  - **Buttons / row actions**: Gate each action individually:
+    - Invite button → `canCreateUser()`
+    - Edit button → `canUpdateUser()`
+    - Disable/Enable toggle → `canDisableUser()`
+    - Resend invite → `canResendInvite()`
+    - Delete button → `canDeleteUser()`
+  - **Dialog sections**: In edit dialogs, show company and status controls only when the current user is allowed to change them, e.g. superadmin AND `canChangeCompany()` / `canChangeStatus()`.
+- **Principle**: The API is the authority for permissions. The frontend must:
+  - Read permissions from auth responses
+  - Store them in Zustand
+  - Use them consistently via `usePermission()` and module-specific `can*()` helpers to hide UI affordances when not allowed.
+
+---
+
 ## SSO Provider Config (LoginPage)
 
 - SSO providers are defined in the `SSO_PROVIDERS` array inside `LoginPage.tsx`.

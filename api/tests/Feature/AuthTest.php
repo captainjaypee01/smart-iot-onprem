@@ -53,10 +53,11 @@ test('authenticated user can get their profile', function () {
 
     $response->assertStatus(200)
         ->assertJsonStructure([
-            'user' => ['id', 'name', 'email'],
+            'user' => ['id', 'uuid', 'name', 'email'],
         ]);
 
-    expect($response->json('user.id'))->toBe($user->uuid);
+    expect($response->json('user.uuid'))->toBe($user->uuid);
+    expect($response->json('user.id'))->toBe($user->id);
 });
 
 test('user can logout', function () {

@@ -13,6 +13,7 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\SetPasswordRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\Permission;
 use App\Models\Setting;
 use App\Models\User;
 use Carbon\Carbon;
@@ -53,7 +54,7 @@ class SetPasswordController extends Controller
             ->firstOrFail();
 
         $user->update([
-            'password'          => Hash::make($request->password),
+            'password' => Hash::make($request->password),
             'email_verified_at' => $user->email_verified_at ?? now(),
         ]);
 
@@ -67,8 +68,13 @@ class SetPasswordController extends Controller
         Auth::guard('web')->login($user, true);
         $request->session()->regenerate();
 
+        $permissions = $user->is_superadmin
+            ? Permission::pluck('key')->values()->all()
+            : $user->role?->permissions?->pluck('key')->values()->all() ?? [];
+
         return response()->json([
             'user' => new UserResource($user),
+            'permissions' => $permissions,
         ]);
     }
 }

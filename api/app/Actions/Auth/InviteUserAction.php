@@ -39,7 +39,7 @@ class InviteUserAction
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $user->email],
             [
-                'token'      => $token,
+                'token' => $token,
                 'created_at' => now(),
             ]
         );
@@ -47,7 +47,7 @@ class InviteUserAction
         $frontendUrl = rtrim(config('app.frontend_url'), '/');
 
         return "{$frontendUrl}/set-password?"
-            . http_build_query([
+            .http_build_query([
                 'token' => $token,
                 'email' => $user->email,
             ]);

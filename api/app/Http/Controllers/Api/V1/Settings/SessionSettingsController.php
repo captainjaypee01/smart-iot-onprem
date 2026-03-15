@@ -30,7 +30,7 @@ class SessionSettingsController extends Controller
             ? (int) $requestedCompanyId
             : null;
 
-        $action = new GetSessionSettingsAction();
+        $action = new GetSessionSettingsAction;
         $payload = $action->execute($user, $companyId);
 
         return response()->json($payload);
@@ -48,7 +48,7 @@ class SessionSettingsController extends Controller
             companyId: $request->filled('company_id') ? (int) $request->input('company_id') : null,
         );
 
-        $action = new UpdateSessionSettingsAction();
+        $action = new UpdateSessionSettingsAction;
         $result = $action->execute($user, $dto);
 
         return response()->json($result);

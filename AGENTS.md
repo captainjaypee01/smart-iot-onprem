@@ -177,6 +177,31 @@ Rules:
 - Accessibility:
   - Labels for inputs, keyboard navigable, proper button types.
 
+### 8A.1) Permission-based UI
+- **Source of truth**: API returns permission keys (e.g. `user.view`, `user.create`) in `/auth/me`, login, and set-password responses. Auth store holds `user` and `permissions: string[]`; `setAuth(user, permissions)`.
+- **Generic check**: Use `usePermission().hasPermission(key)` for any permission key. Never hardcode role strings for gating; use permission keys that match the API.
+- **Module-specific helpers**: For a given module (e.g. users), create a dedicated hook (e.g. `useUserPermissions`) that exposes named helpers: `canViewUsers()`, `canCreateUser()`, `canUpdateUser()`, `canDeleteUser()`, `canDisableUser()`, `canResendInvite()`, `canChangeStatus()`, `canChangeCompany()`. Each helper maps to a single `hasPermission("user.xxx")` call. Use these in the page and dialogs so each action has a named permission you can reason about and adjust per role.
+- **Where to enforce**:
+  - **Page access**: Redirect or block entry when the user lacks the view permission (e.g. `canViewUsers()` for `/users`).
+  - **Buttons / row actions**: Show Invite only if `canCreateUser()`, Edit only if `canUpdateUser()`, Delete only if `canDeleteUser()`, etc.
+  - **Dialog sections**: Show company or status controls only when the user has the right permission (e.g. superadmin and `canChangeCompany()` / `canChangeStatus()`).
+- **Navigation**: In nav config, use `permission: "user.view"` (or other key) for items that should show only when the user has that permission. Sidebar filters with `usePermission().hasPermission(item.permission)`; fall back to `adminOnly` + `useRole().isAdmin()` when a single “admin” gate is enough.
+- **Principle**: API enforces permissions authoritatively; the frontend mirrors them for UX (hide buttons/sections when not allowed).
+
+### 8A.2) Lifting shared data to avoid duplicate API calls
+- When **multiple children** (e.g. two dialogs on the same page) need the **same fetched data** (e.g. company options), **lift the fetch to the parent**: call the hook (e.g. `useCompanies()`) once in the page and pass the result (e.g. `companies`, `companiesLoading`) as props to each child.
+- Avoid calling the same data-fetching hook in multiple sibling components that are always mounted (e.g. dialogs rendered in the tree with `open={false}`). Otherwise each mount triggers its own request and, with React Strict Mode in development, you get duplicate or quadruplicate calls.
+- Pattern: one subscription to the data at the page level; children receive data via props.
+
+### 8A.3) Server-side pagination and shared table component
+- Use the shared **`DataTableServer`** component for server-side paginated tables. Pass: `columns`, `data`, `isLoading`, `emptyMessage`, `meta`, `page`, `onPageChange`, and optionally `perPage`, `onPerPageChange`, `perPageOptions` for “rows per page” control.
+- Define columns as an array of `{ id, header, cell(row), className? }`. Keep row actions (Edit, Delete, etc.) behind the same permission helpers used elsewhere (e.g. `canUpdateUser()`, `canDeleteUser()`).
+- Pagination state (page, perPage) lives in the page or a custom hook (e.g. `useUsers()`) that calls the API with `page` and `per_page`; the API returns `meta` (e.g. `current_page`, `last_page`, `per_page`, `total`). No client-side pagination of full lists; fetch by page.
+
+### 8A.4) Display strings and UI constants
+- All user-facing strings (labels, buttons, messages) come from a central place (e.g. `src/constants/strings.ts` or module-specific `USER_STRINGS`, `UI_STRINGS`). No hardcoded display strings in JSX.
+- Use `cn()` for conditional class names; support dark mode with Tailwind `dark:` variants where applicable.
+
 Testing:
 - Unit: component logic and helpers
 - E2E (later): Playwright for critical flows
@@ -300,5 +325,7 @@ Agents must not change files outside the stated scope unless explicitly asked.
 - Change MQTT topic patterns without updating contracts + tests.
 - Log secrets or commit `.env` files.
 - Large refactors without approval/spec.
+- **Web**: Gate features by hardcoded role names (e.g. `role === 'admin'`); use permission keys and `usePermission()` / module `can*()` helpers instead.
+- **Web**: Call the same data-fetching hook in multiple sibling components that are always mounted (e.g. two dialogs each calling `useCompanies()`); lift the hook to the parent and pass data as props.
 
 ---

@@ -1,10 +1,9 @@
 // src/types/auth.ts
 // TypeScript interfaces for authentication domain.
-//
-// Note on `id` fields:
-//   User.id is a UUID string — the backend exposes the uuid column, not the
-//   integer primary key. This prevents enumeration attacks on public-facing IDs.
-//   Company.id and Role.id remain numbers as they are not user-enumerable resources.
+// User shape matches UserResource from docs/specs/user-module-contract.md (re-exported from user.ts).
+
+import type { User } from "./user";
+export type { User } from "./user";
 
 export interface Company {
     id: number;
@@ -16,19 +15,7 @@ export interface Role {
     id: number;
     name: string;
     is_system_role: boolean;
-    permissions: string[];
-}
-
-export interface User {
-    id: string;          // UUID — maps to users.uuid, NOT users.id (integer)
-    name: string;
-    email: string;
-    is_superadmin: boolean;
-    is_active: boolean;
-    company: Company | null;
-    role: Role | null;
-    last_login_at: string | null;
-    created_at: string;
+    permissions?: string[];
 }
 
 export interface LoginCredentials {
@@ -39,6 +26,8 @@ export interface LoginCredentials {
 /** API auth responses (cookie-based: no token in response). */
 export interface AuthResponse {
     user: User;
+    /** Permission keys for the current user (e.g. 'user.view', 'user.create'). Included in /auth/me, login, set-password. */
+    permissions?: string[];
 }
 
 export interface SetPasswordPayload {

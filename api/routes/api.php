@@ -7,14 +7,16 @@
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
+use App\Http\Controllers\API\V1\Auth\MicrosoftCallbackController;
 use App\Http\Controllers\Api\V1\Auth\MicrosoftRedirectController;
 use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
+use App\Http\Controllers\Api\V1\Companies\IndexCompaniesController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Roles\IndexRolesController;
 use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
 use App\Http\Controllers\Api\V1\Users\UserController;
-use App\Http\Controllers\API\V1\Auth\MicrosoftCallbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -41,8 +43,13 @@ Route::prefix('v1')->group(function () {
             Route::post('/logout', LogoutController::class);
             Route::get('/me', MeController::class);
         });
-        
+
         // ── Protected API routes go below this line ───────────────────────────
+        // ─── Options lists (dropdowns for user create/edit; not paginated) ───
+        // Reserved: GET /companies and GET /roles for future paginated Role/Company modules.
+        Route::get('/companies/options', IndexCompaniesController::class);
+        Route::get('/roles/options', IndexRolesController::class);
+
         // ─── Users ───────────────────────────────────────────────────
         // Standard CRUD
         Route::apiResource('users', UserController::class);

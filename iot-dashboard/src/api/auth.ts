@@ -26,13 +26,15 @@ export const logout = async (): Promise<void> => {
     await axiosClient.post("/auth/logout");
 };
 
-interface MeResponse {
+/** Response from GET /auth/me (user + permissions). */
+export interface MeResponse {
     user: AuthResponse["user"];
+    permissions: string[];
 }
 
-export const getMe = async (): Promise<AuthResponse["user"]> => {
+export const getMe = async (): Promise<MeResponse> => {
     const res = await axiosClient.get<MeResponse>("/auth/me");
-    return res.data.user;
+    return res.data;
 };
 
 // Returns the Microsoft OAuth redirect URL for the browser to follow

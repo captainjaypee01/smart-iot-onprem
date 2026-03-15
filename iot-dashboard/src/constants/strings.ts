@@ -111,6 +111,57 @@ export const FE_STRINGS = {
     NODE_TYPE_FE_GAUGE: "FE Gauge (v1.3)",
 } as const;
 
+// ─── Users module ─────────────────────────────────────────────────
+export const USER_STRINGS = {
+    TITLE: "Users",
+    SUBTITLE: "Manage user accounts and invitations.",
+    INVITE_USER: "Invite user",
+    EDIT_USER: "Edit user",
+    NAME: "Name",
+    FIRST_NAME: "First name",
+    LAST_NAME: "Last name",
+    USERNAME: "Username",
+    EMAIL: "Email",
+    ROLE: "Role",
+    COMPANY: "Company",
+    STATUS: "Status",
+    ACTIVE: "Active",
+    INACTIVE: "Inactive",
+    JOINED: "Joined",
+    LAST_LOGIN: "Last login",
+    NEVER_LOGGED_IN: "Never logged in",
+    RESEND_INVITE: "Resend invite",
+    DISABLE: "Disable",
+    ENABLE: "Enable",
+    DELETE_USER: "Delete user",
+    CONFIRM_DELETE: "Are you sure you want to delete this user?",
+    USER_INVITED: "Invitation sent successfully.",
+    USER_UPDATED: "User updated successfully.",
+    USER_DISABLED: "User disabled.",
+    USER_ENABLED: "User enabled.",
+    INVITE_RESENT: "Invitation email resent.",
+    USER_DELETED: "User deleted.",
+    ERROR_LOAD: "Failed to load users.",
+    ERROR_SAVE: "Failed to save user.",
+    ERROR_DELETE: "Failed to delete user.",
+    ERROR_RESEND: "Failed to resend invite.",
+    ERROR_DISABLE: "Failed to update user status.",
+    NO_ROLE: "No role",
+    NO_COMPANY: "No company",
+    SELECT_COMPANY_FIRST: "Select company first",
+    ACTIONS: "Actions",
+    NO_USERS: "No users.",
+} as const;
+
+// ─── Profile ──────────────────────────────────────────────────────
+export const PROFILE_STRINGS = {
+    TITLE: "Profile",
+    SUBTITLE: "Your account details.",
+    EDIT_PROFILE: "Edit profile",
+    PROFILE_UPDATED: "Profile updated successfully.",
+    ERROR_UPDATE: "Failed to update profile.",
+} as const;
+
 // ─── General UI ───────────────────────────────────────────────────
 export const UI_STRINGS = {
     LOADING: "Loading…",
@@ -136,4 +187,5 @@ export const UI_STRINGS = {
     NO: "No",
     N_A: "N/A",
     UNKNOWN: "Unknown",
+    ROWS_PER_PAGE: "Rows per page",
 } as const;

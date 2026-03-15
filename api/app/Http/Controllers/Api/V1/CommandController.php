@@ -15,8 +15,7 @@ class CommandController extends Controller
 {
     public function __construct(
         private readonly CreateCommandAction $createCommandAction
-    ) {
-    }
+    ) {}
 
     public function store(CreateCommandRequest $request): JsonResponse
     {

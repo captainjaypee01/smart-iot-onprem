@@ -29,10 +29,12 @@ return new class extends Migration
             $table->string('password')->nullable()->comment('Null for SSO-only accounts');
             $table->boolean('is_superadmin')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->string('status', 20)->default('active');
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

@@ -34,10 +34,11 @@ export const useAuth = (): UseAuthReturn => {
         setError(null);
 
         try {
-            const { user } = USE_MOCK
+            const data = USE_MOCK
                 ? await mockLogin(credentials.email)
                 : await login(credentials);
-            setAuth(user);
+            setAuth(data.user, data.permissions);
+            const user = data.user;
             toast.success(`Welcome back, ${user.name}.`);
             navigate("/", { replace: true });
         } catch (err) {

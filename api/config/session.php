@@ -41,6 +41,7 @@ return [
         if (in_array(strtolower((string) $v), ['unlimited', 'forever'], true)) {
             return 5256000; // 10 years in minutes
         }
+
         return (int) $v;
     })(),
 

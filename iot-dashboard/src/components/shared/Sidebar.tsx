@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/store/sidebarStore";
+import { useRole } from "@/hooks/useRole";
+import { usePermission } from "@/hooks/usePermission";
 import { NAV_GROUPS } from "@/config/nav";
 import SidebarNavItem from "@/components/shared/SidebarNavItem";
 
@@ -15,6 +17,14 @@ const W_COLLAPSED = "w-[68px]";
 
 const Sidebar = () => {
     const { isCollapsed, toggle, isMobileOpen, closeMobile } = useSidebarStore();
+    const { isAdmin } = useRole();
+    const { hasPermission } = usePermission();
+
+    const isItemVisible = (item: { adminOnly?: boolean; permission?: string }) => {
+        if (item.permission) return hasPermission(item.permission);
+        if (item.adminOnly) return isAdmin();
+        return true;
+    };
 
     return (
         <TooltipProvider>
@@ -86,15 +96,17 @@ const Sidebar = () => {
                                     <Separator className="mb-2 bg-white/10" />
                                 )}
                                 <ul className="space-y-0.5">
-                                    {group.items.map((item) => (
-                                        <li key={item.path}>
-                                            <SidebarNavItem
-                                                item={item}
-                                                isCollapsed={isCollapsed}
-                                                onClick={closeMobile}
-                                            />
-                                        </li>
-                                    ))}
+                                    {group.items
+                                        .filter((item) => isItemVisible(item))
+                                        .map((item) => (
+                                            <li key={item.path}>
+                                                <SidebarNavItem
+                                                    item={item}
+                                                    isCollapsed={isCollapsed}
+                                                    onClick={closeMobile}
+                                                />
+                                            </li>
+                                        ))}
                                 </ul>
                             </div>
                         ))}

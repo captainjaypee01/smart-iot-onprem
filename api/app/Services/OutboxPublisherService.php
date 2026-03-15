@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 class OutboxPublisherService implements OutboxPublisherContract
 {
     private const STREAM_KEY = 'outbox:events';
+
     private const MAX_RETRIES = 3;
 
     public function publish(OutboxEvent $event): bool

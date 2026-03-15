@@ -31,8 +31,8 @@ const AuthCallbackPage = () => {
         }
 
         getMe()
-            .then((user) => {
-                setAuth(user);
+            .then((me) => {
+                setAuth(me.user, me.permissions);
                 navigate("/dashboard", { replace: true });
             })
             .catch(() => {

@@ -8,7 +8,11 @@ export interface NavItem {
     path: string;
     icon: LucideIcon;
     badge?: number;        // e.g. unread alert count
-    end?: boolean;       // exact match for active state (react-router)
+    end?: boolean;         // exact match for active state (react-router)
+    /** When true, show only when useRole().isAdmin() is true. */
+    adminOnly?: boolean;
+    /** When set, show only when usePermission().hasPermission(permission) is true (e.g. 'user.view'). */
+    permission?: string;
 }
 
 export interface NavGroup {

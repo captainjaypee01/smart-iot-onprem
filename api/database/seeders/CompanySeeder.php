@@ -14,20 +14,20 @@ class CompanySeeder extends Seeder
     {
         $companies = [
             [
-                'name'          => 'Acme Corporation',
-                'code'          => 'ACME',
-                'address'       => '123 Industry Road, Singapore 123456',
+                'name' => 'Acme Corporation',
+                'code' => 'ACME',
+                'address' => '123 Industry Road, Singapore 123456',
                 'contact_email' => 'admin@acme.example',
                 'contact_phone' => '+65 6000 0001',
-                'is_active'     => true,
+                'is_active' => true,
             ],
             [
-                'name'          => 'Globex Industries',
-                'code'          => 'GLOBEX',
-                'address'       => '456 Commerce Street, Singapore 654321',
+                'name' => 'Globex Industries',
+                'code' => 'GLOBEX',
+                'address' => '456 Commerce Street, Singapore 654321',
                 'contact_email' => 'admin@globex.example',
                 'contact_phone' => '+65 6000 0002',
-                'is_active'     => true,
+                'is_active' => true,
             ],
         ];
 

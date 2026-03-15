@@ -27,15 +27,15 @@ return new class extends Migration
 
         // ── users ────────────────────────────────────────────────────────────────
         Schema::table('users', function (Blueprint $table) {
-            $table->index('company_id',                'idx_users_company_id');
-            $table->index('role_id',                   'idx_users_role_id');
-            $table->index('is_active',                 'idx_users_is_active');
+            $table->index('company_id', 'idx_users_company_id');
+            $table->index('role_id', 'idx_users_role_id');
+            $table->index('is_active', 'idx_users_is_active');
             $table->index(['company_id', 'is_active'], 'idx_users_company_active');
         });
 
         // ── social_accounts ──────────────────────────────────────────────────────
         Schema::table('social_accounts', function (Blueprint $table) {
-            $table->index('user_id',          'idx_social_accounts_user_id');
+            $table->index('user_id', 'idx_social_accounts_user_id');
             $table->index('token_expires_at', 'idx_social_accounts_token_expires');
         });
 
@@ -71,7 +71,7 @@ return new class extends Migration
 
         // ── zones ────────────────────────────────────────────────────────────────
         Schema::table('zones', function (Blueprint $table) {
-            $table->index('network_id',                'idx_zones_network_id');
+            $table->index('network_id', 'idx_zones_network_id');
             $table->index(['network_id', 'is_active'], 'idx_zones_network_active');
         });
 
@@ -87,22 +87,22 @@ return new class extends Migration
 
         // ── nodes ────────────────────────────────────────────────────────────────
         Schema::table('nodes', function (Blueprint $table) {
-            $table->index('network_id',                'idx_nodes_network_id');
-            $table->index('zone_id',                   'idx_nodes_zone_id');
-            $table->index('node_config_id',            'idx_nodes_node_config_id');
-            $table->index('is_online',                 'idx_nodes_is_online');
-            $table->index('last_online_at',            'idx_nodes_last_online_at');
+            $table->index('network_id', 'idx_nodes_network_id');
+            $table->index('zone_id', 'idx_nodes_zone_id');
+            $table->index('node_config_id', 'idx_nodes_node_config_id');
+            $table->index('is_online', 'idx_nodes_is_online');
+            $table->index('last_online_at', 'idx_nodes_last_online_at');
             $table->index(['network_id', 'is_online'], 'idx_nodes_network_online');
-            $table->index(['zone_id', 'is_online'],    'idx_nodes_zone_online');
-            $table->index(['network_id', 'zone_id'],   'idx_nodes_network_zone');
+            $table->index(['zone_id', 'is_online'], 'idx_nodes_zone_online');
+            $table->index(['network_id', 'zone_id'], 'idx_nodes_network_zone');
         });
 
         // ── activity_logs ────────────────────────────────────────────────────────
         Schema::table('activity_logs', function (Blueprint $table) {
-            $table->index(['user_id', 'created_at'],      'idx_activity_logs_user_date');
+            $table->index(['user_id', 'created_at'], 'idx_activity_logs_user_date');
             $table->index(['subject_type', 'subject_id'], 'idx_activity_logs_subject');
-            $table->index(['company_id', 'created_at'],   'idx_activity_logs_company_date');
-            $table->index('created_at',                   'idx_activity_logs_created_at');
+            $table->index(['company_id', 'created_at'], 'idx_activity_logs_company_date');
+            $table->index('created_at', 'idx_activity_logs_created_at');
         });
     }
 
@@ -122,12 +122,12 @@ return new class extends Migration
             $table->dropIndex('idx_social_accounts_token_expires');
         });
 
-        Schema::table('permissions',      fn ($t) => $t->dropIndex('idx_permissions_module'));
-        Schema::table('roles',            fn ($t) => $t->dropIndex('idx_roles_is_system_role'));
+        Schema::table('permissions', fn ($t) => $t->dropIndex('idx_permissions_module'));
+        Schema::table('roles', fn ($t) => $t->dropIndex('idx_roles_is_system_role'));
         Schema::table('role_permissions', fn ($t) => $t->dropIndex('idx_role_permissions_permission_id'));
-        Schema::table('role_companies',   fn ($t) => $t->dropIndex('idx_role_companies_company_id'));
-        Schema::table('role_networks',    fn ($t) => $t->dropIndex('idx_role_networks_network_id'));
-        Schema::table('networks',         fn ($t) => $t->dropIndex('idx_networks_is_active'));
+        Schema::table('role_companies', fn ($t) => $t->dropIndex('idx_role_companies_company_id'));
+        Schema::table('role_networks', fn ($t) => $t->dropIndex('idx_role_networks_network_id'));
+        Schema::table('networks', fn ($t) => $t->dropIndex('idx_networks_is_active'));
 
         Schema::table('zones', function (Blueprint $table) {
             $table->dropIndex('idx_zones_network_id');
@@ -135,7 +135,7 @@ return new class extends Migration
         });
 
         Schema::table('zone_managers', fn ($t) => $t->dropIndex('idx_zone_managers_user_id'));
-        Schema::table('node_configs',  fn ($t) => $t->dropIndex('idx_node_configs_node_type_id'));
+        Schema::table('node_configs', fn ($t) => $t->dropIndex('idx_node_configs_node_type_id'));
 
         Schema::table('nodes', function (Blueprint $table) {
             $table->dropIndex('idx_nodes_network_id');

@@ -23,27 +23,27 @@ class UserSeeder extends Seeder
 
     public function run(): void
     {
-        $acme   = Company::where('code', 'ACME')->firstOrFail();
+        $acme = Company::where('code', 'ACME')->firstOrFail();
         $globex = Company::where('code', 'GLOBEX')->firstOrFail();
 
-        $adminRole    = Role::where('name', 'Admin')->firstOrFail();
+        $adminRole = Role::where('name', 'Admin')->firstOrFail();
         $operatorRole = Role::where('name', 'Operator')->firstOrFail();
-        $viewerRole   = Role::where('name', 'Viewer')->firstOrFail();
+        $viewerRole = Role::where('name', 'Viewer')->firstOrFail();
 
         // ── 1. SuperAdmin ─────────────────────────────────────────────────────
         // No company, no role. is_superadmin bypasses all permission checks.
         User::firstOrCreate(
             ['email' => 'superadmin@iot.local'],
             [
-                'first_name'        => 'Super',
-                'last_name'         => 'Admin',
-                'middle_name'       => null,
-                'name'              => 'Super Admin',
-                'company_id'        => null,
-                'role_id'           => null,
-                'password'          => Hash::make(self::PASSWORD),
-                'is_superadmin'     => true,
-                'is_active'         => true,
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'middle_name' => null,
+                'name' => 'Super Admin',
+                'company_id' => null,
+                'role_id' => null,
+                'password' => Hash::make(self::PASSWORD),
+                'is_superadmin' => true,
+                'is_active' => true,
                 'email_verified_at' => now(),
             ]
         );
@@ -52,15 +52,15 @@ class UserSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@acme.local'],
             [
-                'first_name'        => 'Alice',
-                'last_name'         => 'Admin',
-                'middle_name'       => null,
-                'name'              => 'Alice Admin',
-                'company_id'        => $acme->id,
-                'role_id'           => $adminRole->id,
-                'password'          => Hash::make(self::PASSWORD),
-                'is_superadmin'     => false,
-                'is_active'         => true,
+                'first_name' => 'Alice',
+                'last_name' => 'Admin',
+                'middle_name' => null,
+                'name' => 'Alice Admin',
+                'company_id' => $acme->id,
+                'role_id' => $adminRole->id,
+                'password' => Hash::make(self::PASSWORD),
+                'is_superadmin' => false,
+                'is_active' => true,
                 'email_verified_at' => now(),
             ]
         );
@@ -69,15 +69,15 @@ class UserSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'operator@acme.local'],
             [
-                'first_name'        => 'Bob',
-                'last_name'         => 'Operator',
-                'middle_name'       => null,
-                'name'              => 'Bob Operator',
-                'company_id'        => $acme->id,
-                'role_id'           => $operatorRole->id,
-                'password'          => Hash::make(self::PASSWORD),
-                'is_superadmin'     => false,
-                'is_active'         => true,
+                'first_name' => 'Bob',
+                'last_name' => 'Operator',
+                'middle_name' => null,
+                'name' => 'Bob Operator',
+                'company_id' => $acme->id,
+                'role_id' => $operatorRole->id,
+                'password' => Hash::make(self::PASSWORD),
+                'is_superadmin' => false,
+                'is_active' => true,
                 'email_verified_at' => now(),
             ]
         );
@@ -86,15 +86,15 @@ class UserSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'viewer@globex.local'],
             [
-                'first_name'        => 'Carol',
-                'last_name'         => 'Viewer',
-                'middle_name'       => null,
-                'name'              => 'Carol Viewer',
-                'company_id'        => $globex->id,
-                'role_id'           => $viewerRole->id,
-                'password'          => Hash::make(self::PASSWORD),
-                'is_superadmin'     => false,
-                'is_active'         => true,
+                'first_name' => 'Carol',
+                'last_name' => 'Viewer',
+                'middle_name' => null,
+                'name' => 'Carol Viewer',
+                'company_id' => $globex->id,
+                'role_id' => $viewerRole->id,
+                'password' => Hash::make(self::PASSWORD),
+                'is_superadmin' => false,
+                'is_active' => true,
                 'email_verified_at' => now(),
             ]
         );

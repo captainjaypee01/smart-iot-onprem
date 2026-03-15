@@ -23,8 +23,8 @@ function runAuthCheck(onFailure: () => void): void {
     );
 
     Promise.race([getMe(), timeoutPromise])
-        .then((user) => {
-            useAuthStore.getState().setAuth(user);
+        .then((me) => {
+            useAuthStore.getState().setAuth(me.user, me.permissions);
             useAuthStore.getState().setAuthCheckDone(true);
         })
         .catch(() => {

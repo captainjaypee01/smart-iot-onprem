@@ -16,5 +16,3 @@ parameters:
 
     excludePaths:
         - ./*/*/FileToIgnore.php
-
-    checkMissingIterableValueType: false

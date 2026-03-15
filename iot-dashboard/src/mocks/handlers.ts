@@ -108,21 +108,36 @@ export const mockGetNodes = async (
     };
 };
 
-// ─── Auth (mock login — cookie-style: returns { user } only) ────────
+// ─── Auth (mock login — returns { user, permissions } for permission-based UI) ────────
 export const mockLogin = async (email: string) => {
     await delay(800);
     const name = email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return {
         user: {
-            id: "user-001",
+            id: 1,
+            uuid: "user-001",
+            first_name: name.split(" ")[0] ?? name,
+            last_name: name.split(" ").slice(1).join(" ") || "User",
             name,
             email,
+            username: null,
             is_superadmin: true,
             is_active: true,
+            status: "active" as const,
             company: null,
-            role: { id: 1, name: "Admin", is_system_role: true, permissions: [] },
+            role: { id: 1, name: "Admin" },
             last_login_at: new Date().toISOString(),
             created_at: new Date().toISOString(),
         },
+        permissions: [
+            "user.view",
+            "user.create",
+            "user.update",
+            "user.delete",
+            "user.disable",
+            "user.resend_invite",
+            "user.change_status",
+            "user.change_company",
+        ],
     };
 };

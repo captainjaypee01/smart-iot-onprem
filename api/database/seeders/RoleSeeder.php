@@ -10,6 +10,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Company;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
@@ -57,6 +58,24 @@ class RoleSeeder extends Seeder
         $viewerKeys = ['fault.view', 'node.view', 'zone.view', 'alert.view', 'report.view'];
         $viewerPermissions = Permission::whereIn('key', $viewerKeys)->pluck('id');
         $viewer->permissions()->sync($viewerPermissions);
+
+        // Link all roles to all companies (for GET /api/v1/roles/options and role_id validation).
+        // Run after CompanySeeder so companies exist.
+        $roleIds = Role::pluck('id')->all();
+        $companyIds = Company::pluck('id')->all();
+        $pairs = [];
+        foreach ($roleIds as $roleId) {
+            foreach ($companyIds as $companyId) {
+                $pairs[] = ['role_id' => $roleId, 'company_id' => $companyId];
+            }
+        }
+        if ($pairs !== []) {
+            \Illuminate\Support\Facades\DB::table('role_companies')->upsert(
+                $pairs,
+                ['role_id', 'company_id'],
+                []
+            );
+        }
 
         $this->command->info('  ✓ Roles seeded (Admin, Operator, Viewer).');
     }

@@ -2,7 +2,6 @@
 
 use App\Enums\CommandStatus;
 use App\Models\Command;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

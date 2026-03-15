@@ -42,6 +42,7 @@ class Setting extends Model
 
         if ($companyId !== null) {
             $row = static::where('key', $key)->whereNull('company_id')->first();
+
             return $row !== null ? $row->value : null;
         }
 
@@ -87,6 +88,7 @@ class Setting extends Model
             return 5256000; // 10 years
         }
         $minutes = (int) $value;
+
         return $minutes >= 1 ? $minutes : (int) config('session.lifetime', 120);
     }
 }

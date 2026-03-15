@@ -5,11 +5,11 @@
 // Partitioned by RANGE on received_at — one partition per month
 // Postgres automatically routes queries to the correct partition(s)
 
+use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Carbon\Carbon;
 
 return new class extends Migration
 {
@@ -117,8 +117,8 @@ return new class extends Migration
 
     private function createPartition(Carbon $month): void
     {
-        $name  = 'node_readings_' . $month->format('Y_m');
-        $from  = $month->format('Y-m-01');
+        $name = 'node_readings_'.$month->format('Y_m');
+        $from = $month->format('Y-m-01');
         $until = $month->copy()->addMonth()->format('Y-m-01');
 
         DB::statement("

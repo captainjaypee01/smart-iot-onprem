@@ -20,9 +20,11 @@ app/
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Api/V1/       # Public API controllers (SPA)
-│   │   │   ├── Auth/     # Auth controllers (Login, Logout, Me, MicrosoftRedirect, SetPassword)
-│   │   │   ├── Settings/ # SessionSettingsController (thin; delegates to Actions)
-│   │   │   └── Users/    # User controllers (UserController, ResendInviteController, DisableUserController)
+│   │   │   ├── Auth/       # Auth controllers (Login, Logout, Me, MicrosoftRedirect, SetPassword)
+│   │   │   ├── Companies/  # IndexCompaniesController (GET /companies/options)
+│   │   │   ├── Roles/      # IndexRolesController (GET /roles/options)
+│   │   │   ├── Settings/   # SessionSettingsController (thin; delegates to Actions)
+│   │   │   └── Users/      # UserController, ResendInviteController, DisableUserController
 │   │   ├── Auth/         # Web-route controllers (MicrosoftCallbackController)
 │   │   └── Internal/     # Internal API controllers (backend services)
 │   ├── Middleware/       # Custom middleware
@@ -91,9 +93,61 @@ Route::post('/users/{user}/disable', DisableUserController::class);
 
 ---
 
+## Permissions and Authorization
+
+### Where to enforce
+
+- **FormRequest `authorize()`** — Use for create and update. Check the appropriate permission first, then apply scope (e.g. company) or superadmin bypass.
+- **Controller** — For index/show and one-off actions (disable, resend-invite, delete), check the permission at the top of the method or `__invoke` before running business logic.
+
+### Pattern: permission then scope
+
+1. **Permission check:** `$authUser->hasPermission('user.create')` (or `user.update`, `user.view`, etc.). Return 403 if false.
+2. **Scope / superadmin:** Superadmin typically bypasses scope; company admin is restricted to their `company_id` (e.g. target user’s company must match auth user’s company, or request’s `company_id` must match for create).
+
+### User module permission keys
+
+| Key | Enforced in | Purpose |
+|-----|-------------|---------|
+| `user.view` | UserController@index, @show | List and view users |
+| `user.create` | StoreUserRequest::authorize() | Create/invite user |
+| `user.update` | UpdateUserRequest::authorize(), ResendInviteController | Update user, resend invite |
+| `user.delete` | UserController@destroy | Soft-delete user |
+| `user.disable` | DisableUserController | Toggle is_active |
+| `user.resend_invite` | ResendInviteController | Resend welcome email |
+| `user.change_status` | UpdateUserRequest (rules: superadmin may send `status`) | Change user status (active/locked/disabled) |
+| `user.change_company` | UpdateUserRequest (rules: superadmin may send `company_id`) | Reassign user to another company |
+
+Superadmin bypass is usually applied **after** the permission check (e.g. in authorize: if not permitted return false; if superadmin return true; else check company scope). See [PERMISSIONS.md](PERMISSIONS.md) for the full list and role assignments.
+
+---
+
+## Options vs index endpoints
+
+For dropdown/lookup data that must **not** change when a full CRUD module is added later:
+
+- **Use `/resource/options`** — Returns a simple list (no pagination). Example: `GET /api/v1/companies/options`, `GET /api/v1/roles/options?company_id=1`. Contract and response shape stay fixed.
+- **Reserve `GET /resource`** — For the future paginated index when you add a full Company or Role module. Do not use the same path for the simple list.
+
+This avoids breaking the frontend when you later introduce paginated index responses with `meta` and `links`.
+
+---
+
+## Pagination (index endpoints)
+
+For list endpoints that return many records (e.g. users):
+
+- Accept `page` and `per_page` query parameters. Clamp `per_page` (e.g. 1–100); default 15.
+- Return Laravel’s paginator response: `{ data: [...], meta: { current_page, last_page, per_page, total }, links: { first, next, prev, last } }`.
+- Use `UserResource::collection($query->paginate($perPage))` so the shape matches the shared contract.
+
+---
+
 ## Adding a New Endpoint
 
 ### 1. Create FormRequest (if needed)
+
+Put **permission and scope** in `authorize()`. Use **rules()** for input validation (and for superadmin-only fields use `prohibited` for non-superadmin).
 
 ```php
 <?php
@@ -106,22 +160,33 @@ class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Or use policies
+        $authUser = $this->user();
+        if (! $authUser->hasPermission('user.create')) {
+            return false;
+        }
+        if ($authUser->is_superadmin) {
+            return true;
+        }
+        return (int) $this->company_id === (int) $authUser->company_id;
     }
 
     public function rules(): array
     {
         return [
-            'name'       => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name'  => ['required', 'string', 'max:255'],
             'email'      => ['required', 'email', 'unique:users,email'],
             'company_id' => ['required', 'integer', 'exists:companies,id'],
             'role_id'    => ['required', 'integer', 'exists:roles,id'],
+            // role_id should also be validated against role_companies for company_id
         ];
     }
 }
 ```
 
 ### 2. Create DTO (if complex input)
+
+Use a **readonly** DTO with typed properties. Include all inputs the action needs (e.g. first_name, last_name, companyId, roleId, optional password/useInvite for create; companyId/status for update when superadmin).
 
 ```php
 <?php
@@ -131,11 +196,15 @@ namespace App\DTO\Users;
 readonly class StoreUserDTO
 {
     public function __construct(
-        public string $name,
+        public string $firstName,
+        public string $lastName,
         public string $email,
+        public ?string $username,
         public int $companyId,
         public int $roleId,
         public int $assignedBy,
+        public bool $useInvite,
+        public ?string $password,
     ) {}
 }
 ```
@@ -198,6 +267,8 @@ class UserResource extends JsonResource
 
 ### 5. Create Controller
 
+Keep controllers **thin**: validate via FormRequest (including authorize), build DTO from validated input, call Action, return Resource or JSON. For **index/show** and **one-off actions** (delete, disable, resend-invite), check the required permission at the start of the method if not already enforced by a FormRequest.
+
 ```php
 <?php
 // app/Http/Controllers/Api/V1/Users/UserController.php
@@ -205,19 +276,27 @@ namespace App\Http\Controllers\Api\V1\Users;
 
 class UserController extends Controller
 {
+    public function index(Request $request): AnonymousResourceCollection|JsonResponse
+    {
+        if (! $request->user()->hasPermission('user.view')) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+        $perPage = min(100, max(1, (int) $request->input('per_page', 15)));
+        $users = User::query()->with(['company', 'role'])->...->paginate($perPage);
+        return UserResource::collection($users);
+    }
+
     public function store(StoreUserRequest $request): JsonResponse
     {
         $dto = new StoreUserDTO(
-            name: $request->name,
-            email: $request->email,
-            companyId: $request->company_id,
-            roleId: $request->role_id,
+            firstName: $request->validated('first_name'),
+            lastName: $request->validated('last_name'),
+            email: $request->validated('email'),
+            ...
             assignedBy: $request->user()->id,
         );
-
         $user = (new StoreUserAction)->execute($dto);
-        $user->load(['company', 'userRole.role.permissions']);
-
+        $user->load(['company', 'role']);
         return response()->json(new UserResource($user), 201);
     }
 }
@@ -259,35 +338,31 @@ The callback controller must:
 
 ## User Management Rules
 
-- **Admins create users** — there is no self-registration endpoint.
-- `POST /api/v1/users` always sends a welcome email with an invite link.
-- Invite links use the `password_reset_tokens` table with a 60-minute expiry.
-- `ResendInviteController` only works on users with `password = null` (never set).
-- `DisableUserController` toggles `is_active` — it does not delete the user.
-- Superadmin accounts cannot be deleted or disabled via any endpoint.
-- A user cannot delete or disable their own account.
+- **Admins create users** — no self-registration. Create/invite requires `user.create` and (for non-superadmin) company scope.
+- **Invite flow:** Default `POST /api/v1/users` creates user with `password = null`, stores invite token, sends `WelcomeUserNotification`. Superadmin may send `use_invite: false` and `password` to create with password and no email.
+- **Resend invite:** `POST .../resend-invite` requires `user.resend_invite`; only valid when `last_login_at === null` and password not set.
+- **Disable:** `POST .../disable` requires `user.disable`; toggles `is_active`. Superadmin and self cannot be disabled.
+- **Update:** `PUT .../users/{id}` requires `user.update`. Superadmin may send `company_id` and `status`; company admin must not (validation prohibits).
+- **Delete:** Requires `user.delete`; soft delete. Superadmin and self cannot be deleted.
+- **Pagination:** `GET /api/v1/users` uses `?page` and `?per_page` (1–100); returns `{ data, meta, links }`.
 
 ---
 
 ## Authorization Model
 
 ### Superadmin
-- `is_superadmin = true` on the `users` table
-- Can access all companies, all users, all networks
-- Can edit system roles
+- `is_superadmin = true` on the `users` table. Bypasses permission checks and company scope.
+- Can access all companies, all users; can change user `company_id` and `status` on update.
 
-### Company Admin
-- Has a role with admin-level permissions scoped to their `company_id`
-- Can only manage users within their own company
-- Cannot access other companies' data
+### Company admin
+- Has a role with permissions (e.g. `user.view`, `user.create`, `user.update`, `user.disable`, `user.delete`, `user.resend_invite`) scoped to their `company_id`.
+- Can only list/edit/disable/delete users in their own company. Cannot send `company_id` or `status` on update (validation prohibits).
 
-### Role + Permission System
-- `roles` table: named roles, `is_system_role` flag
-- `permissions` table: keyed strings e.g. `user.create`, `node.view`
-- `role_permissions` pivot: which permissions a role has
-- `users.role_id`: one role per user (enforced by FK + validation)
-- `role_companies` pivot: which companies a role is scoped to
-- `role_networks` pivot: which networks a role can access
+### Role + permission system
+- **Permissions:** `permissions` table with `key` (e.g. `user.view`, `user.create`, `user.update`, `user.delete`, `user.disable`, `user.resend_invite`, `user.change_status`, `user.change_company`). Seeded via `PermissionSeeder`.
+- **User::hasPermission($key):** Returns true for superadmin; otherwise true if the user’s role has that permission (via `role_permissions`).
+- **Enforcement:** FormRequest `authorize()` for create/update; controller checks for index/show and one-off actions. See [PERMISSIONS.md](PERMISSIONS.md) and the table in “Permissions and Authorization” above.
+- **Scoping:** `role_companies` links roles to companies; `role_id` validation for users uses this so a role is only valid for a given company.
 
 ---
 

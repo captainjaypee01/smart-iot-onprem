@@ -9,6 +9,7 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\Permission;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -44,8 +45,13 @@ class LoginController extends Controller
         Auth::guard('web')->login($user, true);
         $request->session()->regenerate();
 
+        $permissions = $user->is_superadmin
+            ? Permission::pluck('key')->values()->all()
+            : $user->role?->permissions?->pluck('key')->values()->all() ?? [];
+
         return response()->json([
             'user' => new UserResource($user),
+            'permissions' => $permissions,
         ]);
     }
 }

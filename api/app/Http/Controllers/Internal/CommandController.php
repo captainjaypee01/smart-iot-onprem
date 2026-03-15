@@ -14,7 +14,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\CommandResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class CommandController extends Controller
 {
@@ -23,8 +22,7 @@ class CommandController extends Controller
         private readonly MarkCommandAckedAction $markAckedAction,
         private readonly MarkCommandCompletedAction $markCompletedAction,
         private readonly MarkCommandFailedAction $markFailedAction,
-    ) {
-    }
+    ) {}
 
     public function markDispatched(string $id): JsonResponse
     {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 // app/Models/User.php
 // Eloquent model for the users table.
 //
@@ -14,14 +16,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property-read \App\Models\Company|null $company
+ * @property-read \App\Models\Role|null $role
+ * @property-read \Illuminate\Support\Carbon $created_at
+ * @property-read \Illuminate\Support\Carbon|null $last_login_at
+ */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -35,6 +44,7 @@ class User extends Authenticatable
         'password',
         'is_superadmin',
         'is_active',
+        'status',
         'email_verified_at',
         'last_login_at',
         // uuid is NOT in fillable — it must only ever be set by booted(), never mass-assigned
@@ -49,10 +59,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'is_superadmin'     => 'boolean',
-            'is_active'         => 'boolean',
+            'is_superadmin' => 'boolean',
+            'is_active' => 'boolean',
+            'status' => 'string',
             'email_verified_at' => 'datetime',
-            'last_login_at'     => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -90,5 +101,23 @@ class User extends Authenticatable
     public function socialAccounts(): HasMany
     {
         return $this->hasMany(SocialAccount::class);
+    }
+
+    /**
+     * Check if the user has a permission by key (e.g. 'user.view').
+     * Superadmins bypass; otherwise checks role->permissions.
+     */
+    public function hasPermission(string $key): bool
+    {
+        if ($this->is_superadmin) {
+            return true;
+        }
+
+        $role = $this->role;
+        if ($role === null) {
+            return false;
+        }
+
+        return $role->permissions()->where('key', $key)->exists();
     }
 }

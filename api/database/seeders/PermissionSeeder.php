@@ -47,6 +47,11 @@ class PermissionSeeder extends Seeder
             ['module' => 'user', 'key' => 'user.view',                 'display_name' => 'View Users'],
             ['module' => 'user', 'key' => 'user.create',               'display_name' => 'Create User'],
             ['module' => 'user', 'key' => 'user.update',               'display_name' => 'Update User'],
+            ['module' => 'user', 'key' => 'user.delete',               'display_name' => 'Delete User'],
+            ['module' => 'user', 'key' => 'user.disable',              'display_name' => 'Disable/Enable User'],
+            ['module' => 'user', 'key' => 'user.resend_invite',         'display_name' => 'Resend Invite'],
+            ['module' => 'user', 'key' => 'user.change_status',        'display_name' => 'Change User Status'],
+            ['module' => 'user', 'key' => 'user.change_company',        'display_name' => 'Change User Company'],
             ['module' => 'user', 'key' => 'user.deactivate',           'display_name' => 'Deactivate User'],
 
             // ── Role ──────────────────────────────────────────────────
@@ -74,7 +79,7 @@ class PermissionSeeder extends Seeder
             ['display_name', 'module', 'updated_at']
         );
 
-        $this->command->info('Permissions seeded: ' . count($permissions) . ' entries.');
+        $this->command->info('Permissions seeded: '.count($permissions).' entries.');
 
         // ── Default System Roles ──────────────────────────────────────
         $this->seedRoles();
@@ -86,16 +91,16 @@ class PermissionSeeder extends Seeder
 
         $roles = [
             [
-                'name'           => 'Platform Admin',
-                'description'    => 'Internal role — full access across all companies and networks',
+                'name' => 'Platform Admin',
+                'description' => 'Internal role — full access across all companies and networks',
                 'is_system_role' => true,
-                'permissions'    => $allPermissionIds->keys()->toArray(),
+                'permissions' => $allPermissionIds->keys()->toArray(),
             ],
             [
-                'name'           => 'Platform Support',
-                'description'    => 'Internal role — read-only access across all companies and networks',
+                'name' => 'Platform Support',
+                'description' => 'Internal role — read-only access across all companies and networks',
                 'is_system_role' => true,
-                'permissions'    => [
+                'permissions' => [
                     'network.view',
                     'zone.view',
                     'node.view', 'node.view_readings', 'node.view_alarms',
@@ -106,25 +111,26 @@ class PermissionSeeder extends Seeder
                 ],
             ],
             [
-                'name'           => 'Company Admin',
-                'description'    => 'Manages users, roles, and nodes within their own company',
+                'name' => 'Company Admin',
+                'description' => 'Manages users, roles, and nodes within their own company',
                 'is_system_role' => true,
-                'permissions'    => [
+                'permissions' => [
                     'network.view',
                     'zone.view', 'zone.create', 'zone.update', 'zone.delete',
                     'zone.assign_user', 'zone.remove_user', 'zone.assign_node', 'zone.remove_node',
                     'node.view', 'node.create', 'node.update', 'node.view_readings', 'node.view_alarms',
                     'fault.view', 'fault.investigate', 'fault.verify', 'fault.resolve',
-                    'user.view', 'user.create', 'user.update', 'user.deactivate',
+                    'user.view', 'user.create', 'user.update', 'user.delete', 'user.disable',
+                    'user.resend_invite', 'user.change_status', 'user.change_company',
                     'role.view', 'role.assign_user',
                     'company.view',
                 ],
             ],
             [
-                'name'           => 'Zone Manager',
-                'description'    => 'Manages assigned zones including user and node assignments',
+                'name' => 'Zone Manager',
+                'description' => 'Manages assigned zones including user and node assignments',
                 'is_system_role' => true,
-                'permissions'    => [
+                'permissions' => [
                     'network.view',
                     'zone.view', 'zone.create', 'zone.update',
                     'zone.assign_user', 'zone.remove_user',
@@ -135,10 +141,10 @@ class PermissionSeeder extends Seeder
                 ],
             ],
             [
-                'name'           => 'Field Technician',
-                'description'    => 'Views nodes and handles fault investigation and verification',
+                'name' => 'Field Technician',
+                'description' => 'Views nodes and handles fault investigation and verification',
                 'is_system_role' => true,
-                'permissions'    => [
+                'permissions' => [
                     'network.view',
                     'zone.view',
                     'node.view', 'node.view_readings', 'node.view_alarms',
@@ -146,10 +152,10 @@ class PermissionSeeder extends Seeder
                 ],
             ],
             [
-                'name'           => 'Viewer',
-                'description'    => 'Read-only access to networks, nodes, and faults',
+                'name' => 'Viewer',
+                'description' => 'Read-only access to networks, nodes, and faults',
                 'is_system_role' => true,
-                'permissions'    => [
+                'permissions' => [
                     'network.view',
                     'zone.view',
                     'node.view', 'node.view_readings',
@@ -157,10 +163,10 @@ class PermissionSeeder extends Seeder
                 ],
             ],
             [
-                'name'           => 'QA Tester',
-                'description'    => 'Internal role — limited to test networks only',
+                'name' => 'QA Tester',
+                'description' => 'Internal role — limited to test networks only',
                 'is_system_role' => true,
-                'permissions'    => [
+                'permissions' => [
                     'network.view',
                     'zone.view',
                     'node.view', 'node.view_readings', 'node.view_alarms',
@@ -184,19 +190,19 @@ class PermissionSeeder extends Seeder
                 DB::table('roles')
                     ->where('id', $existingId)
                     ->update([
-                        'description'    => $roleData['description'] ?? null,
+                        'description' => $roleData['description'] ?? null,
                         'is_system_role' => $roleData['is_system_role'],
-                        'updated_at'     => $now,
+                        'updated_at' => $now,
                     ]);
 
                 $roleId = (int) $existingId;
             } else {
                 $roleId = (int) DB::table('roles')->insertGetId([
-                    'name'           => $roleData['name'],
-                    'description'    => $roleData['description'] ?? null,
+                    'name' => $roleData['name'],
+                    'description' => $roleData['description'] ?? null,
                     'is_system_role' => $roleData['is_system_role'],
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
+                    'created_at' => $now,
+                    'updated_at' => $now,
                 ]);
             }
 
@@ -216,7 +222,7 @@ class PermissionSeeder extends Seeder
                 );
             }
 
-            $this->command->info("Role seeded: {$roleData['name']} with " . $permissionIds->count() . " permissions.");
+            $this->command->info("Role seeded: {$roleData['name']} with ".$permissionIds->count().' permissions.');
         }
     }
 }

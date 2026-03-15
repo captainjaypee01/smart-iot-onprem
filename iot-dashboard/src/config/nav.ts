@@ -11,6 +11,8 @@ import {
     ShieldCheck,
     Activity,
     FireExtinguisher,
+    Users,
+    User,
 } from "lucide-react";
 import type { NavGroup } from "@/types/nav";
 
@@ -46,6 +48,8 @@ export const NAV_GROUPS: NavGroup[] = [
     {
         title: "System",
         items: [
+            { label: "Users", path: "/users", icon: Users, permission: "user.view" },
+            { label: "Profile", path: "/profile", icon: User },
             { label: "Access Control", path: "/access-control", icon: ShieldCheck },
             { label: "Settings", path: "/settings", icon: Settings },
         ],

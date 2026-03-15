@@ -33,4 +33,3 @@ class Permission extends Model
         );
     }
 }
-

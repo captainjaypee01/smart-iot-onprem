@@ -18,6 +18,8 @@ const FireExtinguisherPage = lazy(
 const NodesPage = lazy(() => import("@/pages/nodes/NodesPage"));
 const AlertsPage = lazy(() => import("@/pages/modules/AlertsPage"));
 const SettingsPage = lazy(() => import("@/pages/settings/SettingsPage"));
+const UsersPage = lazy(() => import("@/pages/users/UsersPage"));
+const ProfilePage = lazy(() => import("@/pages/profile/ProfilePage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -51,6 +53,8 @@ const AppRouter = () => (
                         <Route path="/nodes" element={<NodesPage />} />
                         <Route path="/alerts" element={<AlertsPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="/users" element={<UsersPage />} />
+                        <Route path="/profile" element={<ProfilePage />} />
                     </Route>
                 </Route>
 

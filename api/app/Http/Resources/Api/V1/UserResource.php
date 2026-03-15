@@ -1,22 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 // app/Http/Resources/Api/V1/UserResource.php
 // JSON shape for an authenticated user.
 // Must stay in sync with the TypeScript `User` interface in src/types/auth.ts.
-//
-// TS shape reference:
-//   id: string (uuid),  name, email, is_superadmin, is_active,
-//   company: { id: string, name, code } | null,
-//   role: { id: string, name, is_system_role, permissions: string[] } | null,
-//   last_login_at: string | null,
-//   created_at: string
-//
-// Integer primary keys (`id`) are intentionally omitted from all responses.
-// Only `uuid` is exposed externally — this prevents enumeration of users,
-// companies, and roles through predictable integer sequences.
+// Never expose: password, remember_token, or any token.
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,44 +17,37 @@ class UserResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
-     *
-     * Relationships expected to be loaded before calling:
-     *   - company
-     *   - role.permissions
+     * Shape per docs/specs/user-module-contract.md. Never expose password, remember_token, tokens.
      *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
-        $role = $this->role;
+        /** @var User $user */
+        $user = $this->resource;
 
         return [
-            // uuid exposed as `id` — the frontend never needs to know the integer PK
-            'id'            => $this->uuid,
-
-            'name'          => $this->name,
-            'email'         => $this->email,
-            'is_superadmin' => (bool) $this->is_superadmin,
-            'is_active'     => (bool) $this->is_active,
-
-            'company'       => $this->company ? [
-                'id'   => $this->company->id,   // integer fine here — not user-facing enumerable
-                'name' => $this->company->name,
-                'code' => $this->company->code,
-            ] : null,
-
-            'role'          => $role ? [
-                'id'             => $role->id,  // integer fine — role list is not sensitive
-                'name'           => $role->name,
-                'is_system_role' => (bool) $role->is_system_role,
-                'permissions'    => $role->permissions
-                    ->pluck('key')
-                    ->values()
-                    ->all(),
-            ] : null,
-
-            'last_login_at' => $this->last_login_at?->toISOString(),
-            'created_at'    => $this->created_at->toISOString(),
+            'id' => $user->id,
+            'uuid' => $user->uuid,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'name' => $user->name,
+            'email' => $user->email,
+            'username' => $user->username,
+            'is_superadmin' => (bool) $user->is_superadmin,
+            'is_active' => (bool) $user->is_active,
+            'status' => $user->status,
+            'company' => $this->whenLoaded('company', fn () => $user->company ? [
+                'id' => $user->company->id,
+                'name' => $user->company->name,
+                'code' => $user->company->code,
+            ] : null),
+            'role' => $this->whenLoaded('role', fn () => $user->role ? [
+                'id' => $user->role->id,
+                'name' => $user->role->name,
+            ] : null),
+            'last_login_at' => $user->last_login_at?->toIso8601String(),
+            'created_at' => $user->created_at->toIso8601String(),
         ];
     }
 }

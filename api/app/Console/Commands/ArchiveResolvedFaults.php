@@ -11,11 +11,10 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ArchiveResolvedFaults extends Command
 {
-    protected $signature   = 'faults:archive
+    protected $signature = 'faults:archive
                                 {--months=6 : Archive faults resolved more than this many months ago}
                                 {--chunk=500 : Number of rows to move per batch}
                                 {--dry-run : Preview how many rows would be archived}';
@@ -24,10 +23,10 @@ class ArchiveResolvedFaults extends Command
 
     public function handle(): int
     {
-        $months  = (int) $this->option('months');
-        $chunk   = (int) $this->option('chunk');
-        $dryRun  = $this->option('dry-run');
-        $cutoff  = now()->subMonths($months);
+        $months = (int) $this->option('months');
+        $chunk = (int) $this->option('chunk');
+        $dryRun = $this->option('dry-run');
+        $cutoff = now()->subMonths($months);
 
         $this->info("Archiving faults resolved before: {$cutoff->toDateTimeString()}");
 
@@ -38,6 +37,7 @@ class ArchiveResolvedFaults extends Command
                 ->where('resolved_at', '<', $cutoff)
                 ->count();
             $this->info("Would archive {$count} fault(s).");
+
             return Command::SUCCESS;
         }
 
@@ -59,7 +59,7 @@ class ArchiveResolvedFaults extends Command
             try {
                 DB::transaction(function () use ($ids) {
                     // Copy rows to history table with archived_at timestamp
-                    DB::statement("
+                    DB::statement('
                         INSERT INTO faults_history (
                             id, node_id, alarm_reading_id, fault_type_id,
                             description, fault_date, fault_cleared_at,
@@ -77,7 +77,7 @@ class ArchiveResolvedFaults extends Command
                             is_resolved, created_at, updated_at, NOW()
                         FROM faults
                         WHERE id = ANY(?)
-                    ", ['{' . implode(',', $ids) . '}']);
+                    ', ['{'.implode(',', $ids).'}']);
 
                     // Remove from live table only after successful copy
                     DB::table('faults')->whereIn('id', $ids)->delete();
@@ -89,8 +89,9 @@ class ArchiveResolvedFaults extends Command
                 $this->error("Archive batch failed: {$e->getMessage()}");
                 Log::error('ArchiveResolvedFaults failed', [
                     'error' => $e->getMessage(),
-                    'ids'   => $ids,
+                    'ids' => $ids,
                 ]);
+
                 return Command::FAILURE;
             }
         } while (count($ids) === $chunk); // Stop when we get a partial chunk

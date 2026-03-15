@@ -1,8 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
 // app/Http/Requests/Api/V1/Users/UpdateUserRequest.php
-// Validates the payload for updating an existing user
-// All fields are optional — only send what needs to change
 
 namespace App\Http\Requests\Api\V1\Users;
 
@@ -13,26 +13,57 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $authUser  = $this->user();
-        $targetUser = $this->route('user'); // User model via route model binding
+        $authUser = $this->user();
+        $targetUser = $this->route('user');
+
+         if (! $authUser->hasPermission('user.update')) {
+             return false;
+         }
 
         if ($authUser->is_superadmin) {
             return true;
         }
 
-        // Company admin can only update users within their own company
         return (int) $targetUser->company_id === (int) $authUser->company_id;
     }
 
     public function rules(): array
     {
-        $userId = $this->route('user')->id;
+        $user = $this->route('user');
+        $userId = $user->id;
+        $authUser = $this->user();
 
-        return [
-            'name'    => ['sometimes', 'string', 'max:255'],
-            // Ignore the current user's own email when checking uniqueness
-            'email'   => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($userId)],
-            'role_id' => ['sometimes', 'integer', 'exists:roles,id'],
+        // For superadmin, when company_id is being changed, validation for role_id
+        // must use the *new* company_id (so we can assign a company and role in one request).
+        $companyId = $authUser->is_superadmin
+            ? (int) ($this->input('company_id', $user->company_id))
+            : (int) $user->company_id;
+
+        $rules = [
+            'first_name' => ['sometimes', 'string', 'max:255'],
+            'last_name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($userId)],
+            'username' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('users', 'username')->ignore($userId)],
+            'role_id' => [
+                'sometimes',
+                'integer',
+                'exists:roles,id',
+                Rule::exists('role_companies', 'role_id')->where('company_id', $companyId),
+            ],
         ];
+
+        // company_id and status: only superadmin with specific permissions can send these.
+        if ($authUser->is_superadmin && $authUser->hasPermission('user.change_company')) {
+            $rules['company_id'] = ['sometimes', 'integer', 'exists:companies,id'];
+        } else {
+            $rules['company_id'] = ['prohibited'];
+        }
+        if ($authUser->is_superadmin && $authUser->hasPermission('user.change_status')) {
+            $rules['status'] = ['sometimes', 'string', Rule::in(['active', 'locked', 'disabled'])];
+        } else {
+            $rules['status'] = ['prohibited'];
+        }
+
+        return $rules;
     }
 }

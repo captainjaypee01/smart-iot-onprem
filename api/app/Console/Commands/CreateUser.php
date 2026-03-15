@@ -43,25 +43,25 @@ class CreateUser extends Command
         // ── Step 2: Name ──────────────────────────────────────────────────────
         $firstName = $this->askValid(
             question: 'First name',
-            rules:    ['required', 'string', 'max:255'],
+            rules: ['required', 'string', 'max:255'],
         );
 
         $middleName = $this->askValid(
             question: 'Middle name (optional)',
-            rules:    ['nullable', 'max:255', 'nullable'],
+            rules: ['nullable', 'max:255', 'nullable'],
         );
 
         $lastName = $this->askValid(
             question: 'Last name',
-            rules:    ['required', 'string', 'max:255'],
+            rules: ['required', 'string', 'max:255'],
         );
 
-        $fullName = trim($firstName . ' ' . $lastName);
+        $fullName = trim($firstName.' '.$lastName);
 
         // ── Step 3: Email ─────────────────────────────────────────────────────
         $email = $this->askValid(
             question: 'Email address',
-            rules:    ['required', 'email', 'unique:users,email'],
+            rules: ['required', 'email', 'unique:users,email'],
             messages: ['unique' => 'A user with this email already exists.'],
         );
 
@@ -78,6 +78,7 @@ class CreateUser extends Command
 
             if ($companies->isEmpty()) {
                 $this->components->error('No active companies found. Create a company first.');
+
                 return self::FAILURE;
             }
 
@@ -99,6 +100,7 @@ class CreateUser extends Command
 
             if ($roles->isEmpty()) {
                 $this->components->error('No roles found. Run db:seed first.');
+
                 return self::FAILURE;
             }
 
@@ -112,36 +114,37 @@ class CreateUser extends Command
 
         // ── Step 7: Confirm before creating ───────────────────────────────────
         $this->newLine();
-        $this->components->twoColumnDetail('Name',        $fullName);
-        $this->components->twoColumnDetail('Email',       $email);
-        $this->components->twoColumnDetail('SuperAdmin',  $isSuperAdmin ? 'Yes' : 'No');
+        $this->components->twoColumnDetail('Name', $fullName);
+        $this->components->twoColumnDetail('Email', $email);
+        $this->components->twoColumnDetail('SuperAdmin', $isSuperAdmin ? 'Yes' : 'No');
 
         if (! $isSuperAdmin) {
             $company = Company::find($companyId);
-            $role    = Role::find($roleId);
+            $role = Role::find($roleId);
             $this->components->twoColumnDetail('Company', "{$company->name} ({$company->code})");
-            $this->components->twoColumnDetail('Role',    $role->name);
+            $this->components->twoColumnDetail('Role', $role->name);
         }
 
         $this->newLine();
 
         if (! $this->components->confirm('Create this user?', true)) {
             $this->components->warn('Cancelled. No user was created.');
+
             return self::SUCCESS;
         }
 
         // ── Step 8: Create ────────────────────────────────────────────────────
         $user = User::create([
-            'first_name'        => $firstName,
-            'middle_name'       => $middleName ?: null,
-            'last_name'         => $lastName,
-            'name'              => $fullName,
-            'email'             => $email,
-            'company_id'        => $companyId,
-            'role_id'           => $roleId,
-            'password'          => Hash::make($password),
-            'is_superadmin'     => $isSuperAdmin,
-            'is_active'         => true,
+            'first_name' => $firstName,
+            'middle_name' => $middleName ?: null,
+            'last_name' => $lastName,
+            'name' => $fullName,
+            'email' => $email,
+            'company_id' => $companyId,
+            'role_id' => $roleId,
+            'password' => Hash::make($password),
+            'is_superadmin' => $isSuperAdmin,
+            'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
@@ -169,13 +172,13 @@ class CreateUser extends Command
     /**
      * Ask a question and re-prompt until the answer passes validation.
      *
-     * @param  array<string>       $rules
-     * @param  array<string>       $messages
+     * @param  array<string>  $rules
+     * @param  array<string>  $messages
      */
     private function askValid(
         string $question,
-        array  $rules,
-        array  $messages = [],
+        array $rules,
+        array $messages = [],
     ): string {
         while (true) {
             $answer = $this->components->ask($question);
@@ -215,6 +218,7 @@ class CreateUser extends Command
 
             if (strlen($password) < 8) {
                 $this->components->error('Password must be at least 8 characters.');
+
                 continue;
             }
 
@@ -222,6 +226,7 @@ class CreateUser extends Command
 
             if ($password !== $confirm) {
                 $this->components->error('Passwords do not match. Please try again.');
+
                 continue;
             }
 

@@ -68,13 +68,13 @@ class MicrosoftCallbackController extends Controller
         // Upsert social_accounts — uses integer $user->id for the FK (internal only)
         SocialAccount::updateOrCreate(
             [
-                'provider'         => 'microsoft',
+                'provider' => 'microsoft',
                 'provider_user_id' => $socialUser->getId(),
             ],
             [
-                'user_id'          => $user->id,
-                'access_token'     => $socialUser->token,
-                'refresh_token'    => $socialUser->refreshToken,
+                'user_id' => $user->id,
+                'access_token' => $socialUser->token,
+                'refresh_token' => $socialUser->refreshToken,
                 'token_expires_at' => $socialUser->expiresIn
                     ? now()->addSeconds($socialUser->expiresIn)
                     : null,

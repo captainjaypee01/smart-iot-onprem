@@ -13,6 +13,5 @@ readonly class UpdateCommandStatusDTO
         public CommandStatus $status,
         public ?string $errorCode = null,
         public ?string $errorMessage = null,
-    ) {
-    }
+    ) {}
 }
