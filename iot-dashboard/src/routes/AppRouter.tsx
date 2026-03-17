@@ -20,6 +20,9 @@ const AlertsPage = lazy(() => import("@/pages/modules/AlertsPage"));
 const SettingsPage = lazy(() => import("@/pages/settings/SettingsPage"));
 const UsersPage = lazy(() => import("@/pages/users/UsersPage"));
 const ProfilePage = lazy(() => import("@/pages/profile/ProfilePage"));
+const PermissionsPage = lazy(
+    () => import("@/pages/permissions/PermissionsPage"),
+);
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -33,33 +36,37 @@ const AppRouter = () => (
         <AuthBootstrap>
             <Suspense fallback={<PageLoader />}>
                 <Routes>
-                {/* ── Public ──────────────────────────────────────────── */}
-                <Route path="/login" element={<LoginPage />} />
+                    {/* ── Public ──────────────────────────────────────────── */}
+                    <Route path="/login" element={<LoginPage />} />
 
-                {/* Handles the redirect back from Microsoft OAuth */}
-                <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                    {/* Handles the redirect back from Microsoft OAuth */}
+                    <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-                {/* Invite link from welcome email — lets new users set a password */}
-                <Route path="/set-password" element={<SetPasswordPage />} />
+                    {/* Invite link from welcome email — lets new users set a password */}
+                    <Route path="/set-password" element={<SetPasswordPage />} />
 
-                {/* ── Protected — all wrapped in DashboardLayout ──────── */}
-                <Route element={<PrivateRoute />}>
-                    <Route element={<DashboardLayout />}>
-                        <Route path="/" element={<DashboardPage />} />
-                        <Route
-                            path="/fire-extinguisher"
-                            element={<FireExtinguisherPage />}
-                        />
-                        <Route path="/nodes" element={<NodesPage />} />
-                        <Route path="/alerts" element={<AlertsPage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="/users" element={<UsersPage />} />
-                        <Route path="/profile" element={<ProfilePage />} />
+                    {/* ── Protected — all wrapped in DashboardLayout ──────── */}
+                    <Route element={<PrivateRoute />}>
+                        <Route element={<DashboardLayout />}>
+                            <Route path="/" element={<DashboardPage />} />
+                            <Route
+                                path="/fire-extinguisher"
+                                element={<FireExtinguisherPage />}
+                            />
+                            <Route path="/nodes" element={<NodesPage />} />
+                            <Route path="/alerts" element={<AlertsPage />} />
+                            <Route path="/settings" element={<SettingsPage />} />
+                            <Route
+                                path="/permissions"
+                                element={<PermissionsPage />}
+                            />
+                            <Route path="/users" element={<UsersPage />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                        </Route>
                     </Route>
-                </Route>
 
-                {/* ── Fallback ─────────────────────────────────────────── */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                    {/* ── Fallback ─────────────────────────────────────────── */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Suspense>
         </AuthBootstrap>

@@ -66,6 +66,12 @@ class PermissionSeeder extends Seeder
             ['module' => 'company', 'key' => 'company.create',         'display_name' => 'Create Company'],
             ['module' => 'company', 'key' => 'company.update',         'display_name' => 'Update Company'],
             ['module' => 'company', 'key' => 'company.deactivate',     'display_name' => 'Deactivate Company'],
+
+            // ── Permission ───────────────────────────────────────────
+            ['module' => 'permission', 'key' => 'permission.view',   'display_name' => 'View Permissions'],
+            ['module' => 'permission', 'key' => 'permission.create', 'display_name' => 'Create Permission'],
+            ['module' => 'permission', 'key' => 'permission.update', 'display_name' => 'Update Permission'],
+            ['module' => 'permission', 'key' => 'permission.delete', 'display_name' => 'Delete Permission'],
         ];
 
         foreach ($permissions as &$p) {
@@ -79,7 +85,7 @@ class PermissionSeeder extends Seeder
             ['display_name', 'module', 'updated_at']
         );
 
-        $this->command->info('Permissions seeded: '.count($permissions).' entries.');
+        $this->command->info('Permissions seeded: ' . count($permissions) . ' entries.');
 
         // ── Default System Roles ──────────────────────────────────────
         $this->seedRoles();
@@ -103,7 +109,9 @@ class PermissionSeeder extends Seeder
                 'permissions' => [
                     'network.view',
                     'zone.view',
-                    'node.view', 'node.view_readings', 'node.view_alarms',
+                    'node.view',
+                    'node.view_readings',
+                    'node.view_alarms',
                     'fault.view',
                     'user.view',
                     'company.view',
@@ -116,13 +124,33 @@ class PermissionSeeder extends Seeder
                 'is_system_role' => true,
                 'permissions' => [
                     'network.view',
-                    'zone.view', 'zone.create', 'zone.update', 'zone.delete',
-                    'zone.assign_user', 'zone.remove_user', 'zone.assign_node', 'zone.remove_node',
-                    'node.view', 'node.create', 'node.update', 'node.view_readings', 'node.view_alarms',
-                    'fault.view', 'fault.investigate', 'fault.verify', 'fault.resolve',
-                    'user.view', 'user.create', 'user.update', 'user.delete', 'user.disable',
-                    'user.resend_invite', 'user.change_status', 'user.change_company',
-                    'role.view', 'role.assign_user',
+                    'zone.view',
+                    'zone.create',
+                    'zone.update',
+                    'zone.delete',
+                    'zone.assign_user',
+                    'zone.remove_user',
+                    'zone.assign_node',
+                    'zone.remove_node',
+                    'node.view',
+                    'node.create',
+                    'node.update',
+                    'node.view_readings',
+                    'node.view_alarms',
+                    'fault.view',
+                    'fault.investigate',
+                    'fault.verify',
+                    'fault.resolve',
+                    'user.view',
+                    'user.create',
+                    'user.update',
+                    'user.delete',
+                    'user.disable',
+                    'user.resend_invite',
+                    'user.change_status',
+                    'user.change_company',
+                    'role.view',
+                    'role.assign_user',
                     'company.view',
                 ],
             ],
@@ -132,11 +160,20 @@ class PermissionSeeder extends Seeder
                 'is_system_role' => true,
                 'permissions' => [
                     'network.view',
-                    'zone.view', 'zone.create', 'zone.update',
-                    'zone.assign_user', 'zone.remove_user',
-                    'zone.assign_node', 'zone.remove_node',
-                    'node.view', 'node.view_readings', 'node.view_alarms',
-                    'fault.view', 'fault.investigate', 'fault.verify', 'fault.resolve',
+                    'zone.view',
+                    'zone.create',
+                    'zone.update',
+                    'zone.assign_user',
+                    'zone.remove_user',
+                    'zone.assign_node',
+                    'zone.remove_node',
+                    'node.view',
+                    'node.view_readings',
+                    'node.view_alarms',
+                    'fault.view',
+                    'fault.investigate',
+                    'fault.verify',
+                    'fault.resolve',
                     'user.view',
                 ],
             ],
@@ -147,8 +184,12 @@ class PermissionSeeder extends Seeder
                 'permissions' => [
                     'network.view',
                     'zone.view',
-                    'node.view', 'node.view_readings', 'node.view_alarms',
-                    'fault.view', 'fault.investigate', 'fault.verify',
+                    'node.view',
+                    'node.view_readings',
+                    'node.view_alarms',
+                    'fault.view',
+                    'fault.investigate',
+                    'fault.verify',
                 ],
             ],
             [
@@ -158,7 +199,8 @@ class PermissionSeeder extends Seeder
                 'permissions' => [
                     'network.view',
                     'zone.view',
-                    'node.view', 'node.view_readings',
+                    'node.view',
+                    'node.view_readings',
                     'fault.view',
                 ],
             ],
@@ -169,8 +211,12 @@ class PermissionSeeder extends Seeder
                 'permissions' => [
                     'network.view',
                     'zone.view',
-                    'node.view', 'node.view_readings', 'node.view_alarms',
-                    'fault.view', 'fault.investigate', 'fault.verify',
+                    'node.view',
+                    'node.view_readings',
+                    'node.view_alarms',
+                    'fault.view',
+                    'fault.investigate',
+                    'fault.verify',
                 ],
             ],
         ];
@@ -207,22 +253,22 @@ class PermissionSeeder extends Seeder
             }
 
             $permissionIds = collect($permissionKeys)
-                ->filter(fn (string $key) => $allPermissionIds->has($key))
-                ->map(fn (string $key) => (int) $allPermissionIds[$key])
+                ->filter(fn(string $key) => $allPermissionIds->has($key))
+                ->map(fn(string $key) => (int) $allPermissionIds[$key])
                 ->values();
 
             DB::table('role_permissions')->where('role_id', $roleId)->delete();
 
             if ($permissionIds->isNotEmpty()) {
                 DB::table('role_permissions')->insert(
-                    $permissionIds->map(fn (int $permissionId) => [
+                    $permissionIds->map(fn(int $permissionId) => [
                         'role_id' => $roleId,
                         'permission_id' => $permissionId,
                     ])->all()
                 );
             }
 
-            $this->command->info("Role seeded: {$roleData['name']} with ".$permissionIds->count().' permissions.');
+            $this->command->info("Role seeded: {$roleData['name']} with " . $permissionIds->count() . ' permissions.');
         }
     }
 }

@@ -45,10 +45,30 @@ routes/
 
 ## Controller Patterns
 
+### Single controller per module
+
+For most modules, prefer a **single controller class per resource** that owns the
+standard CRUD actions (index, show, store, update, destroy) and any closely related
+behaviour. This keeps routing discoverable and keeps cross-cutting concerns (like
+permission checks) in one place.
+
+```php
+// ✅ One controller per module
+class PermissionController extends Controller
+{
+    public function index(): JsonResponse { ... }   // GET    /permissions (grouped)
+    public function options(): JsonResponse { ... } // GET    /permissions/options
+    public function show(Permission $permission): PermissionResource { ... }
+    public function store(StorePermissionRequest $request): JsonResponse { ... }
+    public function update(UpdatePermissionRequest $request, Permission $permission): PermissionResource { ... }
+    public function destroy(Request $request, Permission $permission): JsonResponse { ... }
+}
+```
+
 ### Single-Action Controllers (`__invoke`)
 
 Use for routes that do **one isolated thing** and don't share logic with sibling routes.
-This is the preferred pattern for auth routes and one-off state-change actions.
+This remains the preferred pattern for auth routes and one-off state-change actions.
 
 ```php
 // ✅ Use __invoke for isolated actions
@@ -66,9 +86,10 @@ Route::post('/auth/login', LoginController::class);
 - One-off user actions: `ResendInviteController`, `DisableUserController`
 - Any action that doesn't belong in a standard CRUD flow
 
-### Resource Controllers (Named Methods)
+### Resource-like Controllers (Named Methods)
 
-Use for modules with standard CRUD operations. Register with `Route::apiResource`.
+Use for modules with standard CRUD operations. You can register with `Route::apiResource`
+or with explicit routes, but keep all core actions on a single controller.
 
 ```php
 // ✅ Use named methods for CRUD modules
@@ -89,7 +110,9 @@ Route::post('/users/{user}/resend-invite', ResendInviteController::class);
 Route::post('/users/{user}/disable', DisableUserController::class);
 ```
 
-**Use resource controllers for:** `UserController`, `CompanyController`, `NetworkController`, `RoleController`, and any future CRUD modules.
+**Use single controllers for:** `UserController`, `CompanyController`, `NetworkController`,
+`RoleController`, `PermissionController`, and any future CRUD modules. Reserve single-action
+controllers for auth and truly one-off operations.
 
 ---
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
 use App\Http\Controllers\Api\V1\Companies\IndexCompaniesController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Roles\IndexRolesController;
+use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
@@ -49,6 +50,14 @@ Route::prefix('v1')->group(function () {
         // Reserved: GET /companies and GET /roles for future paginated Role/Company modules.
         Route::get('/companies/options', IndexCompaniesController::class);
         Route::get('/roles/options', IndexRolesController::class);
+
+        // ─── Permissions ───────────────────────────────────────────────
+        Route::get('/permissions', [PermissionController::class, 'index']);
+        Route::get('/permissions/options', [PermissionController::class, 'options']);
+        Route::get('/permissions/{permission}', [PermissionController::class, 'show']);
+        Route::post('/permissions', [PermissionController::class, 'store']);
+        Route::put('/permissions/{permission}', [PermissionController::class, 'update']);
+        Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy']);
 
         // ─── Users ───────────────────────────────────────────────────
         // Standard CRUD

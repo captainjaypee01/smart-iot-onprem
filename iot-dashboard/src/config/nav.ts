@@ -50,7 +50,12 @@ export const NAV_GROUPS: NavGroup[] = [
         items: [
             { label: "Users", path: "/users", icon: Users, permission: "user.view" },
             { label: "Profile", path: "/profile", icon: User },
-            { label: "Access Control", path: "/access-control", icon: ShieldCheck },
+            {
+                label: "Permissions",
+                path: "/permissions",
+                icon: ShieldCheck,
+                permission: "permission.view",
+            },
             { label: "Settings", path: "/settings", icon: Settings },
         ],
     },

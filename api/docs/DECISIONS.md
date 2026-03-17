@@ -248,24 +248,26 @@ The callback receives a browser redirect from Microsoft, not an API fetch from t
 
 ---
 
-## ADR-013: Single-Action Controllers for Auth and One-Off Routes
+## ADR-013: Controller Style — Single Controllers vs Single-Action
 
-**Status**: Accepted
-**Date**: 2026-03-10
-**Context**: Auth routes and one-off user actions don't fit the standard CRUD pattern.
+**Status**: Accepted  
+**Date**: 2026-03-10 (revised 2026-03-17)  
+**Context**: We need a consistent pattern for organising controllers across modules (Users, Roles, Permissions, etc.) while keeping auth and one-off actions simple.
 
-**Decision**: Use `__invoke` single-action controllers for auth routes and one-off actions. Use resource controllers (`apiResource`) for CRUD modules.
+**Decision**:
+- Prefer **one controller per module/resource** (e.g. `UserController`, `RoleController`, `PermissionController`) with named methods for standard CRUD and closely related actions.
+- Use `__invoke` **single-action controllers only for**:
+  - Auth routes (Login, Logout, Me, MicrosoftRedirect, MicrosoftCallback, SetPassword)
+  - One-off state changes (ResendInvite, DisableUser, etc.) that don't belong in the main CRUD flow.
 
-**Rule**:
-- Auth controllers → always `__invoke`
-- One-off state changes (ResendInvite, DisableUser) → always `__invoke`
-- CRUD modules (UserController, CompanyController, etc.) → named methods + `apiResource`
+**Rules**:
+- CRUD-style modules → single controller with named methods (`index`, `show`, `store`, `update`, `destroy`, `options`, etc.).
+- Auth and one-off actions → single-action controllers registered directly on the route.
 
 **Rationale**:
-- Single responsibility is clear — one class, one job
-- Route registration is cleaner (`Route::post('/login', LoginController::class)`)
-- Resource controllers with `apiResource` reduce boilerplate for CRUD
+- Keeps module behaviour discoverable in one place (especially for permissions and role/permission relationships).
+- Reduces scattering of related logic across many files.
+- Maintains simplicity for auth flows and state changes where single-action controllers shine.
 
 **Consequences**:
-- More controller files for auth, but each is small and focused
-- CRUD modules stay in one file per resource
+- New modules should start with a single controller; introduce single-action controllers only when the action is clearly orthogonal to CRUD.
