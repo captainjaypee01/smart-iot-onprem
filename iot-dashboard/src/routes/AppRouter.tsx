@@ -23,6 +23,7 @@ const ProfilePage = lazy(() => import("@/pages/profile/ProfilePage"));
 const PermissionsPage = lazy(
     () => import("@/pages/permissions/PermissionsPage"),
 );
+const NodeTypesPage = lazy(() => import("@/pages/node-types/NodeTypesPage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -60,6 +61,7 @@ const AppRouter = () => (
                                 path="/permissions"
                                 element={<PermissionsPage />}
                             />
+                            <Route path="/node-types" element={<NodeTypesPage />} />
                             <Route path="/users" element={<UsersPage />} />
                             <Route path="/profile" element={<ProfilePage />} />
                         </Route>

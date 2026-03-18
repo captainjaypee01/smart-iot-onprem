@@ -10,13 +10,12 @@ export const APP_DESCRIPTION = "On-Premise IoT Monitoring Platform" as const;
 const normalizeApiBaseUrl = (input: string): string => {
   const base = input.trim().replace(/\/+$/, "");
 
-  // Prefer a single canonical base for all API calls: {host}/api/v1
-  if (/\/api\/v\d+$/.test(base)) return base;
-  if (base.endsWith("/api")) return `${base}/v1`;
-  if (base.endsWith("/v1")) return base;
+  // Prefer a single canonical base for all API calls: {host}/api
+  if (base.endsWith("/api")) return base;
+  if (/\/api\/v\d+$/.test(base)) return base.replace(/\/v\d+$/, "");
 
-  // If user provided only the host (e.g. http://localhost:8000), append /api/v1
-  return `${base}/api/v1`;
+  // If user provided only the host (e.g. http://localhost:8000), append /api
+  return `${base}/api`;
 };
 
 export const API_BASE_URL = normalizeApiBaseUrl(

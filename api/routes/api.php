@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Companies\IndexCompaniesController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Roles\IndexRolesController;
 use App\Http\Controllers\Api\V1\PermissionController;
+use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
 use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
@@ -46,6 +47,10 @@ Route::prefix('v1')->group(function () {
         });
 
         // ── Protected API routes go below this line ───────────────────────────
+        // Node Types
+        Route::get('/node-types/options', [NodeTypeController::class, 'options']);
+        Route::apiResource('node-types', NodeTypeController::class);
+
         // ─── Options lists (dropdowns for user create/edit; not paginated) ───
         // Reserved: GET /companies and GET /roles for future paginated Role/Company modules.
         Route::get('/companies/options', IndexCompaniesController::class);
