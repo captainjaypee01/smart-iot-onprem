@@ -1,5 +1,6 @@
 # Project documentation
 
+- **[BLUEPRINT.md](BLUEPRINT.md)** — High-level system blueprint and entrypoint for humans and AI agents (components, flows, contracts, and how to use docs in prompts).
 - **[specs/user-module-contract.md](specs/user-module-contract.md)** — Shared API ↔ frontend contract for the User module (endpoints, request/response shapes, business rules). Keep in sync when changing user endpoints or resources.
 - **[ENV_FILES.md](ENV_FILES.md)** — Which `.env` files are used by Docker Compose and by each app (API, dashboard).
 - **contracts/** — MQTT and backend contracts:

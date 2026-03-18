@@ -1,4 +1,4 @@
-# Node Type Module — Shared Contract
+# Company Module — Shared Contract
 
 Both API and frontend must treat this as immutable. Update this doc when the contract changes.
 
@@ -6,170 +6,193 @@ Both API and frontend must treat this as immutable. Update this doc when the con
 
 ## Overview
 
-The Node Type module defines the categories of IoT nodes that can be deployed in a network. Each node type describes a physical device (e.g. Fire Extinguisher, Smoke Detector) and declares up to **8 sensor slots** — each slot has a name and an optional unit (e.g. `Temperature` / `°C`). Node types are **global** — shared across all companies and networks. This module is **superadmin-only** for CRUD; the `/options` endpoint is accessible to all authenticated users.
+The Company module manages the tenant companies in the system. Each company groups users, roles, and networks together. A company is the root of the access model — users belong to a company, roles are scoped to a company via `role_companies`, and networks are assigned to a company via `company_networks`.
+
+This module has two access faces:
+- **Superadmin CRUD** — create, view, update, and delete any company
+- **Company admin self-edit** — a company admin can update their own company's details only (limited fields)
 
 ```
-NodeType  ──(network_node_types)──  Network
-NodeType  ──(node.node_type_id)──   Node (IoT device)
+Company ──(company_networks)──  Network   which networks are available to this company
+Company ──(users.company_id)──  User      users belong to a company
+Company ──(role_companies)──    Role      roles are scoped to a company
+Role    ──(role_networks)──     Network   which networks a role can see
 ```
 
 ---
 
-## ⚠ Breaking Change — Network Module Contract Update
+## Network Access Control Design
 
-> The `network_node_types` pivot must be updated simultaneously with this spec.
-> The `node_types` field in `NetworkResource` changes shape. The updates below supersede the relevant sections of the Network Module Contract.
+### The Goal
+> User A (Role 1) can view Network 1 & 2.
+> User B (Role 2) can view Network 2 only.
 
-### Migration delta for `network_node_types`
+### Two pivot tables — already in the DB
 
-Replace `node_type_key` (string) with `node_type_id` (FK to `node_types`).
+**`company_networks`** (new — created by this module's migration)
+Declares which networks are **available** to a company.
+Managed by superadmin when creating or editing a company.
 
-> **Dev environments:** Acceptable to drop and recreate both tables rather than running the multi-step migration.
+**`role_networks`** (`0001_01_01_000009` — already exists)
+Declares which of the company's available networks a **role** can access.
+Managed when creating or editing a role (Role module).
+**Constraint:** a network can only appear in `role_networks` for a role if that network is already in `company_networks` for that role's company. The API enforces this on every role create/update.
 
-```php
-// New migration: add_node_type_id_to_network_node_types_table.php
-
-// Step 1 — add FK column (nullable first to allow backfill)
-Schema::table('network_node_types', function (Blueprint $table) {
-    $table->foreignId('node_type_id')
-        ->nullable()
-        ->constrained('node_types')
-        ->cascadeOnDelete();
-});
-
-// Step 2 — backfill if dev data exists (match by name or slug)
-
-// Step 3 — drop old string column and old primary key
-Schema::table('network_node_types', function (Blueprint $table) {
-    $table->dropColumn('node_type_key');
-    $table->dropPrimary(); // was ['network_id', 'node_type_key']
-});
-
-// Step 4 — add new composite PK and make FK non-nullable
-Schema::table('network_node_types', function (Blueprint $table) {
-    $table->primary(['network_id', 'node_type_id']);
-    // Make non-nullable via separate statement or fresh migration
-});
+### Flow
 ```
+Superadmin assigns Networks 1, 2, 3 to Company A  →  company_networks
+Role "Operator" in Company A gets Networks 1 & 2  →  role_networks
+Role "Viewer"   in Company A gets Network 2 only  →  role_networks
 
-### Updated `NetworkResource` — `node_types` field
-
-**Old shape (string enum keys — REMOVE):**
-```json
-"node_types": ["FIRE_EXTINGUISHER", "SMOKE_DETECTOR"]
+User A has Role "Operator"  →  sees Networks 1 & 2
+User B has Role "Viewer"    →  sees Network 2 only
 ```
-
-**New shape (objects from `node_types` table — USE THIS):**
-```json
-"node_types": [
-  { "id": 1, "name": "Fire Extinguisher", "area_id": "A1B2C3" },
-  { "id": 3, "name": "Smoke Detector",    "area_id": "D4E5F6" }
-]
-```
-
-### Updated TypeScript — `src/types/network.ts`
-
-```ts
-// ADD this interface:
-export interface NetworkNodeType {
-  id: number;
-  name: string;
-  area_id: string;
-}
-
-// In Network interface — REPLACE:
-//   node_types: NodeTypeKey[];
-// WITH:
-  node_types: NetworkNodeType[];
-
-// In StoreNetworkPayload / UpdateNetworkPayload — REPLACE:
-//   node_types?: NodeTypeKey[];
-// WITH:
-  node_types?: number[];  // array of node_type_id values
-```
-
-### Constants cleanup — `src/constants/nodeTypes.ts`
-
-Remove these exports (placeholders for the old enum approach):
-```ts
-// DELETE:
-export const NODE_TYPE_LABELS   // was static map
-export const NODE_TYPE_OPTIONS  // was derived from NODE_TYPE_LABELS
-// also remove: NodeTypeKey type import/re-export
-```
-
-`DIAGNOSTIC_INTERVAL_OPTIONS`, `ALARM_THRESHOLD_UNIT_OPTIONS`, and `WIREPAS_VERSION_OPTIONS` remain unchanged.
-
-Node type options are now fetched at runtime via `GET /api/v1/node-types/options`.
 
 ---
 
 ## Auth Mechanism
 
 Same as all other modules — cookie-based Sanctum (ADR-001).
-- **CRUD endpoints** (`index`, `show`, `store`, `update`, `destroy`): require `is_superadmin = true`. Non-superadmin receives `403`.
-- **`/options` endpoint**: requires `auth:sanctum` only — accessible to all authenticated users.
+
+| Endpoint | Who can access |
+|----------|----------------|
+| `GET /companies` (paginated index) | Superadmin only |
+| `GET /companies/{id}` | Superadmin OR company admin of that company |
+| `POST /companies` | Superadmin only |
+| `PUT /companies/{id}` | Superadmin OR company admin of that company (field restrictions apply) |
+| `DELETE /companies/{id}` | Superadmin only |
+| `GET /companies/options` | All authenticated users |
+| `POST /companies/{id}/logo` | Superadmin OR company admin of that company |
 
 ---
 
-## Migration (Keep As-Is — No Changes)
+## Existing Migration (Keep As-Is)
 
-The existing migration is correct. No modifications required.
+`0001_01_01_000000_create_companies_table.php` — **do not modify this file**.
 
+Current columns:
 ```
-node_types
+companies
 ├── id
-├── name              string       — display name e.g. "Fire Extinguisher"
-├── area_id           string(10), unique — raw hex, no prefix, stored uppercase e.g. "A1B2C3"
-├── description       text, nullable
-├── sensor_1_name     string, nullable
-├── sensor_1_unit     string, nullable
-├── sensor_2_name     string, nullable
-├── sensor_2_unit     string, nullable
-│   ... (slots 3–7 same pattern)
-├── sensor_8_name     string, nullable
-├── sensor_8_unit     string, nullable
+├── name                 string
+├── code                 string(20), unique   — short identifier e.g. ACME
+├── address              text, nullable
+├── contact_email        string, nullable
+├── contact_phone        string(30), nullable
+├── is_active            boolean, default true
 └── timestamps
 ```
 
-**Schema design notes:**
-- **8 sensor slots is the hard maximum.** The flat column design is intentional — no separate sensors table.
-- A sensor slot is **defined** when `sensor_N_name` is not null. `sensor_N_unit` is optional even when name is set.
-- Slots must be filled **contiguously from slot 1** — slot N cannot be set if slot N-1 is empty.
-- Raw flat columns are **never exposed** in the API response — the `sensors` array is the canonical shape.
+---
+
+## New Migration — Add Columns + company_networks Pivot
+
+Create a new migration file that:
+1. Adds the missing columns to `companies` via `Schema::table`
+2. Creates the `company_networks` pivot table
+
+```php
+// database/migrations/xxxx_add_fields_to_companies_and_create_company_networks.php
+
+public function up(): void
+{
+    // Step 1: Add missing columns to companies
+    Schema::table('companies', function (Blueprint $table) {
+        $table->string('timezone', 100)->default('UTC')
+            ->after('code')
+            ->comment('PHP timezone string e.g. Asia/Singapore');
+
+        $table->string('logo_path')->nullable()
+            ->after('timezone')
+            ->comment('Path on disk/S3. Served as signed URL.');
+
+        $table->unsignedTinyInteger('login_attempts')->default(5)
+            ->after('logo_path')
+            ->comment('Max failed login attempts before lockout. Range 1-10.');
+
+        $table->boolean('is_2fa_enforced')->default(false)
+            ->after('login_attempts');
+
+        $table->boolean('is_demo')->default(false)
+            ->after('is_2fa_enforced');
+
+        $table->boolean('is_active_zone')->default(true)
+            ->after('is_demo');
+
+        $table->unsignedSmallInteger('custom_alarm_threshold')->nullable()
+            ->after('is_active_zone')
+            ->comment('Overrides network alarm_threshold. Null = use network default.');
+
+        $table->string('custom_alarm_threshold_unit', 10)->nullable()
+            ->after('custom_alarm_threshold')
+            ->comment('Allowed: minutes, hours. Null = use network default.');
+    });
+
+    // Step 2: Create company_networks pivot
+    Schema::create('company_networks', function (Blueprint $table) {
+        $table->foreignId('company_id')
+            ->constrained('companies')
+            ->cascadeOnDelete();
+        $table->foreignId('network_id')
+            ->constrained('networks')
+            ->cascadeOnDelete();
+        $table->primary(['company_id', 'network_id']);
+    });
+}
+
+public function down(): void
+{
+    Schema::dropIfExists('company_networks');
+
+    Schema::table('companies', function (Blueprint $table) {
+        $table->dropColumn([
+            'timezone', 'logo_path', 'login_attempts', 'is_2fa_enforced',
+            'is_demo', 'is_active_zone',
+            'custom_alarm_threshold', 'custom_alarm_threshold_unit',
+        ]);
+    });
+}
+```
+
+**Migration ordering note:** This migration must run after:
+- `0001_01_01_000000_create_companies_table.php`
+- `0001_01_01_000008_create_networks_table.php` (networks must exist for the FK)
 
 ---
 
-## Area ID Format
+## Complete Companies Table (After Both Migrations)
 
-| Detail | Value |
-|--------|-------|
-| Format | Raw hex string — **no `0x` prefix** |
-| Characters | Hexadecimal only: `0-9`, `a-f`, `A-F` |
-| Max length | 10 characters (string(10) column) |
-| Storage | Normalised to **uppercase** |
-| Example | Input `abc123` → stored and returned as `ABC123` |
-| Uniqueness | Unique constraint on `area_id` column |
-| Entry | **Manual only** — no auto-generate. Maps to a fixed mesh-level identifier defined by the hardware vendor. |
-
-**Regex for validation:** `/^[0-9A-Fa-f]{1,10}$/`
-
-> Note: this format is intentionally different from `network_address` which uses the `0x` prefix. `area_id` is a raw hex identifier only.
+```
+companies
+├── id
+├── name                          string
+├── code                          string(20), unique
+├── address                       text, nullable
+├── contact_email                 string, nullable
+├── contact_phone                 string(30), nullable
+├── timezone                      string(100), default 'UTC'
+├── logo_path                     string, nullable
+├── login_attempts                unsignedTinyInt, default 5
+├── is_2fa_enforced               boolean, default false
+├── is_demo                       boolean, default false
+├── is_active_zone                boolean, default true
+├── is_active                     boolean, default true
+├── custom_alarm_threshold        unsignedSmallInt, nullable
+├── custom_alarm_threshold_unit   string(10), nullable
+└── timestamps
+```
 
 ---
 
-## Sensor Slot Rules
+## Existing Pivots (Already in DB — No Changes)
 
-| Rule | Detail |
-|------|--------|
-| Max slots | 8 (hard limit — schema enforces via flat columns) |
-| Min slots | 0 — a node type can have no sensors |
-| Fill order | Contiguous from slot 1. Slot N cannot be set if slot N-1 is empty. API enforces; UI enforces naturally. |
-| `sensor_N_name` | Required to define a slot. Max 100 chars. |
-| `sensor_N_unit` | Optional within a defined slot. Max 50 chars. Can be `null` (binary / on-off sensors). |
-| Clearing a slot | Set `sensor_N_name` to `null`. API cascade-clears all higher-numbered slots. |
+| Migration file | Pivot | Status |
+|----------------|-------|--------|
+| `0001_01_01_000006` | `role_companies` | ✅ Exists, no changes |
+| `0001_01_01_000009` | `role_networks` | ✅ Exists, no changes |
+| `0001_01_01_000008` | `network_node_types` | ✅ Exists (in networks migration), no changes |
 
-**Cascade-clear example:** If a PUT sets `sensor_3_name: null`, the API automatically clears slots 3–8, even if the payload specified values for slots 4–8.
+`company_networks` is **new** — created by the migration above.
 
 ---
 
@@ -177,209 +200,314 @@ node_types
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | /api/v1/node-types | sanctum + superadmin | List node types (paginated) |
-| GET | /api/v1/node-types/{id} | sanctum + superadmin | Single node type |
-| POST | /api/v1/node-types | sanctum + superadmin | Create node type |
-| PUT | /api/v1/node-types/{id} | sanctum + superadmin | Update node type |
-| DELETE | /api/v1/node-types/{id} | sanctum + superadmin | Delete (if not in use) |
-| GET | /api/v1/node-types/options | **sanctum only** | Flat list for dropdowns — all authenticated users |
+| GET | /api/v1/companies | sanctum + superadmin | List companies (paginated) |
+| GET | /api/v1/companies/{id} | sanctum + superadmin or own company admin | Single company |
+| POST | /api/v1/companies | sanctum + superadmin | Create company |
+| PUT | /api/v1/companies/{id} | sanctum + superadmin or own company admin | Update company |
+| DELETE | /api/v1/companies/{id} | sanctum + superadmin | Delete company |
+| GET | /api/v1/companies/options | sanctum | Flat list for dropdowns — all auth users |
+| POST | /api/v1/companies/{id}/logo | sanctum + superadmin or own company admin | Upload logo |
 
 **Notes:**
-- `/options` is **not** superadmin-gated. Non-superadmin roles (e.g. company admin configuring a network) need to select from available node types.
-- Node types are global — no company scoping on any endpoint.
+- `GET /companies/options` route must be registered **before** `apiResource` to avoid Laravel matching `options` as an `{id}` parameter.
+- `role_companies` and `role_networks` are managed by the **Role module**, not here.
 
 ---
 
-## GET /api/v1/node-types/options
+## GET /api/v1/companies/options
 
-Accessible to all authenticated users. Used by the Network form's node type multi-select.
+Accessible to all authenticated users. Used by the User create/edit form to pick a company.
+
+**Scoping:**
+- Superadmin: all active companies
+- Company admin: their own company only
 
 ```json
 {
   "data": [
-    { "id": 1, "name": "Fire Extinguisher", "area_id": "A1B2C3" },
-    { "id": 2, "name": "Temperature Sensor", "area_id": "D4E5F6" }
+    { "id": 1, "name": "Acme Corp", "code": "ACME" },
+    { "id": 2, "name": "Globex",    "code": "GLOBEX" }
   ]
 }
 ```
 
 ---
 
-## Pagination (GET /api/v1/node-types)
+## Pagination (GET /api/v1/companies)
 
-Accepts `?page` and `?per_page` (1–100, default 15).
+Superadmin only. Accepts `?page` and `?per_page` (1–100, default 15).
 
 | Query param | Type | Description |
 |-------------|------|-------------|
-| `search` | string | Full-text on `name`, `area_id`, `description` |
+| `search` | string | Full-text on `name`, `code` |
+| `is_active` | 0 \| 1 | Filter by active status |
+| `is_demo` | 0 \| 1 | Filter by demo flag |
 
 ---
 
-## API Response Shape (NodeTypeResource)
+## API Response Shape (CompanyResource)
 
-The API must produce exactly this shape. Raw flat columns (`sensor_1_name`, etc.) are **never exposed**.
+The API must produce exactly this shape. The frontend must consume exactly this shape.
 
 ```json
 {
   "id": 1,
-  "name": "Fire Extinguisher",
-  "area_id": "A1B2C3",
-  "description": "Monitors pressure and temperature of fire extinguisher units.",
-  "sensors": [
-    { "slot": 1, "name": "Pressure",    "unit": "bar" },
-    { "slot": 2, "name": "Temperature", "unit": "°C"  },
-    { "slot": 3, "name": "Tilt",        "unit": null  }
+  "code": "ACME",
+  "name": "Acme Corp",
+  "address": "123 Main St",
+  "contact_email": "admin@acme.com",
+  "contact_phone": "+65 1234 5678",
+  "timezone": "Asia/Singapore",
+  "logo_url": "https://example.com/storage/logos/acme.png",
+  "login_attempts": 5,
+  "is_2fa_enforced": false,
+  "is_demo": false,
+  "is_active_zone": true,
+  "is_active": true,
+  "custom_alarm_threshold": 10,
+  "custom_alarm_threshold_unit": "minutes",
+  "networks": [
+    { "id": 1, "name": "Building A", "network_address": "0xA1B2C3" },
+    { "id": 2, "name": "Building B", "network_address": "0xD4E5F6" }
   ],
-  "sensor_count": 3,
+  "networks_count": 2,
+  "users_count": 14,
   "created_at": "2026-01-01T00:00:00+00:00",
   "updated_at": "2026-01-01T00:00:00+00:00"
 }
 ```
 
 **Field notes:**
-- `sensors` — array of **defined slots only** (where `sensor_N_name` is not null), ordered by slot ascending. Empty slots are excluded.
-- `sensor_count` — count of defined slots. Always equals `sensors.length`. Convenience field.
-- `slot` — 1-indexed. Frontend must use the `slot` field — never assume array index equals slot number.
-- `unit` — can be `null` even within a defined slot (binary sensors).
+- `logo_url` — signed/public URL generated server-side from `logo_path`. `null` if no logo.
+- `logo_path` — **never exposed** in the response. Internal storage key only.
+- `custom_alarm_threshold` + `custom_alarm_threshold_unit` — both `null` = use each network's own threshold.
+- `networks` — networks assigned to this company via `company_networks` pivot.
+- `networks_count` — convenience count, equals `networks.length`.
+- `users_count` — count of non-deleted users in this company.
 
 ---
 
 ## Request Payloads
 
-### POST /api/v1/node-types
+### POST /api/v1/companies
 
 ```json
 {
   "name": "string",
-  "area_id": "string",
-  "description": "string | null",
-  "sensors": [
-    { "name": "Pressure",    "unit": "bar" },
-    { "name": "Temperature", "unit": "°C"  },
-    { "name": "Tilt",        "unit": null  }
-  ]
+  "code": "string",
+  "address": "string | null",
+  "contact_email": "string | null",
+  "contact_phone": "string | null",
+  "timezone": "string",
+  "login_attempts": 5,
+  "is_2fa_enforced": false,
+  "is_demo": false,
+  "is_active_zone": true,
+  "is_active": true,
+  "custom_alarm_threshold": 10,
+  "custom_alarm_threshold_unit": "minutes",
+  "network_ids": [1, 2, 3]
 }
 ```
-
-**Sensor array → flat column mapping** (Action responsibility):
-
-`StoreNodeTypeAction` maps `sensors[0]` → `sensor_1_name`/`sensor_1_unit`, `sensors[1]` → `sensor_2_name`/`sensor_2_unit`, and so on. Slots beyond the array length are set to `null`.
 
 **Validation rules:**
 
 | Field | Rule |
 |-------|------|
-| `name` | required, string, max:255, unique:node_types |
-| `area_id` | required, string, regex:`/^[0-9A-Fa-f]{1,10}$/`, unique:node_types |
-| `description` | optional, nullable |
-| `sensors` | optional, array, max:8 items |
-| `sensors.*.name` | required within array item, string, max:100 |
-| `sensors.*.unit` | optional, nullable string, max:50 |
-| contiguous check | API rejects payload where a lower slot is empty and a higher slot is filled |
+| `name` | required, string, max:255 |
+| `code` | required, string, max:20, unique:companies, regex:`/^[A-Z0-9_-]+$/` |
+| `address` | optional, nullable text |
+| `contact_email` | optional, nullable, email format |
+| `contact_phone` | optional, nullable, string, max:30 |
+| `timezone` | required, string, must be valid PHP timezone (`timezone_identifiers_list()`) |
+| `login_attempts` | optional, integer, min:1, max:10, default 5 |
+| `is_2fa_enforced` | optional, boolean, default false |
+| `is_demo` | optional, boolean, default false |
+| `is_active_zone` | optional, boolean, default true |
+| `is_active` | optional, boolean, default true |
+| `custom_alarm_threshold` | optional, nullable integer, min:1; `required_with:custom_alarm_threshold_unit` |
+| `custom_alarm_threshold_unit` | optional, nullable, in:`[minutes,hours]`; `required_with:custom_alarm_threshold` |
+| `network_ids` | optional, array; each item must `exist:networks,id` |
 
-### PUT /api/v1/node-types/{id}
+Logo is uploaded separately via `POST /companies/{id}/logo` — not part of this payload.
 
-Same fields as POST, all optional. Same validation rules apply to any field present.
+### PUT /api/v1/companies/{id}
 
-- `area_id`: must still pass regex and uniqueness (excluding current record).
-- `name`: must still be unique (excluding current record).
-- `sensors`: **replace-all** — `sensors: []` clears all 8 slots. Omitting `sensors` entirely leaves all slots unchanged.
+Same fields as POST, all optional. Same validation rules apply when present.
+
+**`code` is prohibited** on PUT (immutable after creation). API returns `422` if sent.
+
+**Company admin restrictions** — non-superadmin callers receive `422` (`prohibited`) if they send:
+- `code`, `is_demo`, `is_active`, `is_active_zone`
+- `custom_alarm_threshold`, `custom_alarm_threshold_unit`
+- `network_ids`
+
+Company admin may only send: `name`, `address`, `contact_email`, `contact_phone`, `timezone`, `login_attempts`, `is_2fa_enforced`.
+
+### POST /api/v1/companies/{id}/logo
+
+Multipart form upload.
+
+```
+Content-Type: multipart/form-data
+logo: <file>
+```
+
+- `logo`: required, file, mimes:`jpg,jpeg,png,webp`, max:2048 KB
+- Old logo is deleted from storage before new one is saved
+- Returns updated `CompanyResource`
 
 ---
 
 ## Permission Keys for this Module
 
-All CRUD endpoints are superadmin-only. No granular `node_type.*` keys needed for the initial release.
+| Permission key | Enforced in | Purpose |
+|----------------|-------------|---------|
+| `company.view` | `CompanyController@index`, `@show` | List and view companies |
+| `company.create` | `StoreCompanyRequest::authorize()` | Create — superadmin only in practice |
+| `company.update` | `UpdateCompanyRequest::authorize()` | Update — superadmin or own company admin |
+| `company.delete` | `CompanyController@destroy` | Delete — superadmin only in practice |
+| `company.upload_logo` | `UploadCompanyLogoController` | Upload logo |
 
-| Permission key | Status |
-|----------------|--------|
-| `node_type.view` | Reserved — superadmin only for now |
-| `node_type.create` | Reserved |
-| `node_type.update` | Reserved |
-| `node_type.delete` | Reserved |
+**Scoping notes:**
+- Superadmin bypasses all checks and sees all companies.
+- Company admin with `company.update` can only PUT their own company, and only the allowed fields.
+- `company.create` and `company.delete` are never assigned to company admin roles.
 
 ---
 
 ## Business Rules
 
-1. **Superadmin only** for all CRUD endpoints. `/options` accessible to all authenticated users.
-2. **Node type cannot be deleted** if referenced in `network_node_types`. API returns `409 Conflict: { message: "Node type is in use by one or more networks." }`. Frontend disables delete button with tooltip.
-3. **`area_id` format:** Raw hex, no prefix, regex `/^[0-9A-Fa-f]{1,10}$/`. API normalises to uppercase on save. Max 10 characters.
-4. **`name` must be globally unique** across all node types.
-5. **Sensor slots are contiguous.** API rejects any payload where a lower slot is empty and a higher slot is filled.
-6. **Cascade-clear on update.** If slot N is cleared (null name), the API sets all slots N through 8 to null regardless of what the payload says for those higher slots.
-7. **`sensors` is replace-all on update.** Sending `sensors: []` clears all slots. Omitting `sensors` entirely leaves all flat columns unchanged.
-8. **`sensor_N_unit` is independently nullable.** A slot is valid with just a name and no unit.
-9. **Node types are global.** No company scoping — all authenticated users can read `/options`; only superadmin can mutate.
+1. **Superadmin-only for create and delete.** These permission keys are never assigned to company admin roles.
+2. **Company admin self-edit scoping.** On `PUT /companies/{id}`, non-superadmin users: (a) must have `company.update`, (b) can only act when `{id}` matches their own `company_id`. API enforces in `authorize()`.
+3. **Company admin field restrictions.** Non-superadmin callers receive `422` (`prohibited`) for `code`, `is_demo`, `is_active`, `is_active_zone`, `custom_alarm_threshold`, `custom_alarm_threshold_unit`, `network_ids`.
+4. **`code` is immutable after creation.** `prohibited` rule on `PUT`. Frontend hides the code field in edit mode.
+5. **Company cannot be deleted** if it has active users. API returns `409 Conflict: { message: "Company has active users and cannot be deleted." }`.
+6. **`network_ids` is replace-all on update.** Sending `[]` removes all company networks. Omitting `network_ids` entirely leaves existing company networks unchanged.
+7. **`custom_alarm_threshold` and `custom_alarm_threshold_unit` must be set together.** Both present or both null — the `required_with` rule enforces this.
+8. **Logo replacement deletes the old file.** When a new logo is uploaded, the old `logo_path` is deleted from storage first.
+9. **`is_active = false` prevents login** for all users in that company (enforced at the auth layer).
+10. **Timezone must be a valid PHP timezone identifier** from `timezone_identifiers_list()`.
+11. **`role_networks` constraint.** When assigning networks to a role (Role module), the API must verify that each `network_id` exists in `company_networks` for that role's company. This is enforced in the Role module, not here — but the constraint is documented here because the data lives in `company_networks`.
 
 ---
 
 ## Frontend UI Notes
 
-### Node Types List Page
+### Companies List Page (Superadmin only)
 
-- Route: `/node-types` (lazy loaded, `is_superadmin` guard)
+- Route: `/companies` (lazy loaded, `canViewCompanies()` guard)
 - Layout: `DashboardLayout`
-- Table columns: Name, Area ID (monospace badge), Sensors (`3 sensors` summary), Description, Actions
-- Filters: Search (name / area_id / description)
-- Create opens `NodeTypeFormDialog` (shadcn `Dialog`)
-- Edit opens `NodeTypeFormDialog` pre-filled
-- Delete button disabled + tooltip when node type is in use by any network
+- **Uses `DataTableServer`** — no custom table, wrap in `<div className="overflow-x-auto">`
+- Table columns: Code (monospace badge) | Name | Timezone | Networks (count badge) | Users (count badge) | Active (green/red badge) | Demo (yellow badge — only when `is_demo=true`) | Actions
+- Filters: Search input (debounced) | Active toggle | Demo toggle — all local state, passed to `useCompanies()` params
+- Create button → `CompanyFormDialog` (create mode) — only when `canCreateCompany()`
+- Edit button → `CompanyFormDialog` (edit mode) — only when `canUpdateCompany()`
+- Delete button → confirm dialog → disabled + tooltip when company has users — only when `canDeleteCompany()`
+- Logo upload → icon button in Actions column → `uploadCompanyLogo()`
 
-### NodeTypeFormDialog
+### Company Self-Edit Page (Company admin only)
 
-**Basic Info section:**
-- Name (text input)
-- Area ID (text input — manual entry only, no Generate button)
-  - Validates regex `/^[0-9A-Fa-f]{1,10}$/` on blur
-  - Placeholder: e.g. `A1B2C3`
-- Description (textarea)
+- Route: `/settings/company`
+- Layout: `DashboardLayout`
+- Full settings page — not a dialog
+- Shows only the fields a company admin can edit:
+  - Company Name, Address, Contact Email, Contact Phone
+  - Timezone (searchable Select)
+  - Login Attempts (number input, 1–10)
+  - 2FA Enforced (Switch)
+  - Company Logo (file input with current logo preview)
+- Does **not** show: Code, Is Demo, Is Active, Is Active Zone, Custom Alarm, Networks
+- Submit shows spinner + disabled while saving
 
-**Sensors section — dynamic slot list:**
-- Starts with **1 blank sensor row** on create; all defined slots pre-filled on edit
-- Each row: read-only slot number label + Name input + Unit input (nullable, placeholder `e.g. °C — leave blank if none`)
-- **"Add Sensor" button** appends a new blank row; disabled when 8 slots are filled; shows count label `Add Sensor (N/8)`
-- **× remove button** on each row: removes that row AND all rows below (cascade-clear). Tooltip: `"Removing this sensor will also remove all sensors below it."`
-- Slot numbers are derived from array position — the user never manually enters a slot number
+### CompanyFormDialog (Superadmin create/edit)
 
-### Network module — multi-select update
+Mandatory responsive structure per AGENTS.md:
+```tsx
+<DialogContent className="w-full max-w-2xl max-h-[90vh] flex flex-col gap-0">
+  <DialogHeader className="px-6 pt-6 pb-4 shrink-0">...</DialogHeader>
+  <div className="overflow-y-auto flex-1 px-6 pb-2 space-y-6">
+    {/* sections */}
+  </div>
+  <DialogFooter className="px-6 py-4 shrink-0 border-t">...</DialogFooter>
+</DialogContent>
+```
 
-The node types multi-select in `NetworkFormDialog` must be updated:
-- **Remove** the static `NODE_TYPE_OPTIONS` constant from the select source
-- **Add** a `useNodeTypeOptions()` hook call that fetches from `GET /api/v1/node-types/options`
-- Display options as `name` with `area_id` as a secondary label or badge
+**Section 1 — Identity:**
+- Code (Input) — hidden/disabled in edit mode. Regex `/^[A-Z0-9_-]+$/i`, converted to uppercase on blur.
+- Name (Input)
+- `grid grid-cols-1 sm:grid-cols-2 gap-4` for Code + Name
+- Address (Textarea, full width)
+- Contact Email + Contact Phone: `grid grid-cols-1 sm:grid-cols-2 gap-4`
+- Timezone (searchable combobox, full width)
+
+**Section 2 — Security:**
+- `grid grid-cols-1 sm:grid-cols-2 gap-4`
+- Login Attempts (number Input, 1–10)
+- 2FA Enforced (Switch)
+
+**Section 3 — Flags (superadmin only — do not render for non-superadmin):**
+- `grid grid-cols-1 sm:grid-cols-2 gap-4`
+- Is Demo (Switch) | Is Active Zone (Switch) | Is Active (Switch)
+
+**Section 4 — Alarm Override (superadmin only):**
+- Custom Alarm Threshold (number Input, nullable) + Unit Select (`flex gap-2 items-end`)
+- Unit options from `ALARM_THRESHOLD_UNIT_OPTIONS`
+- Helper text: "Leave blank to use each network's own threshold"
+
+**Section 5 — Networks (superadmin only):**
+- Fetched via `useNetworkOptions()` from `GET /api/v1/networks/options`
+- Multi-select checkbox group: `max-h-48 overflow-y-auto border rounded-md p-2`
+- Each option: checkbox + network name + `network_address` monospace badge
+
+Logo is NOT in this dialog — it is a separate upload action.
 
 ### Scoping & Visibility
 
-- Entire CRUD module hidden from non-superadmin — sidebar link rendered only when `user.is_superadmin = true`
-- `/options` is called by any page that needs node type selection (not superadmin-gated in the hook)
+- `/companies`: superadmin only → sidebar link gated by `canViewCompanies()`
+- `/settings/company`: company admin only → sidebar link shown only to non-superadmin with `company.update`
+- Superadmin never sees the `/settings/company` link
 
 ---
 
-## TypeScript Types (`src/types/nodeType.ts`)
+## TypeScript Types (`src/types/company.ts`)
 
 ```ts
-// src/types/nodeType.ts
+// src/types/company.ts
 
-export interface NodeTypeSensor {
-  slot: number;
-  name: string;
-  unit: string | null;
-}
+export type AlarmThresholdUnit = 'minutes' | 'hours';
 
-export interface NodeType {
+export interface CompanyNetwork {
   id: number;
   name: string;
-  area_id: string;
-  description: string | null;
-  sensors: NodeTypeSensor[];
-  sensor_count: number;
+  network_address: string;
+}
+
+export interface Company {
+  id: number;
+  code: string;
+  name: string;
+  address: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  timezone: string;
+  logo_url: string | null;
+  login_attempts: number;
+  is_2fa_enforced: boolean;
+  is_demo: boolean;
+  is_active_zone: boolean;
+  is_active: boolean;
+  custom_alarm_threshold: number | null;
+  custom_alarm_threshold_unit: AlarmThresholdUnit | null;
+  networks: CompanyNetwork[];
+  networks_count: number;
+  users_count: number;
   created_at: string;
   updated_at: string;
 }
 
-export interface NodeTypeListResponse {
-  data: NodeType[];
+export interface CompanyListResponse {
+  data: Company[];
   meta: {
     current_page: number;
     last_page: number;
@@ -394,80 +522,112 @@ export interface NodeTypeListResponse {
   };
 }
 
-export interface NodeTypeOption {
+export interface CompanyOption {
   id: number;
   name: string;
-  area_id: string;
+  code: string;
 }
 
-export interface SensorSlotPayload {
+export interface StoreCompanyPayload {
   name: string;
-  unit?: string | null;
+  code: string;
+  address?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  timezone: string;
+  login_attempts?: number;
+  is_2fa_enforced?: boolean;
+  is_demo?: boolean;
+  is_active_zone?: boolean;
+  is_active?: boolean;
+  custom_alarm_threshold?: number | null;
+  custom_alarm_threshold_unit?: AlarmThresholdUnit | null;
+  network_ids?: number[];
 }
 
-export interface StoreNodeTypePayload {
-  name: string;
-  area_id: string;
-  description?: string | null;
-  sensors?: SensorSlotPayload[];
-}
+// Full update — superadmin
+export interface UpdateCompanyPayload extends Partial<Omit<StoreCompanyPayload, 'code'>> {}
 
-export type UpdateNodeTypePayload = Partial<StoreNodeTypePayload>;
+// Restricted update — company admin only (enforced API-side too)
+export interface UpdateOwnCompanyPayload {
+  name?: string;
+  address?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  timezone?: string;
+  login_attempts?: number;
+  is_2fa_enforced?: boolean;
+}
 ```
 
 ---
 
-## API File (`src/api/nodeTypes.ts`)
+## API File (`src/api/companies.ts`)
 
 ```ts
-// src/api/nodeTypes.ts
-// API functions for Node Type module endpoints
+// src/api/companies.ts
+// API functions for Company module endpoints
 
 import axiosClient from './axiosClient';
 import type {
-  NodeType,
-  NodeTypeListResponse,
-  NodeTypeOption,
-  StoreNodeTypePayload,
-  UpdateNodeTypePayload,
-} from '@/types/nodeType';
+  Company,
+  CompanyListResponse,
+  CompanyOption,
+  StoreCompanyPayload,
+  UpdateCompanyPayload,
+  UpdateOwnCompanyPayload,
+} from '@/types/company';
 
-export const getNodeTypes = async (params?: {
+export const getCompanies = async (params?: {
   page?: number;
   per_page?: number;
   search?: string;
-}): Promise<NodeTypeListResponse> => {
-  const res = await axiosClient.get('/node-types', { params });
+  is_active?: 0 | 1;
+  is_demo?: 0 | 1;
+}): Promise<CompanyListResponse> => {
+  const res = await axiosClient.get('/v1/companies', { params });
   return res.data;
 };
 
-export const getNodeTypeOptions = async (): Promise<{ data: NodeTypeOption[] }> => {
-  const res = await axiosClient.get('/node-types/options');
+export const getCompanyOptions = async (): Promise<{ data: CompanyOption[] }> => {
+  const res = await axiosClient.get('/v1/companies/options');
   return res.data;
 };
 
-export const getNodeType = async (id: number): Promise<{ data: NodeType }> => {
-  const res = await axiosClient.get(`/node-types/${id}`);
+export const getCompany = async (id: number): Promise<{ data: Company }> => {
+  const res = await axiosClient.get(`/v1/companies/${id}`);
   return res.data;
 };
 
-export const createNodeType = async (
-  payload: StoreNodeTypePayload
-): Promise<{ data: NodeType }> => {
-  const res = await axiosClient.post('/node-types', payload);
+export const createCompany = async (
+  payload: StoreCompanyPayload
+): Promise<{ data: Company }> => {
+  const res = await axiosClient.post('/v1/companies', payload);
   return res.data;
 };
 
-export const updateNodeType = async (
+export const updateCompany = async (
   id: number,
-  payload: UpdateNodeTypePayload
-): Promise<{ data: NodeType }> => {
-  const res = await axiosClient.put(`/node-types/${id}`, payload);
+  payload: UpdateCompanyPayload | UpdateOwnCompanyPayload
+): Promise<{ data: Company }> => {
+  const res = await axiosClient.put(`/v1/companies/${id}`, payload);
   return res.data;
 };
 
-export const deleteNodeType = async (id: number): Promise<void> => {
-  await axiosClient.delete(`/node-types/${id}`);
+export const deleteCompany = async (id: number): Promise<void> => {
+  await axiosClient.delete(`/v1/companies/${id}`);
+};
+
+export const uploadCompanyLogo = async (
+  id: number,
+  file: File
+): Promise<{ data: Company }> => {
+  const form = new FormData();
+  form.append('logo', file);
+  const res = await axiosClient.post(`/v1/companies/${id}/logo`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
 };
 ```
 
@@ -476,48 +636,48 @@ export const deleteNodeType = async (id: number): Promise<void> => {
 ## Checklist Before Implementation
 
 ### API
-- [ ] Confirm existing `node_types` migration is correct — no changes needed
-- [ ] New migration: replace `node_type_key` string column in `network_node_types` with `node_type_id` FK
-- [ ] `NodeTypeResource` maps flat columns → `sensors` array (defined slots only, slot number, name, unit)
-- [ ] `NodeTypeResource` includes `sensor_count` convenience field
-- [ ] `NodeTypeResource` **never** exposes raw `sensor_N_name` / `sensor_N_unit` flat columns
-- [ ] `StoreNodeTypeAction` maps `sensors[]` array to flat columns (`sensors[0]` → slot 1, etc.); remaining slots set to `null`
-- [ ] `UpdateNodeTypeAction` implements cascade-clear: clearing slot N also clears N+1…8
-- [ ] `sensors` replace-all on update — omitted `sensors` field = flat columns untouched
-- [ ] Contiguous slot validation: reject payload where slot N is empty and slot N+1 is filled
-- [ ] `area_id` normalised to uppercase on save (mutator or in action)
-- [ ] `StoreNodeTypeRequest` and `UpdateNodeTypeRequest` `authorize()` checks `is_superadmin` only
-- [ ] `/options` endpoint uses `auth:sanctum` middleware only — **NOT** superadmin-gated
-- [ ] `destroy` — check `network_node_types` FK before delete; return `409` if in use
-- [ ] Routes registered for all 6 endpoints in `routes/api.php`
-- [ ] Update `NetworkResource`: `node_types` returns `[{ id, name, area_id }]` objects
-- [ ] Update `Network` model relationship to use `node_type_id` FK on pivot
-- [ ] Feature tests: happy path CRUD, sensor slot mapping (1 sensor → slot 1, 8 sensors → all slots), cascade-clear on update, contiguous slot validation, 403 on CRUD for non-superadmin, 200 on `/options` for non-superadmin, 409 on delete in-use, unique `name` / `area_id` validation
+- [ ] New migration: `add_fields_to_companies_and_create_company_networks` (alter + new pivot)
+- [ ] Migration timestamp places it after `0001_01_01_000008` (networks must exist for FK)
+- [ ] `role_networks` — already exists (`0001_01_01_000009`) — no changes needed
+- [ ] `role_companies` — already exists (`0001_01_01_000006`) — no changes needed
+- [ ] `CompanyResource` shape matches contract exactly — `logo_url` from `Storage::url()`, never raw `logo_path`
+- [ ] `StoreCompanyRequest::authorize()` — `is_superadmin` only
+- [ ] `UpdateCompanyRequest::authorize()` — superadmin OR (has `company.update` AND own company)
+- [ ] `UpdateCompanyRequest::rules()` — `code` is `prohibited`; restricted fields are `prohibited` for non-superadmin
+- [ ] `network_ids` replace-all — `sync()` when present; skip pivot when omitted
+- [ ] `custom_alarm_threshold` + unit pair validation (`required_with`)
+- [ ] `UploadCompanyLogoController` — deletes old `logo_path` before saving new one
+- [ ] `destroy` — check `users` table FK; return `409` if users exist
+- [ ] `/options` route registered **before** `apiResource`
+- [ ] PermissionSeeder updated: `company.view`, `company.create`, `company.update`, `company.delete`, `company.upload_logo`
+- [ ] Routes registered for all 7 endpoints
+- [ ] Feature tests — full coverage per checklist section in prompts
 
 ### Frontend
-- [ ] New types file `src/types/nodeType.ts`
-- [ ] API file `src/api/nodeTypes.ts`
-- [ ] Custom hook `src/hooks/useNodeTypes.ts`
-- [ ] Page at `src/pages/node-types/NodeTypesPage.tsx`
-- [ ] `NodeTypeFormDialog` component in `src/components/shared/`
-- [ ] Route added to `src/routes/AppRouter.tsx` (lazy loaded)
-- [ ] Sidebar link rendered only when `user.is_superadmin = true`
-- [ ] Sensor slot UI: starts with 1 blank row on create; "Add Sensor" button disabled at 8 slots; shows count `(N/8)`
-- [ ] × remove button triggers cascade-clear of current and all lower rows, with warning tooltip
-- [ ] Area ID validates regex `/^[0-9A-Fa-f]{1,10}$/` on blur; placeholder shows `e.g. A1B2C3`
-- [ ] Delete button disabled + tooltip when node type is in use
-- [ ] **Network module updates:**
-  - [ ] Remove `NodeTypeKey`, `NODE_TYPE_LABELS`, `NODE_TYPE_OPTIONS` from `src/constants/nodeTypes.ts`
-  - [ ] Update `src/types/network.ts`: add `NetworkNodeType` interface; change `node_types` field to `NetworkNodeType[]`; change payload `node_types` to `number[]`
-  - [ ] Update `NetworkFormDialog` node types multi-select: replace static constant with `getNodeTypeOptions()` call
-  - [ ] Update `src/api/networks.ts`: `node_types` payload type changed to `number[]`
-- [ ] All user-facing strings in `src/constants/strings.ts`
-- [ ] Dark mode variants present on all custom styles
+- [ ] `src/types/company.ts` — all interfaces
+- [ ] `src/api/companies.ts` — all functions
+- [ ] `src/hooks/useCompanyPermissions.ts` — `canView/Create/Update/Delete/UploadLogo` helpers
+- [ ] `src/hooks/useCompanies.ts` — `useCompanies()` and `useCompanyOptions()`
+- [ ] `src/pages/companies/CompaniesPage.tsx` — `DataTableServer`, correct columns, filters
+- [ ] `src/pages/settings/CompanySettingsPage.tsx` — company admin self-edit, allowed fields only
+- [ ] `src/components/shared/CompanyFormDialog.tsx` — responsive, 5 sections, superadmin-only sections gated
+- [ ] Routes added to `AppRouter.tsx` (lazy loaded)
+- [ ] Sidebar: superadmin → Companies link; company admin → Company Settings link
+- [ ] Code field hidden in edit mode
+- [ ] Sections 3, 4, 5 not rendered for non-superadmin
+- [ ] Network multi-select uses `useNetworkOptions()` (not `useCompanyOptions()`)
+- [ ] Delete button disabled + tooltip when company has users
+- [ ] Submit buttons: spinner + disabled while in-flight
+- [ ] All strings in `src/constants/strings.ts`
+- [ ] Dark mode variants on all custom styles
+- [ ] `DataTableServer` + `overflow-x-auto` on list page
+- [ ] Responsive dialog structure per AGENTS.md
 
 ---
 
 ## Open Questions
 
-- [ ] Should `area_id` become immutable once IoT nodes of this type are active? The hardware `area_id` is fixed at mesh level — changing it would break device communication. Recommend: immutable once any node of this type is deployed. Add to Business Rules when the Nodes module is spec'd.
-- [ ] Is `name` editable after deployment? It has no hardware dependency unlike `area_id`, so it appears safe to change. Confirm.
-- [ ] Should there be an `is_active` flag to retire a node type without deleting it? Not in the current migration — raise if needed.
+- [ ] Should `is_active = false` immediately terminate existing sessions for that company's users, or only prevent new logins? Confirm with backend team.
+- [ ] Timezone dropdown: all ~600 PHP timezone identifiers or a curated short list? Recommend searchable combobox with full list.
+- [ ] Logo disk: `public` or `s3`? Which env uses which? Document in `.env.example` as `FILESYSTEM_DISK=public`.
+- [ ] Is `code` shown to end users in the dashboard UI, or is it internal only?

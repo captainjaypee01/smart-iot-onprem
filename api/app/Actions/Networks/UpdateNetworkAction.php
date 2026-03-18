@@ -94,7 +94,7 @@ final class UpdateNetworkAction
             $hex = $address;
         }
 
-        return '0x' . strtoupper($hex);
+        return strtoupper($hex);
     }
 }
 

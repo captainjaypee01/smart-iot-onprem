@@ -10,11 +10,13 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\API\V1\Auth\MicrosoftCallbackController;
 use App\Http\Controllers\Api\V1\Auth\MicrosoftRedirectController;
 use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
-use App\Http\Controllers\Api\V1\Companies\IndexCompaniesController;
+use App\Http\Controllers\Api\V1\Companies\CompanyController;
+use App\Http\Controllers\Api\V1\Companies\UploadCompanyLogoController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Roles\IndexRolesController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
+use App\Http\Controllers\Api\V1\CommandController;
 use App\Http\Controllers\Api\V1\Networks\GenerateAddressController;
 use App\Http\Controllers\Api\V1\Networks\NetworkController;
 use App\Http\Controllers\Api\V1\Networks\ToggleMaintenanceController;
@@ -60,9 +62,12 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('networks', NetworkController::class);
         Route::post('/networks/{network}/toggle-maintenance', ToggleMaintenanceController::class);
 
+        // ─── Companies ───────────────────────────────────────────────────
+        Route::get('/companies/options', [CompanyController::class, 'options']);
+        Route::apiResource('companies', CompanyController::class);
+        Route::post('companies/{company}/logo', UploadCompanyLogoController::class);
+
         // ─── Options lists (dropdowns for user create/edit; not paginated) ───
-        // Reserved: GET /companies and GET /roles for future paginated Role/Company modules.
-        Route::get('/companies/options', IndexCompaniesController::class);
         Route::get('/roles/options', IndexRolesController::class);
 
         // ─── Permissions ───────────────────────────────────────────────
@@ -83,6 +88,9 @@ Route::prefix('v1')->group(function () {
         // Settings (superadmin only; enforced in controller)
         Route::get('/settings/session', [SessionSettingsController::class, 'index']);
         Route::patch('/settings/session', [SessionSettingsController::class, 'update']);
+
+        // ─── Commands ─────────────────────────────────────────────────
+        Route::post('/commands', [CommandController::class, 'store']);
 
         // Route::apiResource('devices', DeviceController::class);
         // Route::apiResource('alerts',  AlertController::class);

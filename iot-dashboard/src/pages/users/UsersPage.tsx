@@ -28,7 +28,7 @@ import { useRole } from "@/hooks/useRole";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useRoles } from "@/hooks/useRoles";
 import { DataTableServer, type DataTableColumn } from "@/components/shared/DataTableServer";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useCompanyOptions } from "@/hooks/useCompanies";
 import { useAuthStore } from "@/store/authStore";
 import {
     storeUser,
@@ -552,7 +552,7 @@ const UsersPage = () => {
         canResendInvite,
         canDeleteUser,
     } = useUserPermissions();
-    const { companies, isLoading: companiesLoading } = useCompanies();
+    const { options: companies, isLoading: companiesLoading } = useCompanyOptions();
     const [inviteOpen, setInviteOpen] = useState(false);
     const [editUser, setEditUser] = useState<User | null>(null);
     const [editOpen, setEditOpen] = useState(false);

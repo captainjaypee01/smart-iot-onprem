@@ -17,7 +17,7 @@ enum CommandStatus: string
     public function canTransitionTo(self $newStatus): bool
     {
         return match ($this) {
-            self::PENDING => in_array($newStatus, [self::QUEUED, self::FAILED, self::TIMEOUT], true),
+            self::PENDING => in_array($newStatus, [self::QUEUED, self::DISPATCHED, self::FAILED, self::TIMEOUT], true),
             self::QUEUED => in_array($newStatus, [self::DISPATCHED, self::FAILED, self::TIMEOUT], true),
             self::DISPATCHED => in_array($newStatus, [self::ACKED, self::FAILED, self::TIMEOUT], true),
             self::ACKED => in_array($newStatus, [self::COMPLETED, self::FAILED], true),

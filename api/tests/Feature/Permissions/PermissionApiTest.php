@@ -8,6 +8,7 @@ declare(strict_types=1);
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Testing\TestResponse;
 
 use function Pest\Laravel\actingAs;
@@ -17,6 +18,8 @@ use function Pest\Laravel\postJson;
 use function Pest\Laravel\putJson;
 
 beforeEach(function (): void {
+    $this->seed(PermissionSeeder::class);
+
     /** @var \App\Models\User $admin */
     $admin = User::factory()->create([
         'is_superadmin' => false,

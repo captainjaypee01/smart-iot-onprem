@@ -17,10 +17,14 @@ const W_COLLAPSED = "w-[68px]";
 
 const Sidebar = () => {
     const { isCollapsed, toggle, isMobileOpen, closeMobile } = useSidebarStore();
-    const { isAdmin } = useRole();
+    const { isAdmin, isSuperAdmin } = useRole();
     const { hasPermission } = usePermission();
 
-    const isItemVisible = (item: { adminOnly?: boolean; permission?: string }) => {
+    const isItemVisible = (
+        item: { adminOnly?: boolean; permission?: string; notSuperadmin?: boolean; superadminOnly?: boolean },
+    ) => {
+        if (item.superadminOnly && !isSuperAdmin()) return false;
+        if (item.notSuperadmin && isSuperAdmin()) return false;
         if (item.permission) return hasPermission(item.permission);
         if (item.adminOnly) return isAdmin();
         return true;
@@ -84,21 +88,26 @@ const Sidebar = () => {
                 {/* ── Nav groups ────────────────────────────────────────── */}
                 <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 scrollbar-thin">
                     <div className="space-y-5 px-2">
-                        {NAV_GROUPS.map((group) => (
-                            <div key={group.title}>
-                                {/* Group label — hidden when collapsed */}
-                                {!isCollapsed && (
-                                    <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-                                        {group.title}
-                                    </p>
-                                )}
-                                {isCollapsed && (
-                                    <Separator className="mb-2 bg-white/10" />
-                                )}
-                                <ul className="space-y-0.5">
-                                    {group.items
-                                        .filter((item) => isItemVisible(item))
-                                        .map((item) => (
+                        {NAV_GROUPS.map((group) => {
+                            const visibleItems = group.items.filter((item) =>
+                                isItemVisible(item),
+                            );
+
+                            if (visibleItems.length === 0) return null;
+
+                            return (
+                                <div key={group.title}>
+                                    {/* Group label — hidden when collapsed */}
+                                    {!isCollapsed && (
+                                        <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+                                            {group.title}
+                                        </p>
+                                    )}
+                                    {isCollapsed && (
+                                        <Separator className="mb-2 bg-white/10" />
+                                    )}
+                                    <ul className="space-y-0.5">
+                                        {visibleItems.map((item) => (
                                             <li key={item.path}>
                                                 <SidebarNavItem
                                                     item={item}
@@ -107,9 +116,10 @@ const Sidebar = () => {
                                                 />
                                             </li>
                                         ))}
-                                </ul>
-                            </div>
-                        ))}
+                                    </ul>
+                                </div>
+                            );
+                        })}
                     </div>
                 </nav>
 

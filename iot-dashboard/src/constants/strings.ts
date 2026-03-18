@@ -179,6 +179,7 @@ export const UI_STRINGS = {
     NEXT: "Next",
     PREVIOUS: "Previous",
     SEARCH: "Search",
+    NO_RESULTS: "No results found.",
     FILTER: "Filter",
     EXPORT: "Export",
     ALL: "All",
@@ -264,4 +265,83 @@ export const NETWORK_STRINGS = {
     SAVE_SUCCESS_CREATE: "Network created successfully.",
     SAVE_SUCCESS_UPDATE: "Network updated successfully.",
     SAVE_ERROR: "Failed to save network.",
+} as const;
+
+// ─── Company module ───────────────────────────────────────────────
+export const COMPANY_STRINGS = {
+    NAV_COMPANIES: "Companies",
+    NAV_COMPANY_SETTINGS: "Company Settings",
+    CARD_GENERAL_TITLE: "General",
+    CARD_SECURITY_TITLE: "Security",
+
+    TITLE: "Companies",
+    SUBTITLE: "Manage tenant companies and their network access.",
+
+    CREATE_COMPANY: "Create Company",
+    SEARCH_PLACEHOLDER: "Search companies…",
+    FILTER_ACTIVE_LABEL: "Active",
+    FILTER_DEMO_LABEL: "Demo",
+
+    NO_COMPANIES: "No companies found.",
+
+    COL_CODE: "Code",
+    COL_NAME: "Name",
+    COL_TIMEZONE: "Timezone",
+    COL_NETWORKS: "Networks",
+    COL_USERS: "Users",
+    COL_ACTIVE: "Active",
+    COL_DEMO: "Demo",
+    COL_ACTIONS: "Actions",
+
+    BADGE_ACTIVE: "Active",
+    BADGE_INACTIVE: "Inactive",
+    BADGE_DEMO: "Demo",
+
+    NETWORKS_COUNT_LABEL: (count: number) =>
+        `${count} network${count === 1 ? "" : "s"}`,
+    USERS_COUNT_LABEL: (count: number) =>
+        `${count} user${count === 1 ? "" : "s"}`,
+
+    CONFIRM_DELETE: "Are you sure you want to delete this company?",
+    DELETE_409_TOOLTIP:
+        "Company has active users and cannot be deleted.",
+    COMPANY_DELETED: "Company deleted successfully.",
+    ERROR_DELETE: "Failed to delete company.",
+
+    UPLOAD_LOGO: "Upload Logo",
+
+    // Dialog: identity
+    DIALOG_TITLE_CREATE: "Create Company",
+    DIALOG_TITLE_EDIT: "Edit Company",
+    BUTTON_CREATE: "Create",
+    BUTTON_UPDATE: "Update",
+    LABEL_CODE: "Code",
+    CODE_PLACEHOLDER: "e.g. ACME",
+    LABEL_NAME: "Name",
+    LABEL_ADDRESS: "Address",
+    LABEL_CONTACT_EMAIL: "Contact Email",
+    LABEL_CONTACT_PHONE: "Contact Phone",
+    LABEL_TIMEZONE: "Timezone",
+    LABEL_CUSTOM_ALARM_THRESHOLD: "Custom Alarm Threshold",
+    LABEL_ALARM_UNIT: "Unit",
+    CUSTOM_ALARM_THRESHOLD_PLACEHOLDER: "e.g. 10",
+    CUSTOM_ALARM_HELPER:
+        "Leave blank to use each network's own threshold.",
+
+    LABEL_IS_DEMO: "Is Demo",
+    LABEL_IS_ACTIVE_ZONE: "Is Active Zone",
+    LABEL_IS_ACTIVE: "Is Active",
+
+    LABEL_NETWORKS: "Networks",
+
+    LABEL_LOGIN_ATTEMPTS: "Login Attempts",
+    LABEL_2FA_ENFORCED: "2FA Enforced",
+
+    LABEL_CURRENT_LOGO_PREVIEW: "Current logo preview",
+    LABEL_COMPANY_LOGO: "Company Logo",
+
+    TOAST_SAVE_SUCCESS: "Company updated successfully.",
+    TOAST_SAVE_ERROR: "Failed to update company.",
+    TOAST_LOGO_SUCCESS: "Company logo uploaded successfully.",
+    TOAST_LOGO_ERROR: "Failed to upload company logo.",
 } as const;

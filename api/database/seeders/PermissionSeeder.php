@@ -65,7 +65,8 @@ class PermissionSeeder extends Seeder
             ['module' => 'company', 'key' => 'company.view',           'display_name' => 'View Companies'],
             ['module' => 'company', 'key' => 'company.create',         'display_name' => 'Create Company'],
             ['module' => 'company', 'key' => 'company.update',         'display_name' => 'Update Company'],
-            ['module' => 'company', 'key' => 'company.deactivate',     'display_name' => 'Deactivate Company'],
+            ['module' => 'company', 'key' => 'company.delete',         'display_name' => 'Delete Company'],
+            ['module' => 'company', 'key' => 'company.upload_logo',    'display_name' => 'Upload Company Logo'],
 
             // ── Permission ───────────────────────────────────────────
             ['module' => 'permission', 'key' => 'permission.view',   'display_name' => 'View Permissions'],

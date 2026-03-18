@@ -2,10 +2,17 @@
 // Central route definitions — all routes are declared here only
 
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+    Outlet,
+} from "react-router-dom";
 import AuthBootstrap from "@/components/auth/AuthBootstrap";
 import PrivateRoute from "./PrivateRoute";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import { useRole } from "@/hooks/useRole";
 
 // Lazy-loaded pages — keeps initial bundle small
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
@@ -25,6 +32,10 @@ const PermissionsPage = lazy(
 );
 const NodeTypesPage = lazy(() => import("@/pages/node-types/NodeTypesPage"));
 const NetworksPage = lazy(() => import("@/pages/networks/NetworksPage"));
+const CompaniesPage = lazy(() => import("@/pages/companies/CompaniesPage"));
+const CompanySettingsPage = lazy(
+    () => import("@/pages/settings/CompanySettingsPage"),
+);
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -32,6 +43,16 @@ const PageLoader = () => (
         <div className="border-brand-blue h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
     </div>
 );
+
+const SuperadminOutlet = () => {
+    const { isSuperAdmin } = useRole();
+    return isSuperAdmin() ? <Outlet /> : <Navigate to="/" replace />;
+};
+
+const CompanyAdminOutlet = () => {
+    const { isSuperAdmin } = useRole();
+    return !isSuperAdmin() ? <Outlet /> : <Navigate to="/settings" replace />;
+};
 
 const AppRouter = () => (
     <BrowserRouter>
@@ -56,16 +77,34 @@ const AppRouter = () => (
                                 element={<FireExtinguisherPage />}
                             />
                             <Route path="/nodes" element={<NodesPage />} />
-                            <Route path="/networks" element={<NetworksPage />} />
                             <Route path="/alerts" element={<AlertsPage />} />
                             <Route path="/settings" element={<SettingsPage />} />
-                            <Route
-                                path="/permissions"
-                                element={<PermissionsPage />}
-                            />
-                            <Route path="/node-types" element={<NodeTypesPage />} />
                             <Route path="/users" element={<UsersPage />} />
                             <Route path="/profile" element={<ProfilePage />} />
+                            <Route element={<SuperadminOutlet />}>
+                                <Route
+                                    path="/networks"
+                                    element={<NetworksPage />}
+                                />
+                                <Route
+                                    path="/permissions"
+                                    element={<PermissionsPage />}
+                                />
+                                <Route
+                                    path="/node-types"
+                                    element={<NodeTypesPage />}
+                                />
+                                <Route
+                                    path="/companies"
+                                    element={<CompaniesPage />}
+                                />
+                            </Route>
+                            <Route element={<CompanyAdminOutlet />}>
+                                <Route
+                                    path="/settings/company"
+                                    element={<CompanySettingsPage />}
+                                />
+                            </Route>
                         </Route>
                     </Route>
 

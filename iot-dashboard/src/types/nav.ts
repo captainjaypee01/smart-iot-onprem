@@ -13,6 +13,10 @@ export interface NavItem {
     adminOnly?: boolean;
     /** When set, show only when usePermission().hasPermission(permission) is true (e.g. 'user.view'). */
     permission?: string;
+    /** When true, hide the item when the user is a superadmin. */
+    notSuperadmin?: boolean;
+    /** When true, show only when useRole().isSuperAdmin() is true. */
+    superadminOnly?: boolean;
 }
 
 export interface NavGroup {

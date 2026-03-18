@@ -30,6 +30,7 @@ class Command extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'string',
         'payload' => 'array',
         'status' => CommandStatus::class,
         'requested_at' => 'datetime',
