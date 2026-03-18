@@ -6,7 +6,7 @@ import type { FeKpi, Fault, HeatmapBuilding } from "@/types/dashboard";
 import type { PaginatedResponse } from "@/types";
 
 export const getFeKpi = async (): Promise<FeKpi> => {
-    const res = await axiosClient.get<FeKpi>("/fire-extinguisher/kpi");
+    const res = await axiosClient.get<FeKpi>("/v1/fire-extinguisher/kpi");
     return res.data;
 };
 
@@ -24,7 +24,7 @@ export const getFeFaults = async (
 
 export const getFeHeatmap = async (): Promise<HeatmapBuilding[]> => {
     const res = await axiosClient.get<HeatmapBuilding[]>(
-        "/fire-extinguisher/heatmap"
+        "/v1/fire-extinguisher/heatmap"
     );
     return res.data;
 };

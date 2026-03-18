@@ -15,6 +15,9 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Roles\IndexRolesController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
+use App\Http\Controllers\Api\V1\Networks\GenerateAddressController;
+use App\Http\Controllers\Api\V1\Networks\NetworkController;
+use App\Http\Controllers\Api\V1\Networks\ToggleMaintenanceController;
 use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
@@ -50,6 +53,12 @@ Route::prefix('v1')->group(function () {
         // Node Types
         Route::get('/node-types/options', [NodeTypeController::class, 'options']);
         Route::apiResource('node-types', NodeTypeController::class);
+
+        // Networks
+        Route::get('/networks/options', [NetworkController::class, 'options']);
+        Route::post('/networks/generate-address', GenerateAddressController::class);
+        Route::apiResource('networks', NetworkController::class);
+        Route::post('/networks/{network}/toggle-maintenance', ToggleMaintenanceController::class);
 
         // ─── Options lists (dropdowns for user create/edit; not paginated) ───
         // Reserved: GET /companies and GET /roles for future paginated Role/Company modules.

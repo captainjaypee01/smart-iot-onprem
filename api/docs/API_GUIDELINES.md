@@ -338,6 +338,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 ---
 
+## Client UX Expectations for Mutations
+
+- The SPA **always shows a loading state** while calling state-changing endpoints (`POST`, `PUT`, `PATCH`, `DELETE`, toggle actions):
+  - Buttons that trigger mutations are disabled and show a spinner until the response arrives.
+  - Dialogs remain open while saving; they close only after a successful response.
+- To support this UX cleanly:
+  - Keep mutation endpoints **fast and idempotent** so that retries (manual or automatic) do not cause inconsistent state.
+  - Return clear error messages suitable for `toast.error()` and inline validation, following the standard validation error shape.
+  - Avoid long-running synchronous work in controllers; push heavy processing to queues where possible so the UI loader represents a short, bounded wait.
+
+---
+
 ## Microsoft SSO Callback (Special Case)
 
 The Microsoft OAuth callback is a **web route**, not an API route. This is because Microsoft redirects the browser directly to it — no Bearer token exists at this point.

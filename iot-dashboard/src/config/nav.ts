@@ -14,6 +14,7 @@ import {
     Users,
     User,
     Layers,
+    Network,
 } from "lucide-react";
 import type { NavGroup } from "@/types/nav";
 
@@ -36,6 +37,12 @@ export const NAV_GROUPS: NavGroup[] = [
         title: "IoT Management",
         items: [
             { label: "Nodes", path: "/nodes", icon: Cpu },
+            {
+                label: "Networks",
+                path: "/networks",
+                icon: Network,
+                adminOnly: true,
+            },
             { label: "Node Types", path: "/node-types", icon: Layers, adminOnly: true },
             { label: "Alerts", path: "/alerts", icon: BellRing, badge: 0 },
             { label: "Device Map", path: "/device-map", icon: Map },

@@ -179,6 +179,7 @@ Accepts `?page` and `?per_page` (1–100, default 15).
 - [Describe any dialogs, modals, or drawers used]
 - [Describe any conditional rendering based on user role/permission]
 - [Describe any confirm dialogs for destructive actions]
+ - [Describe loading behaviour: button-level spinners and disabled state while submitting, table-level skeletons or spinners while fetching]
 
 ### Scoping / visibility rules
 - Superadmin sees: [describe]
@@ -316,6 +317,7 @@ export const delete[Resource] = async (id: number): Promise<void> => {
 - [ ] Confirm dialogs on all destructive actions
 - [ ] All user-facing strings in `src/constants/strings.ts`
 - [ ] Dark mode variants present on all custom styles
+ - [ ] All forms and state-changing actions show a clear loading state (disabled submit button with spinner) while the API request is in-flight
 
 ---
 

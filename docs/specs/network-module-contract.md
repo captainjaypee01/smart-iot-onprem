@@ -85,8 +85,8 @@ Storing value + unit separately avoids unit-conversion bugs. The API always retu
 ## Network Address Generation
 
 ### Format
-- Stored as `0x` + 6 uppercase hex characters (3 bytes): e.g. `0xA3F2B1`
-- Total string length: 8 characters
+- Stored as 6 uppercase hex characters (3 bytes): e.g. `A3F2B1`
+- Total string length: 6 characters
 - Unique constraint on `network_address`
 
 ### Generation Algorithm (auto-generate mode)
@@ -100,13 +100,12 @@ public function execute(string $name): string
         if (++$attempts > 10) {
             throw new \RuntimeException('Could not generate a unique network address.');
         }
-        $raw     = now()->toIso8601String() . $name . Str::random(16);
-        $hash    = md5($raw);
-        $hex6    = strtoupper(substr($hash, 0, 6));
-        $address = '0x' . $hex6;
-    } while (Network::where('network_address', $address)->exists());
+        $raw   = now()->toIso8601String() . $name . Str::random(16);
+        $hash  = md5($raw);
+        $hex6  = strtoupper(substr($hash, 0, 6));
+    } while (Network::where('network_address', $hex6)->exists());
 
-    return $address;
+    return $hex6;
 }
 ```
 
@@ -114,7 +113,7 @@ public function execute(string $name): string
 
 | Mode | Behaviour |
 |------|-----------|
-| **Manual** | Admin types a value directly. Validated on blur: regex `/^0x[0-9A-Fa-f]{6}$/i`. Uniqueness checked on submit. |
+| **Manual** | Admin types a value directly. Validated on blur: regex `/^[0-9A-Fa-f]{6}$/i`. Uniqueness checked on submit. |
 | **Auto-generate** | A "Generate" button calls `POST /api/v1/networks/generate-address`, receives a unique address, and pre-fills the field. Admin may regenerate multiple times. |
 
 ---
@@ -195,7 +194,7 @@ Stateless. No request body required.
 
 **Response `200`:**
 ```json
-{ "data": { "network_address": "0xA3F2B1" } }
+{ "data": { "network_address": "A3F2B1" } }
 ```
 
 **Response `500`** (collision retry exhausted — statistically near-impossible):
@@ -212,8 +211,8 @@ Flat list for dropdowns when assigning a device to a network.
 ```json
 {
   "data": [
-    { "id": 1, "name": "Building A", "network_address": "0xA3F2B1", "is_active": true },
-    { "id": 2, "name": "Building B", "network_address": "0xC4D5E6", "is_active": false }
+    { "id": 1, "name": "Building A", "network_address": "A3F2B1", "is_active": true },
+    { "id": 2, "name": "Building B", "network_address": "C4D5E6", "is_active": false }
   ]
 }
 ```
@@ -242,7 +241,7 @@ The API must produce exactly this shape. The frontend must consume exactly this 
 {
   "id": 1,
   "name": "Building A — Floor 3",
-  "network_address": "0xA3F2B1",
+  "network_address": "A3F2B1",
   "description": "Main office floor 3 network",
   "remarks": "Installed by vendor X",
   "is_active": true,
@@ -301,7 +300,7 @@ The API must produce exactly this shape. The frontend must consume exactly this 
 | Field | Rule |
 |-------|------|
 | `name` | required, string, max:255 |
-| `network_address` | required, string, regex:`/^0x[0-9A-Fa-f]{6}$/`, unique:networks |
+| `network_address` | required, string, regex:`/^[0-9A-Fa-f]{6}$/`, unique:networks |
 | `description` | optional, nullable |
 | `remarks` | optional, nullable |
 | `is_active` | optional, boolean, default `true` |
@@ -362,7 +361,7 @@ All endpoints are superadmin-only. The superadmin guard short-circuits before pe
 
 1. **Superadmin only.** Any authenticated non-superadmin receives `403` on every endpoint.
 2. **Network cannot be deleted** if it has associated IoT devices (FK on a future `devices` table). API returns `409 Conflict: { message: "Network has active devices and cannot be deleted." }`. Frontend shows confirm dialog regardless.
-3. **`network_address` regex:** Must match `/^0x[0-9A-Fa-f]{6}$/`. API normalises to uppercase on save: `'0x' . strtoupper(substr($address, 2))`.
+3. **`network_address` regex:** Must match `/^[0-9A-Fa-f]{6}$/`. API normalises to uppercase on save.
 4. **Maintenance coherence:** `maintenance_end_at` must be strictly after `maintenance_start_at`. Enforced via `after:` validation rule.
 5. **Maintenance flag is manually controlled.** The system does NOT auto-clear `is_maintenance` when `maintenance_end_at` passes.
 6. **When `is_maintenance` is turned OFF**, both `maintenance_start_at` and `maintenance_end_at` are set to `null`. Previous window values are discarded.
@@ -571,7 +570,7 @@ export const WIREPAS_VERSION_OPTIONS: { value: WirepasVersion; label: string }[]
 // src/api/networks.ts
 // API functions for Network module endpoints
 
-import axiosClient from './axiosClient';
+import axiosClient from "./axiosClient";
 import type {
   Network,
   NetworkListResponse,
@@ -580,7 +579,7 @@ import type {
   StoreNetworkPayload,
   UpdateNetworkPayload,
   ToggleMaintenancePayload,
-} from '@/types/network';
+} from "@/types/network";
 
 export const getNetworks = async (params?: {
   page?: number;
@@ -589,49 +588,49 @@ export const getNetworks = async (params?: {
   is_active?: 0 | 1;
   is_maintenance?: 0 | 1;
 }): Promise<NetworkListResponse> => {
-  const res = await axiosClient.get('/networks', { params });
+  const res = await axiosClient.get("/v1/networks", { params });
   return res.data;
 };
 
 export const getNetworkOptions = async (): Promise<{ data: NetworkOption[] }> => {
-  const res = await axiosClient.get('/networks/options');
+  const res = await axiosClient.get("/v1/networks/options");
   return res.data;
 };
 
 export const getNetwork = async (id: number): Promise<{ data: Network }> => {
-  const res = await axiosClient.get(`/networks/${id}`);
+  const res = await axiosClient.get(`/v1/networks/${id}`);
   return res.data;
 };
 
 export const generateNetworkAddress = async (): Promise<GenerateAddressResponse> => {
-  const res = await axiosClient.post('/networks/generate-address');
+  const res = await axiosClient.post("/v1/networks/generate-address");
   return res.data;
 };
 
 export const createNetwork = async (
-  payload: StoreNetworkPayload
+  payload: StoreNetworkPayload,
 ): Promise<{ data: Network }> => {
-  const res = await axiosClient.post('/networks', payload);
+  const res = await axiosClient.post("/v1/networks", payload);
   return res.data;
 };
 
 export const updateNetwork = async (
   id: number,
-  payload: UpdateNetworkPayload
+  payload: UpdateNetworkPayload,
 ): Promise<{ data: Network }> => {
-  const res = await axiosClient.put(`/networks/${id}`, payload);
+  const res = await axiosClient.put(`/v1/networks/${id}`, payload);
   return res.data;
 };
 
 export const deleteNetwork = async (id: number): Promise<void> => {
-  await axiosClient.delete(`/networks/${id}`);
+  await axiosClient.delete(`/v1/networks/${id}`);
 };
 
 export const toggleMaintenance = async (
   id: number,
-  payload: ToggleMaintenancePayload
+  payload: ToggleMaintenancePayload,
 ): Promise<{ data: Network }> => {
-  const res = await axiosClient.post(`/networks/${id}/toggle-maintenance`, payload);
+  const res = await axiosClient.post(`/v1/networks/${id}/toggle-maintenance`, payload);
   return res.data;
 };
 ```

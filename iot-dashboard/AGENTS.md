@@ -136,8 +136,8 @@ const DeviceTable = () => {
 - One API file per domain: `auth.ts`, `users.ts`, `devices.ts`, `alerts.ts`, `metrics.ts`.
 - All API functions are `async` and return typed responses.
 - HTTP errors are handled globally in the Axios interceptor — do not duplicate in components.
-- The base URL is always `/api` — never hardcode ports or hostnames.
-- API path prefix is `/v1/` — all endpoints must follow `/api/v1/` convention.
+- The `axiosClient` `baseURL` is always `/api` — never hardcode ports or hostnames, and **never** include `v1` in the base URL.
+- API path prefix is `/v1/` — all endpoint paths in `src/api/*` must start with `/v1/`, so the effective URL is `/api/v1/...`.
 
 ```ts
 // src/api/devices.ts ✅ Correct
@@ -317,6 +317,26 @@ import toast from "react-hot-toast";
 
 ---
 
+## Form Submission & Loading States
+
+- **Every mutation to the API must have a visible loading state**:
+  - Submit buttons show a spinner icon and are disabled while the request is in-flight.
+  - Related destructive actions (Delete, Disable, Toggle Maintenance, etc.) also disable their buttons and show progress.
+- **Pattern for forms and dialogs**:
+  - Each hook that performs a mutation exposes an `isSubmitting` / `isLoading` boolean.
+  - Components bind `disabled={isSubmitting}` on `<Button>` and render a small spinner (e.g. `Loader2` with `animate-spin`) before the label.
+  - Prevent duplicate submissions by ignoring clicks while `isSubmitting` is true.
+- **User feedback lifecycle**:
+  - Optional: show `toast.loading()` for long-running operations, then `toast.success()` / `toast.error()` and `toast.dismiss()` when the promise resolves.
+  - Validation errors are shown inline near fields; server errors use `toast.error()` with a helpful message.
+- **Blueprint example** (apply to all new feature dialogs/pages):
+  - Local `isSubmitting` or hook-provided flag.
+  - Submit handler is `async`, sets loading, awaits API call, then:
+    - On success: show success toast, close dialog, trigger refetch.
+    - On failure: show error toast, keep dialog open, keep field values intact.
+
+---
+
 ## Constants & Strings Rules
 
 - All user-facing strings live in `src/constants/strings.ts` — never hardcode display text in components.
@@ -326,6 +346,105 @@ import toast from "react-hot-toast";
 - Always import auth constants directly: `import { SSO_ERROR_MESSAGES } from "@/constants/auth"`.
 - Never use magic strings like `"MISSING"` or `"Fire Extinguisher"` inline in components.
 - When adding a new fault type or node type, update the constants files first before touching any UI.
+
+---
+
+## Data Table Rules
+
+- **`DataTableServer` is the only approved table component** for all paginated, server-side data lists. Never build a custom table from scratch for a list page.
+- Import it from `src/components/shared/DataTableServer.tsx`.
+- Every list page (Users, Networks, Node Types, Roles, Companies, and all future modules) must use `DataTableServer` — no exceptions.
+- `DataTableServer` handles: pagination, loading skeleton, empty state, column definitions, and row actions. Do not re-implement any of these inside a page.
+- Column definitions are passed as a `columns` prop using the TanStack Table `ColumnDef<T>[]` pattern.
+- Server-side filters (search, status toggles, etc.) live in the page component as local state and are passed to the hook as params — they are NOT managed inside `DataTableServer`.
+
+```tsx
+// ✅ Correct — page uses DataTableServer
+const NetworksPage = () => {
+  const [search, setSearch] = useState("");
+  const { networks, meta, isLoading } = useNetworks({ search });
+  return (
+    <DataTableServer
+      columns={columns}
+      data={networks}
+      meta={meta}
+      isLoading={isLoading}
+    />
+  );
+};
+
+// ❌ Wrong — custom table built inline
+const NetworksPage = () => (
+  <table>
+    <tbody>{networks.map(n => <tr>...</tr>)}</tbody>
+  </table>
+);
+```
+
+---
+
+## Options Endpoints — When and Where to Call Them
+
+- **`/options` endpoints are for form dropdowns only** — they are called inside the dialog/form component's hook, not on the list page.
+- Never call a `/options` endpoint on a list page. The list page only fetches the paginated index data it needs to render its table.
+- Example: `GET /api/v1/node-types/options` is called inside `NetworkFormDialog` (because the form needs a node type selector), not in `NetworksPage`.
+- Each form dialog that needs dropdown data must use a dedicated hook (e.g. `useNodeTypeOptions()`) and call it only when the dialog is open.
+
+```tsx
+// ✅ Correct — options fetched inside the dialog that needs them
+const NetworkFormDialog = ({ open }: Props) => {
+  const { options } = useNodeTypeOptions(); // called here, not in NetworksPage
+  ...
+};
+
+// ❌ Wrong — options fetched on the list page
+const NetworksPage = () => {
+  const { networks } = useNetworks();
+  const { nodeTypeOptions } = useNodeTypeOptions(); // not needed here
+  ...
+};
+```
+
+---
+
+## Responsive & Mobile-Friendly Rules
+
+- **Every page and component must be responsive** — designed mobile-first, then scaled up.
+- Use Tailwind responsive prefixes (`sm:`, `md:`, `lg:`, `xl:`) for layout changes.
+- **Dialogs and modals** must never overflow the viewport on any screen size:
+  - Always set `max-h-[90vh]` (or similar) with `overflow-y-auto` on the dialog content so tall forms scroll instead of clipping.
+  - Use `w-full max-w-lg` (or appropriate max-width) — never a fixed pixel width.
+  - On mobile (`< sm`), dialogs should be full-width with small horizontal padding.
+- **Forms inside dialogs** with multiple sections must use a scrollable content area:
+  - Wrap form fields in a `<div className="overflow-y-auto max-h-[70vh] px-1">` inside the dialog body.
+  - Keep the dialog header (title) and footer (action buttons) fixed — only the field area scrolls.
+- **Multi-column form layouts** must stack to single column on mobile:
+  - Use `grid grid-cols-1 sm:grid-cols-2 gap-4` — never `grid-cols-2` without a mobile fallback.
+- **Tables** (`DataTableServer`) must be horizontally scrollable on small screens:
+  - Wrap in `<div className="overflow-x-auto">`.
+- Never use fixed pixel widths (`w-[600px]`) on containers that hold user-facing content — use max-width + full-width instead.
+
+```tsx
+// ✅ Correct — responsive dialog with scrollable body
+<DialogContent className="w-full max-w-2xl max-h-[90vh] flex flex-col">
+  <DialogHeader>...</DialogHeader>
+  <div className="overflow-y-auto flex-1 px-1 space-y-6">
+    {/* form sections */}
+  </div>
+  <DialogFooter>...</DialogFooter>
+</DialogContent>
+
+// ❌ Wrong — fixed width, no scroll, will break on mobile
+<DialogContent className="w-[700px]">
+  {/* form sections */}
+</DialogContent>
+
+// ✅ Correct — two-column grid that stacks on mobile
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+// ❌ Wrong — always two columns, breaks on mobile
+<div className="grid grid-cols-2 gap-4">
+```
 
 ---
 
@@ -347,3 +466,8 @@ import toast from "react-hot-toast";
 - ❌ No reading `?token=` from the URL anywhere except `AuthCallbackPage` and `SetPasswordPage`
 - ❌ No duplicate type definitions — auth types live in `src/types/auth.ts` only
 - ❌ No mock imports outside of `VITE_USE_MOCK` guards
+- ❌ No custom table implementations for list pages — always use `DataTableServer`
+- ❌ No `/options` endpoint calls on list pages — options are for form dialogs only
+- ❌ No fixed pixel widths on dialogs or page containers — use `max-w-*` + `w-full`
+- ❌ No multi-column form grids without a single-column mobile fallback (`grid-cols-1 sm:grid-cols-2`)
+- ❌ No dialogs without `max-h-[90vh]` and `overflow-y-auto` on tall forms

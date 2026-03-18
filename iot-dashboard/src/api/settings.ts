@@ -23,7 +23,7 @@ export async function getSessionSettings(
     const params =
         companyId != null ? { company_id: companyId } : undefined;
     const res = await axiosClient.get<SessionSettingsResponse>(
-        "/settings/session",
+        "/v1/settings/session",
         { params }
     );
     return res.data;
@@ -42,6 +42,6 @@ export async function updateSessionSettings(payload: {
         session_lifetime_minutes: string;
         company_id?: number;
         message: string;
-    }>("/settings/session", payload);
+    }>("/v1/settings/session", payload);
     return res.data;
 }

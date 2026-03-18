@@ -5,7 +5,7 @@ import axiosClient from "./axiosClient";
 import type { Role } from "@/types/role";
 
 export const getRolesByCompany = async (companyId: number): Promise<Role[]> => {
-    const res = await axiosClient.get<{ data: Role[] }>("/roles/options", {
+    const res = await axiosClient.get<{ data: Role[] }>("/v1/roles/options", {
         params: { company_id: companyId },
     });
     const data = res.data?.data ?? res.data;

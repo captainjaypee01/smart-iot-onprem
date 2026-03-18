@@ -7,6 +7,6 @@ import type { NodeListParams, NodeListResponse } from "@/types/nodes";
 export const getNodes = async (
   params: NodeListParams
 ): Promise<NodeListResponse> => {
-  const res = await axiosClient.get<NodeListResponse>("/nodes", { params });
+  const res = await axiosClient.get<NodeListResponse>("/v1/nodes", { params });
   return res.data;
 };

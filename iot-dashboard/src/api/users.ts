@@ -13,7 +13,7 @@ export const getUsers = async (
     page: number,
     perPage: number = 15
 ): Promise<UsersListResponse> => {
-    const res = await axiosClient.get<UsersListResponse>("/users", {
+    const res = await axiosClient.get<UsersListResponse>("/v1/users", {
         params: { page, per_page: perPage },
     });
     return res.data;
@@ -21,13 +21,13 @@ export const getUsers = async (
 
 /** @param id User id (number) for Laravel route binding */
 export const getUserById = async (id: number): Promise<User> => {
-    const res = await axiosClient.get<{ data: User }>(`/users/${id}`);
+    const res = await axiosClient.get<{ data: User }>(`/v1/users/${id}`);
     return res.data.data;
 };
 
 export const storeUser = async (payload: StoreUserPayload): Promise<User> => {
     await getCsrfCookie();
-    const res = await axiosClient.post<User>("/users", payload);
+    const res = await axiosClient.post<User>("/v1/users", payload);
     // UserController@store returns new UserResource($user) directly, not wrapped
     return res.data;
 };
@@ -38,7 +38,7 @@ export const updateUser = async (
     payload: UpdateUserPayload
 ): Promise<User> => {
     await getCsrfCookie();
-    const res = await axiosClient.put<User>(`/users/${id}`, payload);
+    const res = await axiosClient.put<User>(`/v1/users/${id}`, payload);
     // UserController@update returns new UserResource($user) directly, not wrapped
     return res.data;
 };
@@ -46,17 +46,17 @@ export const updateUser = async (
 /** @param id User id (number) for Laravel route binding */
 export const deleteUser = async (id: number): Promise<void> => {
     await getCsrfCookie();
-    await axiosClient.delete(`/users/${id}`);
+    await axiosClient.delete(`/v1/users/${id}`);
 };
 
 /** @param id User id (number) for Laravel route binding */
 export const resendInvite = async (id: number): Promise<void> => {
     await getCsrfCookie();
-    await axiosClient.post(`/users/${id}/resend-invite`);
+    await axiosClient.post(`/v1/users/${id}/resend-invite`);
 };
 
 /** @param id User id (number) for Laravel route binding */
 export const disableUser = async (id: number): Promise<void> => {
     await getCsrfCookie();
-    await axiosClient.post(`/users/${id}/disable`);
+    await axiosClient.post(`/v1/users/${id}/disable`);
 };

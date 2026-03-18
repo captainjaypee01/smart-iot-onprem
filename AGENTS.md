@@ -202,6 +202,18 @@ Rules:
 - All user-facing strings (labels, buttons, messages) come from a central place (e.g. `src/constants/strings.ts` or module-specific `USER_STRINGS`, `UI_STRINGS`). No hardcoded display strings in JSX.
 - Use `cn()` for conditional class names; support dark mode with Tailwind `dark:` variants where applicable.
 
+### 8A.5) Submission loading & user feedback
+- All **state-changing API calls (create, update, delete, toggle, etc.) must surface a clear loading state in the UI**:
+  - Buttons that trigger mutations show a spinner icon and are disabled while the request is in-flight.
+  - Forms inside dialogs must prevent duplicate submissions while saving.
+- Frontend hooks wrapping mutations (e.g. `useSaveX`, `useToggleY`) **must expose an `isSubmitting` / `isLoading` flag** that components bind to button `disabled` and loading indicators.
+- For non-trivial operations:
+  - Consider `toast.loading()` at the start and `toast.success()` / `toast.error()` + `toast.dismiss()` when the request settles.
+  - Keep field values in place on error so the user can correct and re-submit.
+- New specs in `docs/specs/*` should always call out:
+  - What the loading indicator looks like (button spinner, global skeleton, etc.).
+  - When the dialog/page closes and when the table/list is refreshed.
+
 Testing:
 - Unit: component logic and helpers
 - E2E (later): Playwright for critical flows

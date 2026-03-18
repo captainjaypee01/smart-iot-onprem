@@ -6,12 +6,12 @@ import type { DashboardKpi, ModuleSummary, Fault, HeatmapBuilding } from "@/type
 import type { PaginatedResponse } from "@/types";
 
 export const getDashboardKpi = async (): Promise<DashboardKpi> => {
-    const res = await axiosClient.get<DashboardKpi>("/dashboard/kpi");
+    const res = await axiosClient.get<DashboardKpi>("/v1/dashboard/kpi");
     return res.data;
 };
 
 export const getModuleSummaries = async (): Promise<ModuleSummary[]> => {
-    const res = await axiosClient.get<ModuleSummary[]>("/dashboard/modules");
+    const res = await axiosClient.get<ModuleSummary[]>("/v1/dashboard/modules");
     return res.data;
 };
 
@@ -36,6 +36,6 @@ export const getOutstandingFaults = async (
 };
 
 export const getHeatmap = async (): Promise<HeatmapBuilding[]> => {
-    const res = await axiosClient.get<HeatmapBuilding[]>("/dashboard/heatmap");
+    const res = await axiosClient.get<HeatmapBuilding[]>("/v1/dashboard/heatmap");
     return res.data;
 };
