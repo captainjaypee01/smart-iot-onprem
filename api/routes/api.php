@@ -13,9 +13,12 @@ use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
 use App\Http\Controllers\Api\V1\Companies\CompanyController;
 use App\Http\Controllers\Api\V1\Companies\UploadCompanyLogoController;
 use App\Http\Controllers\Api\V1\HealthController;
-use App\Http\Controllers\Api\V1\Roles\IndexRolesController;
+use App\Http\Controllers\Api\V1\Roles\RoleController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
+use App\Http\Controllers\Api\V1\Features\FeatureController;
+use App\Http\Controllers\Api\V1\Features\ReorderFeaturesController;
+use App\Http\Controllers\Api\V1\Features\ReorderGroupsController;
 use App\Http\Controllers\Api\V1\CommandController;
 use App\Http\Controllers\Api\V1\Networks\GenerateAddressController;
 use App\Http\Controllers\Api\V1\Networks\NetworkController;
@@ -68,7 +71,10 @@ Route::prefix('v1')->group(function () {
         Route::post('companies/{company}/logo', UploadCompanyLogoController::class);
 
         // ─── Options lists (dropdowns for user create/edit; not paginated) ───
-        Route::get('/roles/options', IndexRolesController::class);
+        Route::get('/roles/options', [RoleController::class, 'options']);
+
+        // Role CRUD (options route must be registered before apiResource).
+        Route::apiResource('roles', RoleController::class);
 
         // ─── Permissions ───────────────────────────────────────────────
         Route::get('/permissions', [PermissionController::class, 'index']);
@@ -88,6 +94,13 @@ Route::prefix('v1')->group(function () {
         // Settings (superadmin only; enforced in controller)
         Route::get('/settings/session', [SessionSettingsController::class, 'index']);
         Route::patch('/settings/session', [SessionSettingsController::class, 'update']);
+
+        // ─── Features ─────────────────────────────────────────────────────────
+        Route::get('/features/options', [FeatureController::class, 'options']);
+        Route::put('/features/reorder', ReorderFeaturesController::class);
+        Route::put('/features/reorder-groups', ReorderGroupsController::class);
+        Route::apiResource('features', FeatureController::class)
+            ->only(['index', 'show', 'update', 'store', 'destroy']);
 
         // ─── Commands ─────────────────────────────────────────────────
         Route::post('/commands', [CommandController::class, 'store']);

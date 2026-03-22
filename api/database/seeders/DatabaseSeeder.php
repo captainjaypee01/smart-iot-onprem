@@ -18,9 +18,10 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             CompanySeeder::class,       // 1. Companies first — users FK to companies
-            PermissionSeeder::class,    // 2. Permissions before roles
-            RoleSeeder::class,          // 3. Roles + role_permissions
-            UserSeeder::class,          // 4. Users + user_roles
+            FeatureSeeder::class,       // 2. Features first — system-role pivots depend on it
+            PermissionSeeder::class,    // 3. Permissions before roles
+            RoleSeeder::class,          // 4. Roles + role_permissions
+            UserSeeder::class,          // 5. Users + user_roles
         ]);
     }
 }

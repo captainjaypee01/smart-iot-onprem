@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { getSessionSettings, updateSessionSettings, type CompanyOption } from "@/api/settings";
 import { useAuthStore } from "@/store/authStore";
+import { NAVBAR_STRINGS, SETTINGS_STRINGS } from "@/constants";
 
 const SESSION_DURATION_PRESETS: { value: string; label: string }[] = [
     { value: "15", label: "15 minutes" },
@@ -152,13 +153,13 @@ const SettingsPage = () => {
     if (forbidden) {
         return (
             <div className="space-y-4">
-                <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+                <h1 className="text-2xl font-bold tracking-tight">
+                    {NAVBAR_STRINGS.SESSION_SETTINGS}
+                </h1>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Access restricted</CardTitle>
-                        <CardDescription>
-                            You do not have permission to view or change settings.
-                        </CardDescription>
+                        <CardTitle>{SETTINGS_STRINGS.FORBIDDEN_TITLE}</CardTitle>
+                        <CardDescription>{SETTINGS_STRINGS.FORBIDDEN_DESCRIPTION}</CardDescription>
                     </CardHeader>
                 </Card>
             </div>
@@ -167,7 +168,7 @@ const SettingsPage = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{NAVBAR_STRINGS.SESSION_SETTINGS}</h1>
 
             {/* Superadmin: select company once at the top; all sections below use this context */}
             {isSuperadmin && companies.length > 0 && (

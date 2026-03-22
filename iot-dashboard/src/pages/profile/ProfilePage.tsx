@@ -46,7 +46,14 @@ const ProfilePage = () => {
                 username: username.trim() || null,
             });
             const me = await getMe();
-            setAuth(me.user, me.permissions);
+            setAuth(
+                {
+                    ...me.user,
+                    features: me.features,
+                    networks: me.networks,
+                },
+                me.permissions
+            );
             toast.success(PROFILE_STRINGS.PROFILE_UPDATED);
         } catch {
             toast.error(PROFILE_STRINGS.ERROR_UPDATE);

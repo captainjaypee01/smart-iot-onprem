@@ -5,6 +5,12 @@
 import type { User } from "./user";
 export type { User } from "./user";
 
+export interface NetworkSummary {
+    id: number;
+    name: string;
+    network_address: string;
+}
+
 export interface Company {
     id: number;
     name: string;

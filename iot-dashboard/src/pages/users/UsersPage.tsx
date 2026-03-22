@@ -26,7 +26,7 @@ import {
 import { useUsers } from "@/hooks/useUsers";
 import { useRole } from "@/hooks/useRole";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { useRoles } from "@/hooks/useRoles";
+import { useRoleOptions } from "@/hooks/useRoles";
 import { DataTableServer, type DataTableColumn } from "@/components/shared/DataTableServer";
 import { useCompanyOptions } from "@/hooks/useCompanies";
 import { useAuthStore } from "@/store/authStore";
@@ -91,7 +91,7 @@ const InviteDialog = ({
         ? (selectedCompanyId ? parseInt(selectedCompanyId, 10) : null)
         : companyAdminCompanyId;
 
-    const { roles, isLoading: rolesLoading } = useRoles(effectiveCompanyId);
+    const { options: roles, isLoading: rolesLoading } = useRoleOptions(effectiveCompanyId);
 
     const resetForm = useCallback(() => {
         setFirstName("");
@@ -348,7 +348,7 @@ const EditDialog = ({
             : user?.company?.id ?? null
         : user?.company?.id ?? null;
 
-    const { roles, isLoading: rolesLoading } = useRoles(effectiveCompanyId);
+    const { options: roles, isLoading: rolesLoading } = useRoleOptions(effectiveCompanyId);
 
     useEffect(() => {
         if (open && user) {

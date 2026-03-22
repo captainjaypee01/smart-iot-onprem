@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 // database/seeders/PermissionSeeder.php
 // Seeds all system permissions and default system roles
 
@@ -7,6 +9,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PermissionSeeder extends Seeder
 {
@@ -73,6 +76,12 @@ class PermissionSeeder extends Seeder
             ['module' => 'permission', 'key' => 'permission.create', 'display_name' => 'Create Permission'],
             ['module' => 'permission', 'key' => 'permission.update', 'display_name' => 'Update Permission'],
             ['module' => 'permission', 'key' => 'permission.delete', 'display_name' => 'Delete Permission'],
+
+            // ── Feature ─────────────────────────────────────────────
+            ['module' => 'feature', 'key' => 'feature.view',   'display_name' => 'View Features'],
+            ['module' => 'feature', 'key' => 'feature.update', 'display_name' => 'Update Feature'],
+            ['module' => 'feature', 'key' => 'feature.create', 'display_name' => 'Create Feature'],
+            ['module' => 'feature', 'key' => 'feature.delete', 'display_name' => 'Delete Feature'],
         ];
 
         foreach ($permissions as &$p) {
@@ -90,6 +99,10 @@ class PermissionSeeder extends Seeder
 
         // ── Default System Roles ──────────────────────────────────────
         $this->seedRoles();
+
+        // Ensure superadmin-equivalent roles also have feature/network pivots.
+        // Some environments may rely on role-based pivots instead of `users.is_superadmin`.
+        $this->seedRoleFeatureAndNetworkPivotsForSystemRoles();
     }
 
     private function seedRoles(): void
@@ -270,6 +283,74 @@ class PermissionSeeder extends Seeder
             }
 
             $this->command->info("Role seeded: {$roleData['name']} with " . $permissionIds->count() . ' permissions.');
+        }
+    }
+
+    private function seedRoleFeatureAndNetworkPivotsForSystemRoles(): void
+    {
+        if (! Schema::hasTable('features') || ! Schema::hasTable('role_features')) {
+            return;
+        }
+
+        if (! Schema::hasTable('networks') || ! Schema::hasTable('role_networks')) {
+            return;
+        }
+
+        $systemRoleNames = ['Platform Admin', 'Admin'];
+
+        $now = now();
+
+        $activeFeatureIds = DB::table('features')
+            ->where('is_active', true)
+            ->pluck('id')
+            ->all();
+
+        $activeNetworkIds = DB::table('networks')
+            ->where('is_active', true)
+            ->pluck('id')
+            ->all();
+
+        foreach ($systemRoleNames as $roleName) {
+            $roleId = DB::table('roles')
+                ->where('name', $roleName)
+                ->value('id');
+
+            if ($roleId === null) {
+                continue;
+            }
+
+            // Replace-all: remove existing pivots then insert the expected full set.
+            DB::table('role_features')
+                ->where('role_id', (int) $roleId)
+                ->delete();
+
+            if ($activeFeatureIds !== []) {
+                DB::table('role_features')->insert(
+                    collect($activeFeatureIds)
+                        ->map(static fn (int $featureId): array => [
+                            'role_id' => (int) $roleId,
+                            'feature_id' => $featureId,
+                        ])
+                        ->all(),
+                );
+            }
+
+            DB::table('role_networks')
+                ->where('role_id', (int) $roleId)
+                ->delete();
+
+            if ($activeNetworkIds !== []) {
+                DB::table('role_networks')->insert(
+                    collect($activeNetworkIds)
+                        ->map(static fn (int $networkId): array => [
+                            'role_id' => (int) $roleId,
+                            'network_id' => $networkId,
+                        ])
+                        ->all(),
+                );
+            }
+
+            $this->command->info("Seeded role pivots for system role: {$roleName} at {$now->toIso8601String()}.");
         }
     }
 }

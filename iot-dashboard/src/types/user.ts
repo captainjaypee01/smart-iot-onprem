@@ -1,6 +1,8 @@
 // src/types/user.ts
 // User API resource and payload types for the users module (GET/POST/PUT/DELETE /api/v1/users).
 // Matches docs/specs/user-module-contract.md exactly.
+import type { FeatureSummary } from "./feature";
+import type { NetworkSummary } from "./auth";
 
 /** Role names from the API — use this type instead of string literals for role checks. */
 export type UserRole = "superadmin" | "admin" | "viewer" | "user";
@@ -34,6 +36,11 @@ export interface User {
     role: UserRoleRef | null;
     last_login_at: string | null;
     created_at: string;
+
+    // Populated by GET /api/v1/auth/me (feature registry + network registry).
+    // Used by the UI to dynamically render navigation + route guards.
+    features: FeatureSummary[];
+    networks: NetworkSummary[];
 }
 
 /** Payload for POST /api/v1/users (invite user or direct create with password for superadmin). */

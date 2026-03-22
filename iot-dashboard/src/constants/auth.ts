@@ -1,7 +1,8 @@
 // src/constants/auth.ts
 // User-facing strings and constants for the authentication flow
 
-export const AUTH_STRINGS = {
+/** Login / callback / set-password copy — nested shape. Import from `@/constants/auth` in auth pages. */
+export const AUTH_FLOW_STRINGS = {
     login: {
         title: "Welcome back",
         subtitle: "Sign in to your account to continue",

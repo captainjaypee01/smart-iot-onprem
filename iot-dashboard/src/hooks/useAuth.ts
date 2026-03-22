@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { login, logout as logoutApi, getMicrosoftRedirectUrl } from "@/api/auth";
+import { login, logout as logoutApi, getMicrosoftRedirectUrl, getMe } from "@/api/auth";
 import { mockLogin } from "@/mocks/handlers";
 import { useAuthStore } from "@/store/authStore";
 import type { LoginCredentials, ApiError } from "@/types";
@@ -37,7 +37,30 @@ export const useAuth = (): UseAuthReturn => {
             const data = USE_MOCK
                 ? await mockLogin(credentials.email)
                 : await login(credentials);
-            setAuth(data.user, data.permissions);
+
+            if (!USE_MOCK) {
+                // Login response may not include feature/network registries yet.
+                // Immediately hydrate from GET /auth/me to keep the sidebar (roles/pages) in sync.
+                const me = await getMe();
+                setAuth(
+                    {
+                        ...me.user,
+                        features: me.features,
+                        networks: me.networks,
+                    },
+                    me.permissions,
+                );
+            } else {
+                setAuth(
+                    {
+                        ...data.user,
+                        features: [],
+                        networks: [],
+                    },
+                    data.permissions,
+                );
+            }
+
             const user = data.user;
             toast.success(`Welcome back, ${user.name}.`);
             navigate("/", { replace: true });

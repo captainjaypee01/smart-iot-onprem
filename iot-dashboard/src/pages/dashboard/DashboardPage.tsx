@@ -20,6 +20,7 @@ import {
     useOutstandingFaults,
     useHeatmap,
 } from "@/hooks/useDashboard";
+import { useFeatures } from "@/hooks/useFeatures";
 import {
     DASHBOARD_STRINGS,
     FAULT_STRINGS,
@@ -98,8 +99,12 @@ const ModuleCard = ({
     </Card>
 );
 
-// ─── Page ─────────────────────────────────────────────────────────
-const DashboardPage = () => {
+const DashboardEmpty = () => {
+    // Users with no granted feature access should see a safe empty state.
+    return <div className="flex flex-col gap-6" />;
+};
+
+const DashboardContent = () => {
     const { kpi, modules, loading: kpiLoading } = useDashboardKpi();
     const {
         faults, meta, page, setPage,
@@ -211,6 +216,23 @@ const DashboardPage = () => {
             </Tabs>
         </div>
     );
+};
+
+// ─── Page ─────────────────────────────────────────────────────────
+const DashboardPage = () => {
+    const { hasFeature } = useFeatures();
+
+    // Current dashboard UI is Fire Extinguisher-based (faults + heatmap).
+    // If the user has no access, keep the dashboard blank instead of
+    // rendering module cards/links that would lead to 403.
+    const canViewDashboard = hasFeature("dashboard");
+    const canViewFireExtinguisher = hasFeature("fire-extinguisher");
+
+    if (!canViewDashboard || !canViewFireExtinguisher) {
+        return <DashboardEmpty />;
+    }
+
+    return <DashboardContent />;
 };
 
 export default DashboardPage;

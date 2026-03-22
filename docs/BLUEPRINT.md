@@ -17,6 +17,17 @@ It does **not** replace individual module contracts — those are the source of 
 
 ---
 
+## Operating model (current)
+
+The platform is **operator-led**: the deployment owner provisions **companies**, defines **roles** (the bundles of features, permissions, and networks per company), and owns **authorization policy**. **Tenant (company) administrators** may create and manage **users** within their company — typically by assigning people to **roles the operator has already created** — but **creating or editing roles and permission matrices** is handled by the operator, not delegated to tenants in the current product.
+
+**Implications for implementation**
+
+- Role Management in **iot-dashboard** is **superadmin-only** (see `SuperadminOutlet` for `/roles` routes).
+- **Delegating role CRUD to company admins** is a **future product decision**. If adopted, it must be updated together: API authorization, `docs/specs/role-module-contract.md`, seeds/permissions, and UI — not in isolation.
+
+---
+
 ## System Architecture
 
 ```
@@ -57,21 +68,28 @@ It does **not** replace individual module contracts — those are the source of 
 │ users                  │              │ roles                   │
 │  id · uuid · first_name│              │  id · name              │
 │  last_name · email     │              │  is_system_role         │
-│  username · is_superadmin             └──┬─────────┬───────────┘
-│  is_active · status    │                 │         │
-│  company_id (FK)       │          role_  │  role_  │
-│  role_id (FK)          │          perms  │  networks
-└────────────────────────┘                 │         │
-                                ┌──────────▼┐  ┌─────▼──────────┐
-                                │permissions│  │ networks        │
-                                │  id · key │  │  id · name      │
-                                │  module   │  │  network_address│
-                                │  display_ │  │  alarm_threshold│
-                                │  name     │  │  diagnostic_int │
-                                └───────────┘  │  wirepas_version│
-                                               │  commissioned_  │
-                                               │  date · flags   │
-                                               └──────┬──────────┘
+│  username · is_superadmin             └──┬──────┬──────┬───────┘
+│  is_active · status    │                 │      │      │
+│  company_id (FK)       │          role_  │ role_│ role_│
+│  role_id (FK)          │          perms  │ nets │ feats│
+└────────────────────────┘                 │      │      │
+                                ┌──────────▼┐ ┌───▼──┐ ┌▼──────────────────┐
+                                │permissions│ │nets  │ │ features           │
+                                │  id · key │ │      │ │  id · key · name   │
+                                │  module   │ │  ... │ │  group · group_order│
+                                │  display_ │ └──────┘ │  route · icon      │
+                                │  name     │          │  sort_order        │
+                                └───────────┘          │  is_active         │
+                                               ┌───────▼──────────┐
+                                               │ networks          │
+                                               │  id · name        │
+                                               │  network_address  │
+                                               │  alarm_threshold  │
+                                               │  diagnostic_int   │
+                                               │  wirepas_version  │
+                                               │  commissioned_date│
+                                               │  flags            │
+                                               └──────┬────────────┘
                                                       │ network_node_types
                                                ┌──────▼──────────┐
                                                │ node_types       │
@@ -94,7 +112,8 @@ All pivots that exist in the DB. **Never create these again — they already exi
 | `role_permissions` | (permissions migration) | `role_id`, `permission_id` | Roles have permissions |
 | `network_node_types` | `0001_01_01_000008` | `network_id`, `node_type_id` | Networks have node types |
 | `role_networks` | `0001_01_01_000009` | `role_id`, `network_id` | Roles see specific networks |
-| `company_networks` | **NEW** (company module) | `company_id`, `network_id` | Companies have networks |
+| `company_networks` | `2026_03_18_000100_add_fields_to_companies...` | `company_id`, `network_id` | Companies have networks |
+| `role_features` | **NEW** (feature module) | `role_id`, `feature_id` | Roles unlock pages/features |
 
 ---
 
@@ -115,8 +134,35 @@ Step 3: Assign roles to users
         User B → Role "Viewer"    →  sees Network 2 only
 ```
 
-**Enforcement rule (API — Role module):**
+**Enforcement rule (API — Role module on POST/PUT):**
 When assigning networks to a role, the API validates that every `network_id` in the payload exists in `company_networks` for that role's company. A network not assigned to the company cannot be in any of that company's roles.
+
+---
+
+## Three-Layer Role Access Model
+
+A Role bundles three access layers simultaneously. Every page check, action check, and data filter runs through all three.
+
+```
+Role answers three questions:
+
+1. WHICH PAGES can this user visit?
+   → role_features  (Feature keys e.g. "dashboard", "nodes", "alerts")
+
+2. WHAT ACTIONS can they perform inside those pages?
+   → role_permissions  (Permission keys e.g. "node.view", "node.export")
+
+3. WHICH NETWORKS can they see data from?
+   → role_networks  (Network IDs, constrained to company_networks)
+```
+
+**Sidebar** — generated dynamically from `user.features` (from `/auth/me`), sorted by `group_order` then `sort_order`.
+
+**Route guard** — `<FeatureRoute featureKey="nodes">` redirects to `/403` if the user's role does not have that feature.
+
+**Action buttons** — gated by `usePermission().hasPermission("node.export")` etc.
+
+**Network data filter** — all IoT data queries are scoped to the network IDs in `role_networks` for the user's role.
 
 ---
 
@@ -128,13 +174,14 @@ When assigning networks to a role, the API validates that every `network_id` in 
 | 2 | **Permission** | ✅ Done | `docs/specs/permission-module-contract.md` | Seeded, grouped by module, keys immutable |
 | 3 | **Node Type** | ✅ Done | `docs/specs/node-type-module-contract.md` | Global, 8 sensor slots, superadmin CRUD |
 | 4 | **Network** | ✅ Done | `docs/specs/network-module-contract.md` | Superadmin CRUD, address gen, maintenance |
-| 5 | **Company** | 🔜 Next | `docs/specs/company-module-contract.md` | company_networks pivot, dual access faces |
-| 6 | **Role** | 📋 Planned | `docs/specs/role-module-contract.md` | role_networks, permission assignment UI |
-| 7 | **User** | ✅ Done | `docs/specs/user-module-contract.md` | Invite flow, company-scoped, soft delete |
-| 8 | **Zone** | 📋 Planned | — | TBD |
-| 9 | **Node** | 📋 Planned | — | IoT device, network + node type |
-| 10 | **Alert** | 📋 Planned | — | Alarm events from IoT nodes |
-| 11 | **Dashboard** | 📋 Planned | — | Main monitoring view |
+| 5 | **Company** | ✅ Done | `docs/specs/company-module-contract.md` | `company_networks` pivot, superadmin CRUD + company admin self-edit |
+| 6 | **Feature** | 🔜 Next | `docs/specs/feature-module-contract.md` | Page registry, seeded, two-level sort (`group_order` + `sort_order`), dynamic sidebar |
+| 7 | **Role** | 🔜 Next | `docs/specs/role-module-contract.md` | Bundles features + permissions + networks; `role_features` pivot |
+| 8 | **User** | ✅ Done | `docs/specs/user-module-contract.md` | Invite flow, company-scoped, soft delete |
+| 9 | **Zone** | 📋 Planned | — | TBD |
+| 10 | **Node** | 📋 Planned | — | IoT device, network + node type |
+| 11 | **Alert** | 📋 Planned | — | Alarm events from IoT nodes |
+| 12 | **Dashboard** | 📋 Planned | — | Main monitoring view |
 
 **Status key:** ✅ Done · 🔜 Next · 📋 Planned · ⚠️ Has breaking change pending · ❌ Deprecated
 
@@ -152,8 +199,9 @@ Track every migration file so nothing gets created twice.
 | `0001_01_01_000008_create_networks_table.php` | `networks` + `network_node_types` | ✅ Exists |
 | `0001_01_01_000009_create_role_networks_table.php` | `role_networks` | ✅ Exists |
 | `0001_01_01_000012_create_node_types_table.php` | `node_types` | ✅ Exists |
-| `xxxx_add_fields_to_companies_and_create_company_networks.php` | Alter `companies` + `company_networks` | 🔜 To create |
+| `2026_03_18_000100_add_fields_to_companies_and_create_company_networks.php` | Alter `companies` + `company_networks` | ✅ Exists |
 | `xxxx_create_role_permissions_table.php` | `role_permissions` | (check repo) |
+| `xxxx_create_features_and_role_features_table.php` | `features` + `role_features` pivot | 🔜 Feature module |
 
 ---
 
@@ -167,16 +215,21 @@ Already done:
   networks            ← no FKs (network_node_types needs node_types)
   network_node_types  ← needs networks + node_types (in networks migration)
   role_companies      ← needs roles + companies
-  role_networks       ← needs roles + networks ✅ already exists
+  role_networks       ← needs roles + networks
   role_permissions    ← needs roles + permissions
-
-Next:
   companies (ALTER)   ← add new fields + company_networks pivot
   company_networks    ← needs companies + networks (new pivot)
 
-Then:
-  Role module         ← needs company_networks to validate role_networks
-  User module updates ← no new schema, just behaviour
+Next:
+  Feature module      ← no FKs on features table; role_features needs roles + features
+  Role module         ← needs company_networks (validate role_networks)
+                         needs features table (validate role_features)
+
+Planned:
+  Zone module         ← TBD
+  Node module         ← needs networks + node_types
+  Alert module        ← needs nodes
+  Dashboard           ← needs all of the above
 ```
 
 ---
@@ -191,7 +244,8 @@ Then:
 | `GET /api/v1/roles/options?company_id=N` | Role | User create/edit form | All auth users |
 | `GET /api/v1/networks/options` | Network | Company form (assign networks) | Superadmin |
 | `GET /api/v1/node-types/options` | Node Type | Network form (assign node types) | All auth users |
-| `GET /api/v1/permissions` (grouped) | Permission | Role form (assign permissions) | Superadmin |
+| `GET /api/v1/features/options` | Feature | Role form (assign features/pages) | All auth users |
+| `GET /api/v1/permissions` (grouped) | Permission | Role form (assign permissions) | All auth users |
 
 ---
 
@@ -279,6 +333,8 @@ src/
 | 2026-03 | `network_node_types` pivot: `node_type_key` string → `node_type_id` FK | Network migration, Network model |
 | 2026-03 | `NetworkResource.node_types`: string array → `[{id, name, area_id}]` objects | network.ts types, NetworkFormDialog |
 | 2026-03 | `NODE_TYPE_LABELS`, `NODE_TYPE_OPTIONS`, `NodeTypeKey` removed from constants | src/constants/nodeTypes.ts, all consumers |
+| 2026-03 | `GET /auth/me` now returns `features: FeatureSummary[]` and `networks: NetworkSummary[]` — breaking change to auth response | src/types/auth.ts, useAuthStore, sidebar |
+| 2026-03 | Sidebar now generated dynamically from `user.features` — static nav config for feature-gated pages removed | src/config/nav.ts or equivalent, AppRouter.tsx |
 
 ---
 
@@ -306,4 +362,5 @@ After completing any module:
 6. Update **Implementation Order** if a new dependency was discovered
 7. Commit this file in the **same PR** as the module implementation
 
-After completing the Company module, update entries 1, 2, 3, and 5 above.
+After completing the **Feature** module, update entries 1, 2, 3, 4, 5, and 6 above.
+After completing the **Role** module, update entries 1, 3, and 4 above.

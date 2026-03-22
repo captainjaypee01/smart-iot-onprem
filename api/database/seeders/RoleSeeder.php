@@ -70,11 +70,10 @@ class RoleSeeder extends Seeder
             }
         }
         if ($pairs !== []) {
-            \Illuminate\Support\Facades\DB::table('role_companies')->upsert(
-                $pairs,
-                ['role_id', 'company_id'],
-                []
-            );
+            // `role_companies` has no timestamps and only (`role_id`, `company_id`) as a PK.
+            // On Postgres, using `upsert` with empty update columns can still raise unique violations.
+            // `insertOrIgnore` makes this idempotent by translating to `ON CONFLICT DO NOTHING`.
+            \Illuminate\Support\Facades\DB::table('role_companies')->insertOrIgnore($pairs);
         }
 
         $this->command->info('  ✓ Roles seeded (Admin, Operator, Viewer).');

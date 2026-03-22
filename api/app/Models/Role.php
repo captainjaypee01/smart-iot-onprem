@@ -10,6 +10,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Role extends Model
@@ -49,6 +50,19 @@ class Role extends Model
     }
 
     /**
+     * Features attached to this role (via role_features pivot).
+     */
+    public function features(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Feature::class,
+            'role_features',
+            'role_id',
+            'feature_id'
+        );
+    }
+
+    /**
      * Scope: roles available for a given company (exist in role_companies).
      * Requires role_companies to be populated (e.g. run RoleSeeder or db:seed).
      */
@@ -60,5 +74,26 @@ class Role extends Model
                 ->whereColumn('role_companies.role_id', 'roles.id')
                 ->where('role_companies.company_id', $companyId);
         });
+    }
+
+    /**
+     * Networks visible to users with this role (via role_networks pivot).
+     */
+    public function networks(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Network::class,
+            'role_networks',
+            'role_id',
+            'network_id'
+        );
+    }
+
+    /**
+     * Users assigned to this role.
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'role_id');
     }
 }

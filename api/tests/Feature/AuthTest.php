@@ -1,11 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 test('user can login with valid credentials', function () {
+    $this->get('/sanctum/csrf-cookie', [
+        'Referer' => 'http://localhost:5173/',
+    ])->assertStatus(204);
+    $token = csrf_token();
+
     $user = User::factory()->create([
         'email' => 'test@example.com',
         'password' => bcrypt('password'),
@@ -16,6 +23,8 @@ test('user can login with valid credentials', function () {
         'password' => 'password',
     ], [
         'Referer' => 'http://localhost:5173/',
+        'X-XSRF-TOKEN' => $token,
+        'X-CSRF-TOKEN' => $token,
     ]);
 
     $response->assertStatus(200)
@@ -61,6 +70,10 @@ test('authenticated user can get their profile', function () {
 });
 
 test('user can logout', function () {
+    $this->get('/sanctum/csrf-cookie', [
+        'Referer' => 'http://localhost:5173/',
+    ])->assertStatus(204);
+
     User::factory()->create([
         'email' => 'logout@example.com',
         'password' => bcrypt('password'),
@@ -71,10 +84,16 @@ test('user can logout', function () {
         'password' => 'password',
     ], [
         'Referer' => 'http://localhost:5173/',
+        'X-XSRF-TOKEN' => csrf_token(),
+        'X-CSRF-TOKEN' => csrf_token(),
     ])->assertStatus(200);
+
+    $logoutToken = csrf_token();
 
     $response = $this->postJson('/api/v1/auth/logout', [], [
         'Referer' => 'http://localhost:5173/',
+        'X-XSRF-TOKEN' => $logoutToken,
+        'X-CSRF-TOKEN' => $logoutToken,
     ]);
 
     $response->assertStatus(200)

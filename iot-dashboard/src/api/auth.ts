@@ -2,8 +2,15 @@
 // API functions for authentication endpoints (cookie-based; no token in responses)
 import axios from "axios";
 import axiosClient from "./axiosClient";
-import type { AuthResponse, LoginCredentials, MicrosoftRedirectResponse, SetPasswordPayload } from "@/types";
+import type {
+    AuthResponse,
+    LoginCredentials,
+    MicrosoftRedirectResponse,
+    SetPasswordPayload,
+} from "@/types";
 import { SANCTUM_CSRF_URL } from "@/constants";
+import type { FeatureSummary } from "@/types/feature";
+import type { NetworkSummary } from "@/types/auth";
 
 /** Call before first state-changing request so Laravel sets the CSRF cookie. */
 export const getCsrfCookie = async (): Promise<void> => {
@@ -30,6 +37,8 @@ export const logout = async (): Promise<void> => {
 export interface MeResponse {
     user: AuthResponse["user"];
     permissions: string[];
+    features: FeatureSummary[];
+    networks: NetworkSummary[];
 }
 
 export const getMe = async (): Promise<MeResponse> => {

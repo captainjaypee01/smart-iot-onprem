@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSetPassword } from "@/hooks/useSetPassword";
 import { useAuthStore } from "@/store/authStore";
-import { AUTH_STRINGS } from "@/constants/auth";
+import { AUTH_FLOW_STRINGS } from "@/constants/auth";
 
 const SetPasswordPage = () => {
     const [searchParams] = useSearchParams();
@@ -58,10 +58,10 @@ const SetPasswordPage = () => {
                         <span className="text-sm font-bold text-white">IO</span>
                     </div>
                     <h2 className="text-foreground text-2xl font-bold tracking-tight">
-                        {AUTH_STRINGS.setPassword.title}
+                        {AUTH_FLOW_STRINGS.setPassword.title}
                     </h2>
                     <p className="text-muted-foreground text-sm">
-                        {AUTH_STRINGS.setPassword.subtitle}
+                        {AUTH_FLOW_STRINGS.setPassword.subtitle}
                     </p>
                 </div>
 
@@ -77,13 +77,13 @@ const SetPasswordPage = () => {
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
                         <Label htmlFor="password">
-                            {AUTH_STRINGS.setPassword.passwordLabel}
+                            {AUTH_FLOW_STRINGS.setPassword.passwordLabel}
                         </Label>
                         <div className="relative">
                             <Input
                                 id="password"
                                 type={showPassword ? "text" : "password"}
-                                placeholder={AUTH_STRINGS.setPassword.passwordPlaceholder}
+                                placeholder={AUTH_FLOW_STRINGS.setPassword.passwordPlaceholder}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={isLoading}
@@ -109,13 +109,13 @@ const SetPasswordPage = () => {
 
                     <div className="space-y-2">
                         <Label htmlFor="password_confirmation">
-                            {AUTH_STRINGS.setPassword.confirmLabel}
+                            {AUTH_FLOW_STRINGS.setPassword.confirmLabel}
                         </Label>
                         <div className="relative">
                             <Input
                                 id="password_confirmation"
                                 type={showConfirm ? "text" : "password"}
-                                placeholder={AUTH_STRINGS.setPassword.confirmPlaceholder}
+                                placeholder={AUTH_FLOW_STRINGS.setPassword.confirmPlaceholder}
                                 value={passwordConfirmation}
                                 onChange={(e) => setPasswordConfirmation(e.target.value)}
                                 disabled={isLoading}
@@ -146,10 +146,10 @@ const SetPasswordPage = () => {
                         {isLoading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {AUTH_STRINGS.setPassword.submittingButton}
+                                {AUTH_FLOW_STRINGS.setPassword.submittingButton}
                             </>
                         ) : (
-                            AUTH_STRINGS.setPassword.submitButton
+                            AUTH_FLOW_STRINGS.setPassword.submitButton
                         )}
                     </Button>
                 </form>

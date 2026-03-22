@@ -9,14 +9,28 @@ import type {
 } from "@/types/permission";
 
 export const getPermissionsGrouped = async (): Promise<PermissionsGroupedResponse> => {
-    const res = await axiosClient.get<PermissionsGroupedResponse>("/permissions");
+    const res = await axiosClient.get<PermissionsGroupedResponse>("/v1/permissions");
     return res.data;
 };
 
 export const getPermissionsPaginated = async (params: {
     page?: number;
     per_page?: number;
-}): Promise<{ data: Permission[]; meta: any; links: any }> => {
+}): Promise<{
+    data: Permission[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+    };
+    links?: {
+        first: string;
+        next: string | null;
+        prev: string | null;
+        last: string;
+    };
+}> => {
     const res = await axiosClient.get("/v1/permissions", {
         params: { flat: 1, ...params },
     });

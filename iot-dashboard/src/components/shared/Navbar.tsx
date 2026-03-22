@@ -1,7 +1,7 @@
 // src/components/shared/Navbar.tsx
 // Top navigation bar — breadcrumb, theme toggle, alerts bell, user menu
 
-import { Menu, Sun, Moon, Bell, LogOut, User, ChevronDown } from "lucide-react";
+import { Menu, Sun, Moon, Bell, LogOut, User, Settings, Building2, ChevronDown, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,25 +26,47 @@ import { useAuthStore } from "@/store/authStore";
 import { useSidebarStore } from "@/store/sidebarStore";
 import { useAuth } from "@/hooks/useAuth";
 import { NAV_GROUPS } from "@/config/nav";
+import { COMPANY_STRINGS, DASHBOARD_STRINGS, NAVBAR_STRINGS } from "@/constants";
+import { useFeatures } from "@/hooks/useFeatures";
+import { useRole } from "@/hooks/useRole";
 
 // ─── Derive a breadcrumb label from the current path ──────────────
 const usePageTitle = (): string => {
     const { pathname } = useLocation();
+    const { features } = useFeatures();
+
+    // Contract routes use `/dashboard`, but the app also supports `/` as a dashboard alias.
+    const normalizedPath = pathname === "/" ? "/dashboard" : pathname;
+
+    const featureMatch = features.find((f) => f.route === normalizedPath);
+    if (featureMatch) return featureMatch.name;
+
     for (const group of NAV_GROUPS) {
-        const match = group.items.find((item) =>
-            item.end ? pathname === item.path : pathname.startsWith(item.path)
+        const candidates = group.items.filter((item) =>
+            item.end
+                ? normalizedPath === item.path
+                : normalizedPath === item.path ||
+                  normalizedPath.startsWith(`${item.path}/`),
         );
+        const match = [...candidates].sort((a, b) => b.path.length - a.path.length)[0];
         if (match) return match.label;
     }
-    return "Dashboard";
+    return DASHBOARD_STRINGS.TITLE;
 };
 
 const Navbar = () => {
     const { theme, toggleTheme } = useTheme();
-    const { openMobile } = useSidebarStore();
+    const { openMobile, toggle, isCollapsed } = useSidebarStore();
     const user = useAuthStore((s) => s.user);
     const { handleLogout } = useAuth();
     const pageTitle = usePageTitle();
+    const { isAdmin, isSuperAdmin } = useRole();
+    const { hasFeature } = useFeatures();
+
+    /** Session duration / app settings — superadmin + company admins (see `useRole().isAdmin`). */
+    const showSessionSettings = isAdmin();
+    /** Company profile for own tenant — company admins only; superadmin uses Companies. */
+    const showCompanySettings = !isSuperAdmin() && hasFeature("company-settings");
 
     // Placeholder — wire to real alert count from your alerts store/API later
     const unreadAlerts = 0;
@@ -66,9 +88,24 @@ const Navbar = () => {
 
                 {/* Page title / breadcrumb */}
                 <div className="flex flex-1 items-center gap-2">
-                    <h1 className="text-base font-semibold text-foreground">
-                        {pageTitle}
-                    </h1>
+                    {/* Desktop sidebar collapse trigger */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hidden lg:inline-flex"
+                        onClick={toggle}
+                        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    >
+                        {isCollapsed ? (
+                            <ChevronsRight className="h-4 w-4 shrink-0" />
+                        ) : (
+                            <ChevronsLeft className="h-4 w-4 shrink-0" />
+                        )}
+                    </Button>
+
+                    <Separator orientation="vertical" className="hidden lg:block mx-1 h-6" />
+
+                    <h1 className="text-base font-semibold text-foreground">{pageTitle}</h1>
                 </div>
 
                 {/* Right-side actions */}
@@ -116,7 +153,7 @@ const Navbar = () => {
                                 </Link>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Alerts</TooltipContent>
+                        <TooltipContent>{NAVBAR_STRINGS.ALERTS}</TooltipContent>
                     </Tooltip>
 
                     <Separator orientation="vertical" className="mx-1 h-6" />
@@ -167,11 +204,39 @@ const Navbar = () => {
                             <DropdownMenuSeparator />
 
                             <DropdownMenuItem asChild>
-                                <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                                <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
                                     <User className="h-4 w-4" />
-                                    Profile &amp; Settings
+                                    {NAVBAR_STRINGS.PROFILE}
                                 </Link>
                             </DropdownMenuItem>
+
+                            {(showSessionSettings || showCompanySettings) && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    {showSessionSettings && (
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                to="/settings"
+                                                className="flex items-center gap-2 cursor-pointer"
+                                            >
+                                                <Settings className="h-4 w-4" />
+                                                {NAVBAR_STRINGS.SESSION_SETTINGS}
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                    {showCompanySettings && (
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                to="/settings/company"
+                                                className="flex items-center gap-2 cursor-pointer"
+                                            >
+                                                <Building2 className="h-4 w-4" />
+                                                {COMPANY_STRINGS.NAV_COMPANY_SETTINGS}
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                </>
+                            )}
 
                             <DropdownMenuSeparator />
 
@@ -180,7 +245,7 @@ const Navbar = () => {
                                 className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                             >
                                 <LogOut className="h-4 w-4" />
-                                Sign out
+                                {NAVBAR_STRINGS.SIGN_OUT}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

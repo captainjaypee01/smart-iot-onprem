@@ -583,6 +583,10 @@ describe('company options', function (): void {
 
 describe('company logo upload', function (): void {
     it('allows superadmin to upload a logo and returns updated resource', function (): void {
+        if (! function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('GD extension is not installed.');
+        }
+
         Storage::fake('local');
 
         $superadmin = createCompanySuperadmin();
@@ -601,6 +605,10 @@ describe('company logo upload', function (): void {
     });
 
     it('allows company admin to upload logo for own company only', function (): void {
+        if (! function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('GD extension is not installed.');
+        }
+
         Storage::fake('local');
 
         $company = Company::factory()->create(['logo_path' => null]);
@@ -619,6 +627,10 @@ describe('company logo upload', function (): void {
     });
 
     it('rejects invalid file type and oversized files', function (): void {
+        if (! function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('GD extension is not installed.');
+        }
+
         Storage::fake('local');
 
         $superadmin = createCompanySuperadmin();
@@ -636,6 +648,10 @@ describe('company logo upload', function (): void {
     });
 
     it('deletes old logo file when new one is uploaded', function (): void {
+        if (! function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('GD extension is not installed.');
+        }
+
         Storage::fake('local');
 
         $superadmin = createCompanySuperadmin();

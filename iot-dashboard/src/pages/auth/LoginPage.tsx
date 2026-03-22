@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/store/authStore";
 import { useTheme } from "@/context/ThemeContext";
-import { AUTH_STRINGS, SSO_ERROR_MESSAGES } from "@/constants/auth";
+import { AUTH_FLOW_STRINGS, SSO_ERROR_MESSAGES } from "@/constants/auth";
 import type { LoginCredentials } from "@/types";
 
 // ─── SSO Provider Config ─────────────────────────────────────────
@@ -200,10 +200,10 @@ const LoginPage = () => {
                         {/* Heading */}
                         <div className="space-y-1">
                             <h2 className="text-2xl font-bold text-foreground">
-                                {AUTH_STRINGS.login.title}
+                                {AUTH_FLOW_STRINGS.login.title}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                {AUTH_STRINGS.login.subtitle}
+                                {AUTH_FLOW_STRINGS.login.subtitle}
                             </p>
                         </div>
 
@@ -233,8 +233,8 @@ const LoginPage = () => {
                                             : provider.icon
                                         }
                                         {provider.id === "microsoft" && isMicrosoftLoading
-                                            ? AUTH_STRINGS.login.microsoftLoading
-                                            : AUTH_STRINGS.login.microsoftButton
+                                            ? AUTH_FLOW_STRINGS.login.microsoftLoading
+                                            : AUTH_FLOW_STRINGS.login.microsoftButton
                                         }
                                         {!provider.enabled && (
                                             <span className="ml-auto text-xs text-muted-foreground font-normal">
@@ -248,7 +248,7 @@ const LoginPage = () => {
                                 <div className="flex items-center gap-3 py-1">
                                     <Separator className="flex-1" />
                                     <span className="text-xs text-muted-foreground">
-                                        {AUTH_STRINGS.login.divider}
+                                        {AUTH_FLOW_STRINGS.login.divider}
                                     </span>
                                     <Separator className="flex-1" />
                                 </div>
@@ -261,7 +261,7 @@ const LoginPage = () => {
                             {/* Email */}
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                                    {AUTH_STRINGS.login.emailLabel}
+                                    {AUTH_FLOW_STRINGS.login.emailLabel}
                                 </Label>
                                 <Input
                                     id="email"
@@ -269,7 +269,7 @@ const LoginPage = () => {
                                     type="email"
                                     autoComplete="email"
                                     required
-                                    placeholder={AUTH_STRINGS.login.emailPlaceholder}
+                                    placeholder={AUTH_FLOW_STRINGS.login.emailPlaceholder}
                                     value={credentials.email}
                                     onChange={onChange}
                                     disabled={isFormDisabled}
@@ -283,7 +283,7 @@ const LoginPage = () => {
                             {/* Password */}
                             <div className="space-y-2">
                                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                                    {AUTH_STRINGS.login.passwordLabel}
+                                    {AUTH_FLOW_STRINGS.login.passwordLabel}
                                 </Label>
                                 <div className="relative">
                                     <Input
@@ -292,7 +292,7 @@ const LoginPage = () => {
                                         type={showPassword ? "text" : "password"}
                                         autoComplete="current-password"
                                         required
-                                        placeholder={AUTH_STRINGS.login.passwordPlaceholder}
+                                        placeholder={AUTH_FLOW_STRINGS.login.passwordPlaceholder}
                                         value={credentials.password}
                                         onChange={onChange}
                                         disabled={isFormDisabled}
@@ -328,10 +328,10 @@ const LoginPage = () => {
                                 {isLoading ? (
                                     <span className="flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        {AUTH_STRINGS.login.submittingButton}
+                                        {AUTH_FLOW_STRINGS.login.submittingButton}
                                     </span>
                                 ) : (
-                                    AUTH_STRINGS.login.submitButton
+                                    AUTH_FLOW_STRINGS.login.submitButton
                                 )}
                             </Button>
                         </form>

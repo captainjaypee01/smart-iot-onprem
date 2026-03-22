@@ -23,8 +23,12 @@ export const getNetworks = async (params?: {
     return res.data;
 };
 
-export const getNetworkOptions = async (): Promise<{ data: NetworkOption[] }> => {
-    const res = await axiosClient.get("/v1/networks/options");
+export const getNetworkOptions = async (
+  companyId?: number,
+): Promise<{ data: NetworkOption[] }> => {
+  const res = await axiosClient.get("/v1/networks/options", {
+    params: companyId != null ? { company_id: companyId } : undefined,
+  });
     return res.data;
 };
 

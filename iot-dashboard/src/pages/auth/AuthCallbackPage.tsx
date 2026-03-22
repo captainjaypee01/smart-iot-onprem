@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { getMe } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
-import { SSO_ERROR_MESSAGES, AUTH_STRINGS } from "@/constants/auth";
+import { SSO_ERROR_MESSAGES, AUTH_FLOW_STRINGS } from "@/constants/auth";
 
 const AuthCallbackPage = () => {
     const [searchParams] = useSearchParams();
@@ -32,7 +32,14 @@ const AuthCallbackPage = () => {
 
         getMe()
             .then((me) => {
-                setAuth(me.user, me.permissions);
+                setAuth(
+                    {
+                        ...me.user,
+                        features: me.features,
+                        networks: me.networks,
+                    },
+                    me.permissions
+                );
                 navigate("/dashboard", { replace: true });
             })
             .catch(() => {
@@ -45,7 +52,7 @@ const AuthCallbackPage = () => {
         <div className="bg-background flex min-h-screen flex-col items-center justify-center gap-4">
             <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
             <p className="text-muted-foreground text-sm">
-                {AUTH_STRINGS.callback.loading}
+                {AUTH_FLOW_STRINGS.callback.loading}
             </p>
         </div>
     );

@@ -2,8 +2,9 @@
 // All user-facing UI strings — labels, messages, placeholders, tooltips
 // Never hardcode display text in components. Always import from here.
 
-// ─── Auth ─────────────────────────────────────────────────────────
-export const AUTH_STRINGS = {
+// ─── Auth (UI / generic app copy) ─────────────────────────────────
+// Named AUTH_UI_STRINGS to avoid clashing with `AUTH_FLOW_STRINGS` in `auth.ts` when using barrel `export *`.
+export const AUTH_UI_STRINGS = {
     LOGIN_TITLE: "Welcome back",
     LOGIN_SUBTITLE: "Sign in to your account to continue",
     LOGIN_BUTTON: "Sign in",
@@ -28,14 +29,86 @@ export const NAV_STRINGS = {
     OPEN_MENU: "Open sidebar",
 } as const;
 
+// Feature registry group labels (from feature.group keys).
+export const FEATURE_GROUP_STRINGS = {
+    monitoring: "Monitoring",
+    reports: "Reports",
+    management: "Management",
+    admin: "Admin",
+} as const;
+
+// ─── Feature module (superadmin registry UI) ──────────────────────
+export const FEATURE_MODULE_STRINGS = {
+    PAGE_TITLE: "Features",
+    PAGE_SUBTITLE: "Reorder groups and pages, edit display names, and toggle availability.",
+    NAV_ITEM: "Features",
+    DIALOG_EDIT_TITLE: "Edit feature",
+    DIALOG_CREATE_TITLE: "Create feature",
+    LABEL_NAME: "Name",
+    LABEL_ICON: "Icon",
+    LABEL_ACTIVE: "Active",
+    LABEL_KEY: "Key",
+    LABEL_ROUTE: "Route",
+    PLACEHOLDER_ICON: "e.g. LayoutDashboard",
+    PLACEHOLDER_KEY: "e.g. fire-extinguisher",
+    PLACEHOLDER_ROUTE: "e.g. /fire-extinguisher",
+    PLACEHOLDER_NAME: "e.g. Fire Extinguisher",
+    LABEL_GROUP: "Group",
+    PLACEHOLDER_GROUP: "Select group",
+    NEW_GROUP_OPTION: "New group",
+    LABEL_NEW_GROUP_KEY: "New group key",
+    PLACEHOLDER_NEW_GROUP_KEY: "e.g. custom-monitoring",
+    LABEL_GROUP_ORDER: "Group order",
+    LABEL_SORT_ORDER: "Sort order",
+    GROUP_LABEL_NOTE: "Group labels are derived from the group key. Reordering is supported.",
+    GROUP_CREATE_HELP: "You can create a new sidebar section by choosing a new group key. Drag the tabs to reorder groups.",
+    ERROR_CREATE_MISSING_FIELDS: "Key, route, and name are required.",
+    ERROR_CREATE_MISSING_GROUP_KEY: "Group key is required for a new group.",
+    SUCCESS_CREATE: "Feature created.",
+    ERROR_CREATE: "Failed to create feature.",
+    SUCCESS_UPDATE: "Feature updated.",
+    ERROR_UPDATE: "Failed to update feature.",
+    SUCCESS_DELETE: "Feature deleted.",
+    ERROR_DELETE: "Failed to delete feature.",
+    ICON_SEARCH_PLACEHOLDER: "Search icon name…",
+    ICON_PICKER_GROUP: "Lucide icons",
+    ICON_PICKER_EMPTY: "No icons match your search.",
+    CONFIRM_DELETE_TITLE: "Delete feature",
+    CONFIRM_DELETE_DESCRIPTION: "Are you sure you want to delete this feature? This action cannot be undone.",
+    CREATE_FEATURE: "Create feature",
+    ERROR_REORDER_GROUPS: "Failed to reorder groups.",
+    ERROR_REORDER_FEATURES: "Failed to reorder features.",
+    ERROR_TOGGLE_ACTIVE: "Failed to update active state.",
+    COL_ICON: "Icon",
+    COL_NAME: "Name",
+    COL_KEY: "Key",
+    COL_ROUTE: "Route",
+    COL_ACTIVE: "Active",
+    COL_ACTIONS: "Actions",
+    EDIT: "Edit",
+    DELETE: "Delete",
+    DRAG_GROUP_TAB_ARIA: "Drag to reorder group tab",
+    DRAG_ROW_ARIA: "Drag to reorder feature",
+    SUPERADMIN_ONLY: "Superadmin only",
+} as const;
+
 // ─── Navbar ───────────────────────────────────────────────────────
 export const NAVBAR_STRINGS = {
     TOGGLE_DARK: "Switch to dark mode",
     TOGGLE_LIGHT: "Switch to light mode",
     ALERTS: "Alerts",
-    PROFILE: "Profile & Settings",
+    PROFILE: "Profile",
+    /** Session duration / app settings for a company (`/settings`). Not the same as company profile (`/settings/company`). */
+    SESSION_SETTINGS: "Session settings",
     SIGN_OUT: "Sign out",
     ROLE_PREFIX: "Role:",
+} as const;
+
+// ─── Settings (session / app) ─────────────────────────────────────
+export const SETTINGS_STRINGS = {
+    FORBIDDEN_TITLE: "Access restricted",
+    FORBIDDEN_DESCRIPTION:
+        "You do not have permission to view or change session settings.",
 } as const;
 
 // ─── Dashboard ────────────────────────────────────────────────────
@@ -151,6 +224,67 @@ export const USER_STRINGS = {
     SELECT_COMPANY_FIRST: "Select company first",
     ACTIONS: "Actions",
     NO_USERS: "No users.",
+} as const;
+
+// ─── Roles ─────────────────────────────────────────────────────
+export const ROLE_STRINGS = {
+    TITLE: "Roles",
+    SEARCH_PLACEHOLDER: "Search roles…",
+
+    COL_NAME: "Name",
+    COL_COMPANY: "Company",
+    COL_FEATURES: "Features",
+    COL_PERMISSIONS: "Permissions",
+    COL_NETWORKS: "Networks",
+    COL_USERS: "Users",
+    COL_SYSTEM: "System",
+    COL_ACTIONS: "Actions",
+
+    SYSTEM_ROLE: "System role",
+    CREATE_ROLE: "Create Role",
+    UPDATE_ROLE: "Update Role",
+    DIALOG_TITLE_CREATE: "Create Role",
+    DIALOG_TITLE_EDIT: "Edit Role",
+
+    LABEL_NAME: "Name",
+    LABEL_IS_SYSTEM_ROLE: "Is System Role",
+
+    SECTION_PAGE_ACCESS: "Page Access",
+    SECTION_ACTION_PERMISSIONS: "Action Permissions",
+    SECTION_NETWORK_ACCESS: "Network Access",
+
+    SELECT_ALL: "Select all",
+    DESELECT_ALL: "Deselect all",
+    SELECTED: "selected",
+    NO_NETWORKS_FOR_COMPANY: "No networks assigned to this company.",
+    SELECT_COMPANY_FIRST: "Select a company first",
+
+    DELETE_409_TOOLTIP: "Role has active users and cannot be deleted.",
+    CONFIRM_DELETE_TITLE: "Delete role",
+
+    ERROR_LOAD: "Failed to load roles.",
+    ERROR_DELETE: "Failed to delete role.",
+    ROLE_DELETED: "Role deleted successfully.",
+
+    EMPTY_NETWORKS: "No networks assigned to this company.",
+    ERROR_SAVE: "Failed to save role.",
+    ROLE_SAVED: "Role saved successfully.",
+
+    // Role form page
+    TAB_DETAILS: "Details",
+    TAB_PAGE_ACCESS: "Page Access",
+    TAB_PERMISSIONS: "Permissions",
+    TAB_NETWORKS: "Networks",
+
+    LABEL_ROLE_NAME: "Role Name",
+    SUBTITLE_CREATE: "Create a new role.",
+    SUBTITLE_EDIT: "Update role details and access.",
+    SYSTEM_ROLE_HELPER: "System roles cannot be modified or deleted.",
+
+    // Form page
+    PLACEHOLDER_ROLE_NAME: "e.g. Operator",
+    EDIT_ROLE_PREFIX: "Edit Role: ",
+    OF: "of",
 } as const;
 
 // ─── Profile ──────────────────────────────────────────────────────

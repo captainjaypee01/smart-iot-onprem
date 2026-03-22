@@ -158,12 +158,24 @@ class NetworkController extends Controller
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function options(): JsonResponse
+    public function options(Request $request): JsonResponse
     {
         $this->authorizeSuperadmin();
 
-        $data = Network::query()
+        $companyId = $request->query('company_id');
+
+        $companyId = $companyId === null || $companyId === '' ? null : (int) $companyId;
+
+        $query = Network::query()
             ->orderBy('name')
+            ->when($companyId !== null, static function ($q) use ($companyId): void {
+                $q->whereExists(static function ($sub) use ($companyId): void {
+                    $sub->selectRaw('1')
+                        ->from('company_networks')
+                        ->whereColumn('company_networks.network_id', 'networks.id')
+                        ->where('company_networks.company_id', $companyId);
+                });
+            })
             ->get(['id', 'name', 'network_address', 'is_active'])
             ->map(static fn (Network $network): array => [
                 'id' => $network->id,
