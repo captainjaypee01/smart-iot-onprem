@@ -15,13 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 
 import { cn } from "@/lib/utils";
 import { getFeatureLucideIcon } from "@/lib/featureLucideIcon";
@@ -55,8 +48,8 @@ export default function RoleFormPage() {
 
         name,
         setName,
-        companyId,
-        setCompanyId,
+        companyIds,
+        toggleCompany,
         isSystemRole,
         setIsSystemRole,
 
@@ -76,7 +69,7 @@ export default function RoleFormPage() {
         networkOptions,
         isLoadingNetworks,
         companyOptions,
-        isLoadingCompanies,
+        // isLoadingCompanies is not used; the checkbox list uses companyOptions length.
 
         handleSubmit,
         isSubmitting,
@@ -166,36 +159,49 @@ export default function RoleFormPage() {
 
                             <div className="space-y-2">
                                 {isSuperAdmin ? (
-                                    <>
+                                    <div className="space-y-2">
                                         <Label>{USER_STRINGS.COMPANY}</Label>
-                                        <Select
-                                            value={
-                                                companyId != null
-                                                    ? String(companyId)
-                                                    : undefined
-                                            }
-                                            onValueChange={(v) =>
-                                                setCompanyId(
-                                                    Number.parseInt(v, 10),
-                                                )
-                                            }
-                                            disabled={isLoadingCompanies || isEdit}
-                                        >
-                                            <SelectTrigger className="bg-background dark:bg-background">
-                                                <SelectValue placeholder={USER_STRINGS.NO_COMPANY} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {companyOptions.map((c) => (
-                                                    <SelectItem
-                                                        key={c.id}
-                                                        value={String(c.id)}
-                                                    >
-                                                        {c.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </>
+                                        {companyOptions.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground">
+                                                {ROLE_STRINGS.SELECT_COMPANY_FIRST}
+                                            </p>
+                                        ) : (
+                                            <div className="max-h-56 overflow-y-auto border rounded-md p-3 space-y-2">
+                                                {companyOptions.map((c) => {
+                                                    const checked = companyIds.has(c.id);
+                                                    return (
+                                                        <label
+                                                            key={c.id}
+                                                            className={cn(
+                                                                "flex items-center gap-3 p-2 rounded-lg border cursor-pointer hover:bg-muted transition-colors",
+                                                                checked
+                                                                    ? "border-primary bg-primary/5"
+                                                                    : "border-border",
+                                                            )}
+                                                        >
+                                                            <Checkbox
+                                                                checked={checked}
+                                                                onCheckedChange={(v) =>
+                                                                    toggleCompany(
+                                                                        c.id,
+                                                                        v === true,
+                                                                    )
+                                                                }
+                                                            />
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-medium truncate">
+                                                                    {c.name}
+                                                                </p>
+                                                                <code className="text-xs text-muted-foreground font-mono">
+                                                                    {c.code}
+                                                                </code>
+                                                            </div>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : (
                                     <>
                                         <Label>{USER_STRINGS.COMPANY}</Label>
@@ -407,7 +413,7 @@ export default function RoleFormPage() {
                             <Skeleton className="h-10 w-full" />
                             <Skeleton className="h-10 w-full" />
                         </div>
-                    ) : companyId == null ? (
+                    ) : companyIds.size === 0 ? (
                         <Card className="p-6">
                             <p className="text-sm text-muted-foreground">
                                 {ROLE_STRINGS.SELECT_COMPANY_FIRST}

@@ -30,7 +30,15 @@ export interface Role {
     id: number;
     name: string;
     is_system_role: boolean;
-    company: RoleCompany;
+    /**
+     * Legacy singular company field (kept for backward compatibility).
+     * Prefer `companies`.
+     */
+    company?: RoleCompany | null;
+    /**
+     * Companies this role is assigned to via `role_companies`.
+     */
+    companies?: RoleCompany[];
     features: RoleFeature[];
     permissions: RolePermission[];
     networks: RoleNetwork[];
@@ -67,7 +75,8 @@ export interface RoleOption {
 
 export interface StoreRolePayload {
     name: string;
-    company_id?: number; // superadmin only
+    company_id?: number; // legacy superadmin only
+    company_ids?: number[]; // superadmin only (multi-company)
     is_system_role?: boolean; // superadmin only
     feature_ids?: number[];
     permission_ids?: number[];
@@ -80,6 +89,7 @@ export interface StoreRolePayload {
 export interface UpdateRolePayload {
     name?: string;
     is_system_role?: boolean; // superadmin only
+    company_ids?: number[]; // superadmin only
     feature_ids?: number[];
     permission_ids?: number[];
     network_ids?: number[];

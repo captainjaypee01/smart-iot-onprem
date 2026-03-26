@@ -13,7 +13,8 @@ readonly class StoreRoleDTO
      */
     public function __construct(
         public string $name,
-        public int $companyId,
+        /** @var int[] */
+        public array $companyIds,
         public bool $isSystemRole,
         public array $featureIds,
         public array $permissionIds,

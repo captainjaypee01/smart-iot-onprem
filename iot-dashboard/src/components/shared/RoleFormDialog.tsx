@@ -70,7 +70,7 @@ const RoleFormDialog = ({
     const user = useAuthStore((s) => s.user);
     const isSuperAdmin = user?.is_superadmin ?? false;
 
-    const prefillCompanyId = role?.company.id ?? null;
+    const prefillCompanyId = role?.company?.id ?? null;
     const defaultCompanyId = useMemo(() => {
         if (!isSuperAdmin) return user?.company?.id ?? null;
         return prefillCompanyId ?? companyOptions[0]?.id ?? user?.company?.id ?? null;
@@ -104,7 +104,7 @@ const RoleFormDialog = ({
         isLoading: isSuperadminNetworksLoading,
     } = useRoleNetworksOptions(
         isSuperAdmin && open && companyId != null,
-        companyId,
+        companyId != null ? [companyId] : [],
     );
 
     const activeUserNetworks: NetworkOption[] = useMemo(() => {

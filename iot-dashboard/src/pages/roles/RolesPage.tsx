@@ -192,7 +192,10 @@ export default function RolesPage() {
             base.splice(1, 0, {
                 id: "company",
                 header: ROLE_STRINGS.COL_COMPANY,
-                cell: (row) => row.company?.name ?? USER_STRINGS.NO_COMPANY,
+                    cell: (row) =>
+                        row.companies?.length
+                            ? row.companies.map((c) => c.name).join(", ")
+                            : row.company?.name ?? USER_STRINGS.NO_COMPANY,
             });
         }
 

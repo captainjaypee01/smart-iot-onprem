@@ -80,15 +80,20 @@ class RoleController extends Controller
     {
         $auth = $request->user();
 
-        $companyId = $auth->is_superadmin
-            ? (int) $request->validated('company_id')
-            : (int) $auth->company_id;
+        /** @var int[] $companyIds */
+        $companyIds = $auth->is_superadmin
+            ? (
+                $request->validated('company_ids') !== null
+                    ? $request->validated('company_ids')
+                    : [(int) $request->validated('company_id')]
+            )
+            : [(int) $auth->company_id];
 
         $validated = $request->validated();
 
         $dto = new StoreRoleDTO(
             name: (string) $validated['name'],
-            companyId: $companyId,
+            companyIds: $companyIds,
             isSystemRole: (bool) ($validated['is_system_role'] ?? false),
             featureIds: $validated['feature_ids'] ?? [],
             permissionIds: $validated['permission_ids'] ?? [],
@@ -111,10 +116,12 @@ class RoleController extends Controller
         $featureIds = array_key_exists('feature_ids', $validated) ? $validated['feature_ids'] : null;
         $permissionIds = array_key_exists('permission_ids', $validated) ? $validated['permission_ids'] : null;
         $networkIds = array_key_exists('network_ids', $validated) ? $validated['network_ids'] : null;
+        $companyIds = array_key_exists('company_ids', $validated) ? $validated['company_ids'] : null;
 
         $dto = new UpdateRoleDTO(
             name: $validated['name'] ?? null,
             isSystemRole: array_key_exists('is_system_role', $validated) ? $validated['is_system_role'] : null,
+            companyIds: $companyIds,
             featureIds: $featureIds,
             permissionIds: $permissionIds,
             networkIds: $networkIds,

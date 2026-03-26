@@ -18,7 +18,7 @@ class StoreRoleAction
                 'is_system_role' => $dto->isSystemRole,
             ]);
 
-            $role->companies()->attach($dto->companyId);
+            $role->companies()->attach($dto->companyIds);
             $role->features()->sync($dto->featureIds);
             $role->permissions()->sync($dto->permissionIds);
             $role->networks()->sync($dto->networkIds);

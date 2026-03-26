@@ -40,6 +40,10 @@ class UpdateRoleAction
                 $role->networks()->sync($dto->networkIds);
             }
 
+            if ($dto->companyIds !== null) {
+                $role->companies()->sync($dto->companyIds);
+            }
+
             return $role->load(['companies', 'features', 'permissions', 'networks']);
         });
     }

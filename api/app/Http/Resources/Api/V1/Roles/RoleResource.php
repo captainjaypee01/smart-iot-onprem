@@ -18,8 +18,41 @@ class RoleResource extends JsonResource
     {
         /** @var Role $role */
         $role = $this->resource;
+        $companies = $role->companies
+            ->sortBy('id')
+            ->values()
+            ->map(static function ($company): array {
+                return [
+                    'id' => $company->id,
+                    'name' => $company->name,
+                    'code' => $company->code,
+                ];
+            })
+            ->all();
 
-        $company = $role->companies->first();
+        // Backward-compatible "company" field: when the client queries by company_id
+        // (or when a non-superadmin calls the endpoint), prefer that company as the
+        // legacy singular value.
+        $requestedCompanyId = $request->query('company_id');
+        $requestedCompanyId = $requestedCompanyId !== null && $requestedCompanyId !== ''
+            ? (int) $requestedCompanyId
+            : null;
+
+        $authCompanyId = $request->user()?->company_id;
+        $primaryCompanyId = $requestedCompanyId ?? ($authCompanyId !== null ? (int) $authCompanyId : null);
+
+        $company = null;
+        if ($primaryCompanyId !== null) {
+            foreach ($companies as $c) {
+                if ((int) $c['id'] === $primaryCompanyId) {
+                    $company = $c;
+                    break;
+                }
+            }
+        }
+        if ($company === null) {
+            $company = $companies[0] ?? null;
+        }
 
         $features = $role->features
             ->sortBy('sort_order')
@@ -60,11 +93,8 @@ class RoleResource extends JsonResource
             'id' => $role->id,
             'name' => $role->name,
             'is_system_role' => (bool) $role->is_system_role,
-            'company' => [
-                'id' => $company?->id,
-                'name' => $company?->name,
-                'code' => $company?->code,
-            ],
+            'company' => $company,
+            'companies' => $companies,
             'features' => $features,
             'permissions' => $permissions,
             'networks' => $networks,

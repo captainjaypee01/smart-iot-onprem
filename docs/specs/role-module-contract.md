@@ -12,10 +12,10 @@ The Role module manages roles within a company. A role is the central access bun
 2. **Permissions** — what actions the user can perform inside those pages (`role_permissions`)
 3. **Networks** — which networks the user can see data from (`role_networks`)
 
-Roles are scoped to a company via `role_companies`. A role belongs to exactly one company. **Superadmin** creates and manages roles for any company. The API may also allow **company admin** access to role endpoints when policy permits — see the Auth Mechanism table below. **Product stance:** the current **iot-dashboard** restricts Role Management UI to **superadmins** only; the operator provisions companies and roles while tenants manage **users**. See **`docs/BLUEPRINT.md` — Operating model (current)**.
+Roles are associated with one or more companies via `role_companies`. A role can be reused across multiple companies. **Superadmin** creates and manages roles and can attach roles to additional companies. The API may also allow **company admin** access to role endpoints when policy permits — see the Auth Mechanism table below. **Product stance:** the current **iot-dashboard** restricts Role Management UI to **superadmins** only; the operator provisions companies and roles while tenants manage **users**. See **`docs/BLUEPRINT.md` — Operating model (current)**.
 
 ```
-Role ──(role_companies)──   Company     role belongs to one company
+Role ──(role_companies)──   Company     role can be attached to one or many companies
 Role ──(role_features)──    Feature     which pages this role unlocks
 Role ──(role_permissions)── Permission  what actions this role can perform
 Role ──(role_networks)──    Network     which networks this role can see
@@ -114,6 +114,9 @@ Accepts `?page` and `?per_page` (1–100, default 15).
   "id": 1,
   "name": "Operator",
   "is_system_role": false,
+  "companies": [
+    { "id": 1, "name": "Acme Corp", "code": "ACME" }
+  ],
   "company": { "id": 1, "name": "Acme Corp", "code": "ACME" },
   "features": [
     { "id": 1, "key": "dashboard",         "name": "Dashboard",         "icon": "LayoutDashboard" },
@@ -139,7 +142,8 @@ Accepts `?page` and `?per_page` (1–100, default 15).
 ```
 
 **Field notes:**
-- `company` — the company this role belongs to (from `role_companies` pivot, always exactly one)
+- `companies` — the list of companies this role is assigned to via `role_companies` (one role can be assigned to one or more companies)
+- `company` — legacy singular convenience value for the “primary” company (requested `company_id` or the authenticated user’s `company_id`). May be deprecated.
 - `features` — from `role_features` pivot, ordered by `sort_order`
 - `permissions` — from `role_permissions` pivot
 - `networks` — from `role_networks` pivot
@@ -155,7 +159,7 @@ Accepts `?page` and `?per_page` (1–100, default 15).
 ```json
 {
   "name": "string",
-  "company_id": 1,
+  "company_ids": [1, 2],
   "is_system_role": false,
   "feature_ids": [1, 2, 3],
   "permission_ids": [1, 2, 3],
@@ -168,19 +172,20 @@ Accepts `?page` and `?per_page` (1–100, default 15).
 | Field | Rule |
 |-------|------|
 | `name` | required, string, max:255 |
-| `company_id` | required, integer, exists:companies,id; superadmin only (company admin uses own company_id automatically) |
+| `company_ids` | required for superadmin (array of integers, each exists:companies,id; min length 1). Company admin uses their own company automatically. |
 | `is_system_role` | optional, boolean, default false; superadmin only — prohibited for company admin |
 | `feature_ids` | optional, array; each item exists:features,id and `is_active=true` and NOT in `admin` group |
 | `permission_ids` | optional, array; each item exists:permissions,id |
-| `network_ids` | optional, array; each item exists:networks,id AND exists in `company_networks` for this role's company |
+| `network_ids` | optional, array; each item exists:networks,id AND exists in `company_networks` for at least one of the selected `company_ids` |
 
-**Company admin behaviour:** `company_id` is automatically set to their own `company_id` — they cannot send `company_id` in the payload (prohibited).
+**Company admin behaviour:** `company_ids` is automatically set to their own `company_id` — they cannot send `company_ids` in the payload (prohibited).
 
 ### PUT /api/v1/roles/{id}
 
 Same fields as POST, all optional. Same validation rules when present.
 
-- `company_id` — prohibited on PUT (a role cannot be moved between companies)
+- `company_id` — prohibited on PUT (use `company_ids` to attach/detach companies)
+- `company_ids` — allowed for superadmin; replace-all when present
 - `is_system_role` — prohibited for non-superadmin
 - All three pivot assignments (`feature_ids`, `permission_ids`, `network_ids`) are **replace-all**: sending `[]` clears that pivot. Omitting the field entirely leaves it unchanged.
 
@@ -207,8 +212,8 @@ Same fields as POST, all optional. Same validation rules when present.
 
 1. **Role cannot be deleted** if it has users assigned. API returns `409 Conflict: { message: "Role has active users and cannot be deleted." }`.
 2. **`is_system_role = true`** — cannot be deleted or modified (even by superadmin). API returns `403`.
-3. **`company_id` is immutable** after creation (`prohibited` on PUT). A role cannot be moved between companies.
-4. **`network_ids` must be in `company_networks`** for the role's company. The API validates this: any `network_id` not in `company_networks` for the role's company returns `422`. This is the enforcement point for the network access control model.
+3. A role may be attached to **one or more companies** via `role_companies`. On PUT, **`company_ids`** (superadmin) is allowed and treated as replace-all when present.
+4. **`network_ids` must exist in `company_networks` for at least one selected company** (`company_ids`). The API validates this: any `network_id` not in `company_networks` for *all* selected companies returns `422`. This is the enforcement point for the network access control model.
 5. **`feature_ids` cannot include `admin` group features.** Those pages are superadmin-only and cannot be assigned via roles.
 6. **All three pivots are replace-all** on update. Sending `feature_ids: []` clears all features. Omitting `feature_ids` entirely leaves the pivot unchanged.
 7. **Company admin cannot set `is_system_role`** — prohibited on both create and update.
@@ -254,7 +259,7 @@ Note: `max-w-3xl` instead of `max-w-2xl` because this dialog has three multi-sel
 
 **Section 1 — Identity:**
 - Name (Input)
-- Company (Select — superadmin only; company admin sees their own company as read-only label)
+- Companies (multi-select — superadmin only; company admin sees their own company as read-only label)
 - Is System Role (Switch — superadmin only)
 
 **Section 2 — Features (which pages):**
@@ -274,7 +279,7 @@ Note: `max-w-3xl` instead of `max-w-2xl` because this dialog has three multi-sel
 **Section 4 — Networks (which networks):**
 - Fetched via `useNetworkOptions()` when dialog opens for the selected company
 - For company admin: their company's networks from `company_networks`
-- For superadmin: networks for the selected company_id (re-fetched when company changes)
+- For superadmin: union of networks across the selected `company_ids` (re-fetched when companies change)
 - Checkbox per network: name + `network_address` monospace badge
 - `max-h-48 overflow-y-auto border rounded-md p-2`
 

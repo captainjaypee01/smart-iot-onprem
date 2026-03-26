@@ -71,7 +71,7 @@ class FeatureSeeder extends Seeder
                 'route' => '/roles',
                 'icon' => 'ShieldCheck',
                 'sort_order' => 2,
-                'group_order' => 3,
+                'group_order' => 99,
             ],
             [
                 'key' => 'company-settings',

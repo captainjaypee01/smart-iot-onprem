@@ -40,7 +40,7 @@ class MeController extends Controller
 
         $networks = $user->is_superadmin
             ? $this->getSuperadminNetworks()
-            : $this->getRoleNetworks($user->role_id);
+            : $this->getRoleNetworks($user->role_id, (int) $user->company_id);
 
         return response()->json([
             'user' => new UserResource($user),
@@ -134,17 +134,22 @@ class MeController extends Controller
 
     /**
      * @param int|null $roleId
+     * @param int $companyId
      * @return array<int, array{id:int,name:string,network_address:string}>
      */
-    private function getRoleNetworks(?int $roleId): array
+    private function getRoleNetworks(?int $roleId, int $companyId): array
     {
         if ($roleId === null) {
             return [];
         }
 
         return Network::query()
+            ->select(['networks.id', 'networks.name', 'networks.network_address'])
             ->join('role_networks', 'role_networks.network_id', '=', 'networks.id')
+            ->join('company_networks', 'company_networks.network_id', '=', 'networks.id')
             ->where('role_networks.role_id', $roleId)
+            ->where('company_networks.company_id', $companyId)
+            ->distinct()
             ->orderBy('networks.name')
             ->get(['networks.id', 'networks.name', 'networks.network_address'])
             ->map(static function (Network $network): array {

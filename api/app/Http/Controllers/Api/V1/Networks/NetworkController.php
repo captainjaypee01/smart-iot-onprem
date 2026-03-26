@@ -166,7 +166,7 @@ class NetworkController extends Controller
 
         $companyId = $companyId === null || $companyId === '' ? null : (int) $companyId;
 
-        $query = Network::query()
+        $data = Network::query()
             ->orderBy('name')
             ->when($companyId !== null, static function ($q) use ($companyId): void {
                 $q->whereExists(static function ($sub) use ($companyId): void {

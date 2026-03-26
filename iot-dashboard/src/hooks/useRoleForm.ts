@@ -32,8 +32,8 @@ export interface UseRoleFormReturn {
     // form state
     name: string;
     setName: (v: string) => void;
-    companyId: number | null;
-    setCompanyId: (v: number | null) => void;
+    companyIds: Set<number>;
+    toggleCompany: (companyId: number, checked: boolean) => void;
     isSystemRole: boolean;
     setIsSystemRole: (v: boolean) => void;
 
@@ -72,7 +72,9 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
     const { role, isLoading: isLoadingRole } = useRoleData(roleId ?? null);
 
     const [name, setName] = useState<string>("");
-    const [companyId, setCompanyId] = useState<number | null>(userCompanyId);
+    const [companyIds, setCompanyIds] = useState<Set<number>>(
+        userCompanyId != null ? new Set([userCompanyId]) : new Set(),
+    );
     const [isSystemRole, setIsSystemRole] = useState<boolean>(false);
 
     const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<number>>(
@@ -98,14 +100,17 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
     } = useRolePermissionsGrouped(true);
     const { options: companyOptions, isLoading: isLoadingCompanies } = useCompanyOptions();
 
+    const companyIdsArray = useMemo(() => Array.from(companyIds), [companyIds]);
+
     // Networks options:
-    // - superadmin can fetch /v1/networks/options scoped by company_id
-    // - company admin falls back to networks available in /auth/me (role_networks)
-    const shouldFetchSuperadminNetworks = isSuperAdmin && companyId != null;
+    // - superadmin fetches /v1/networks/options scoped by the selected companies
+    //   and unions + dedupes them
+    // - company admin falls back to networks available in /auth/me
+    const shouldFetchSuperadminNetworks = isSuperAdmin && companyIds.size > 0;
     const {
         options: apiNetworkOptions,
         isLoading: isLoadingNetworks,
-    } = useRoleNetworksOptions(shouldFetchSuperadminNetworks, companyId);
+    } = useRoleNetworksOptions(shouldFetchSuperadminNetworks, companyIdsArray);
 
     const networkOptions: NetworkOption[] = useMemo(() => {
         if (isSuperAdmin) return apiNetworkOptions;
@@ -121,13 +126,13 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
         );
     }, [apiNetworkOptions, isSuperAdmin, user?.networks]);
 
-    // Keep companyId aligned for company admins (who can't change it).
+    // Keep companyIds aligned for non-superadmin users (who can't change it).
     useEffect(() => {
         if (roleId != null) return;
-        if (companyId != null) return;
+        if (companyIds.size > 0) return;
         if (userCompanyId == null) return;
-        setCompanyId(userCompanyId);
-    }, [companyId, roleId, userCompanyId]);
+        setCompanyIds(new Set([userCompanyId]));
+    }, [companyIds.size, roleId, userCompanyId]);
 
     // Prefill on edit.
     useEffect(() => {
@@ -136,7 +141,8 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
 
         isPrefillingRef.current = true;
         setName(role.name);
-        setCompanyId(role.company.id);
+        const roleCompanies = role.companies ?? (role.company ? [role.company] : []);
+        setCompanyIds(new Set(roleCompanies.map((c) => c.id)));
         setIsSystemRole(role.is_system_role);
 
         setSelectedFeatureIds(new Set(role.features.map((f) => f.id)));
@@ -144,7 +150,8 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
         setSelectedNetworkIds(new Set(role.networks.map((n) => n.id)));
     }, [role, roleId]);
 
-    // Clear selected networks on company change (superadmin only).
+    // When the selected companies change, keep `selectedNetworkIds` only if the
+    // network is still valid for the union of selected companies.
     useEffect(() => {
         if (!isSuperAdmin) return;
 
@@ -153,8 +160,15 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
             return;
         }
 
-        setSelectedNetworkIds(new Set());
-    }, [companyId, isSuperAdmin]);
+        const validNetworkIds = new Set(networkOptions.map((n) => n.id));
+        setSelectedNetworkIds((prev) => {
+            const next = new Set<number>();
+            for (const id of prev) {
+                if (validNetworkIds.has(id)) next.add(id);
+            }
+            return next;
+        });
+    }, [networkOptions, isSuperAdmin]);
 
     const toggleFeature = useCallback((id: number, checked: boolean) => {
         setSelectedFeatureIds((prev) => {
@@ -167,6 +181,15 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
 
     const togglePermission = useCallback((id: number, checked: boolean) => {
         setSelectedPermissionIds((prev) => {
+            const next = new Set(prev);
+            if (checked) next.add(id);
+            else next.delete(id);
+            return next;
+        });
+    }, []);
+
+    const toggleCompany = useCallback((id: number, checked: boolean) => {
+        setCompanyIds((prev) => {
             const next = new Set(prev);
             if (checked) next.add(id);
             else next.delete(id);
@@ -225,7 +248,7 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
             return;
         }
 
-        if (isSuperAdmin && roleId == null && companyId == null) {
+        if (isSuperAdmin && companyIds.size === 0) {
             toast.error(ROLE_STRINGS.SELECT_COMPANY_FIRST);
             return;
         }
@@ -243,7 +266,12 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
                 // PUT /roles/{id} prohibits company_id; omit it even for superadmin.
                 const updatePayload = {
                     ...basePayload,
-                    ...(isSuperAdmin ? { is_system_role: isSystemRole } : {}),
+                    ...(isSuperAdmin
+                        ? {
+                              is_system_role: isSystemRole,
+                              company_ids: Array.from(companyIds),
+                          }
+                        : {}),
                 };
                 await updateRoleMutate(roleId, updatePayload);
             } else {
@@ -252,7 +280,7 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
                     ...basePayload,
                     ...(isSuperAdmin
                         ? {
-                              company_id: companyId as number,
+                              company_ids: Array.from(companyIds),
                               is_system_role: isSystemRole,
                           }
                         : {}),
@@ -272,7 +300,7 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
         name,
         isSuperAdmin,
         roleId,
-        companyId,
+        companyIds,
         selectedFeatureIds,
         selectedPermissionIds,
         selectedNetworkIds,
@@ -288,8 +316,8 @@ export const useRoleForm = ({ roleId }: UseRoleFormOptions): UseRoleFormReturn =
 
         name,
         setName,
-        companyId,
-        setCompanyId,
+        companyIds,
+        toggleCompany,
         isSystemRole,
         setIsSystemRole,
 

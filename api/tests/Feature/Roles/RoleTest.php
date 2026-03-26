@@ -379,6 +379,102 @@ describe('role store', function (): void {
         expect($role->companies()->pluck('company_id')->all())->toContain($company->id);
     });
 
+    it('superadmin creates multi-company role via company_ids (and validates network_ids across companies)', function (): void {
+        $superadmin = createRoleSuperadmin();
+
+        $companyA = Company::where('code', 'ACME')->first();
+        $companyB = Company::where('code', 'GLOBEX')->first();
+
+        $networkA = Network::factory()->create();
+        $companyA->networks()->attach($networkA->id);
+
+        $networkB = Network::factory()->create();
+        $companyB->networks()->attach($networkB->id);
+
+        $features = Feature::query()->where('group', '!=', 'admin')->limit(2)->pluck('id')->values()->all();
+        $permissions = Permission::query()->limit(2)->pluck('id')->values()->all();
+
+        $response = $this->actingAs($superadmin, 'sanctum')
+            ->postJson('/api/v1/roles', [
+                'company_ids' => [$companyA->id, $companyB->id],
+                'name' => 'Multi-Company Role',
+                'feature_ids' => $features,
+                'permission_ids' => $permissions,
+                // Assign a network that only belongs to companyA.
+                'network_ids' => [$networkA->id],
+            ]);
+
+        $response->assertStatus(201);
+
+        $roleId = $response->json('id');
+        $role = Role::find($roleId);
+        expect($role)->not->toBeNull();
+
+        $companyIds = $role->companies()->pluck('company_id')->values()->all();
+        expect($companyIds)->toContain($companyA->id);
+        expect($companyIds)->toContain($companyB->id);
+
+        $responseCompanyIds = collect($response->json('companies'))->pluck('id')->values()->all();
+        expect($responseCompanyIds)->toContain($companyA->id);
+        expect($responseCompanyIds)->toContain($companyB->id);
+
+        // Runtime check: user in companyB should not see networkA.
+        $userInB = User::factory()->create([
+            'company_id' => $companyB->id,
+            'role_id' => $roleId,
+            'is_superadmin' => false,
+        ]);
+
+        $authResponse = $this->actingAs($userInB, 'sanctum')
+            ->getJson('/api/v1/auth/me');
+
+        $authResponse->assertStatus(200);
+        $authNetworks = $authResponse->json('networks');
+        expect($authNetworks)->toBeArray();
+        expect(count($authNetworks))->toBe(0);
+    });
+
+    it('superadmin can add a company to an existing role via company_ids without network updates', function (): void {
+        $superadmin = createRoleSuperadmin();
+
+        $companyA = Company::where('code', 'ACME')->first();
+        $companyB = Company::where('code', 'GLOBEX')->first();
+
+        $networkA = Network::factory()->create();
+        $companyA->networks()->attach($networkA->id);
+        $companyB->networks()->attach(Network::factory()->create()->id);
+
+        $features = Feature::query()->where('group', '!=', 'admin')->limit(1)->pluck('id')->values()->all();
+        $permissions = Permission::query()->limit(1)->pluck('id')->values()->all();
+
+        $createResponse = $this->actingAs($superadmin, 'sanctum')
+            ->postJson('/api/v1/roles', [
+                'company_ids' => [$companyA->id],
+                'name' => 'Reuse Role',
+                'feature_ids' => $features,
+                'permission_ids' => $permissions,
+                'network_ids' => [$networkA->id],
+            ]);
+
+        $createResponse->assertStatus(201);
+        $roleId = $createResponse->json('id');
+
+        $updateResponse = $this->actingAs($superadmin, 'sanctum')
+            ->putJson("/api/v1/roles/{$roleId}", [
+                'company_ids' => [$companyA->id, $companyB->id],
+            ]);
+
+        $updateResponse->assertStatus(200);
+
+        $role = Role::find($roleId);
+        $companyIds = $role->companies()->pluck('company_id')->values()->all();
+        expect($companyIds)->toContain($companyA->id);
+        expect($companyIds)->toContain($companyB->id);
+
+        // Network pivot should remain unchanged (still only networkA).
+        expect($role->networks()->pluck('network_id')->values()->all())->toEqual([$networkA->id]);
+    });
+
     it('company admin sends company_id → 422 prohibited', function (): void {
         $company = Company::where('code', 'ACME')->first();
         $admin = createRoleCompanyAdmin($company);

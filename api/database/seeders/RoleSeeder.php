@@ -59,9 +59,16 @@ class RoleSeeder extends Seeder
         $viewerPermissions = Permission::whereIn('key', $viewerKeys)->pluck('id');
         $viewer->permissions()->sync($viewerPermissions);
 
-        // Link all roles to all companies (for GET /api/v1/roles/options and role_id validation).
+        // Multi-company role assignment baseline:
+        // Attach seeded baseline roles to all companies so each tenant can assign
+        // these shared roles to users out of the box.
+        //
+        // Important: only seed-managed roles are linked here. Do NOT attach every
+        // role in the table, otherwise custom roles created later would be
+        // unintentionally assigned to all companies on re-seed.
+        //
         // Run after CompanySeeder so companies exist.
-        $roleIds = Role::pluck('id')->all();
+        $roleIds = [$admin->id, $operator->id, $viewer->id];
         $companyIds = Company::pluck('id')->all();
         $pairs = [];
         foreach ($roleIds as $roleId) {
