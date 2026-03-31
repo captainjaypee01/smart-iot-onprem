@@ -82,6 +82,11 @@ class PermissionSeeder extends Seeder
             ['module' => 'feature', 'key' => 'feature.update', 'display_name' => 'Update Feature'],
             ['module' => 'feature', 'key' => 'feature.create', 'display_name' => 'Create Feature'],
             ['module' => 'feature', 'key' => 'feature.delete', 'display_name' => 'Delete Feature'],
+
+            // ── Provisioning ────────────────────────────────────────────
+            ['module' => 'provisioning', 'key' => 'provisioning.view',   'display_name' => 'View Provisioning'],
+            ['module' => 'provisioning', 'key' => 'provisioning.create', 'display_name' => 'Create Provisioning Batch'],
+            ['module' => 'provisioning', 'key' => 'provisioning.resend', 'display_name' => 'Resend Provisioning Command'],
         ];
 
         foreach ($permissions as &$p) {

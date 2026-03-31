@@ -66,14 +66,6 @@ class FeatureSeeder extends Seeder
                 'group_order' => 3,
             ],
             [
-                'key' => 'roles',
-                'name' => 'Roles',
-                'route' => '/roles',
-                'icon' => 'ShieldCheck',
-                'sort_order' => 2,
-                'group_order' => 99,
-            ],
-            [
                 'key' => 'company-settings',
                 'name' => 'Company Settings',
                 'route' => '/settings/company',
@@ -123,6 +115,22 @@ class FeatureSeeder extends Seeder
                 'route' => '/features',
                 'icon' => 'LayoutList',
                 'sort_order' => 5,
+                'group_order' => 99,
+            ],
+            [
+                'key' => 'roles',
+                'name' => 'Roles',
+                'route' => '/roles',
+                'icon' => 'ShieldCheck',
+                'sort_order' => 6,
+                'group_order' => 99,
+            ],
+            [
+                'key' => 'provisioning',
+                'name' => 'Provisioning',
+                'route' => '/provisioning',
+                'icon' => 'ServerCog',
+                'sort_order' => 7,
                 'group_order' => 99,
             ],
         ];

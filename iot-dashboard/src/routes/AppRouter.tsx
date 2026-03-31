@@ -41,6 +41,9 @@ const CompanySettingsPage = lazy(
 const FeaturesPage = lazy(() => import("@/pages/features/FeaturesPage"));
 const RolesPage = lazy(() => import("@/pages/roles/RolesPage"));
 const RoleFormPage = lazy(() => import("@/pages/roles/RoleFormPage"));
+const ProvisioningPage = lazy(() => import("@/pages/provisioning/ProvisioningPage"));
+const NewProvisioningPage = lazy(() => import("@/pages/provisioning/NewProvisioningPage"));
+const ProvisioningDetailPage = lazy(() => import("@/pages/provisioning/ProvisioningDetailPage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -149,6 +152,9 @@ const AppRouter = () => (
                                 <Route path="/roles" element={<RolesPage />} />
                                 <Route path="/roles/create" element={<RoleFormPage />} />
                                 <Route path="/roles/:id/edit" element={<RoleFormPage />} />
+                                <Route path="/provisioning" element={<ProvisioningPage />} />
+                                <Route path="/provisioning/new" element={<NewProvisioningPage />} />
+                                <Route path="/provisioning/:id" element={<ProvisioningDetailPage />} />
                             </Route>
                             <Route element={<CompanyAdminOutlet />}>
                                 <Route

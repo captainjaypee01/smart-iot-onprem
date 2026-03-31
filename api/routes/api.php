@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\V1\Networks\GenerateAddressController;
 use App\Http\Controllers\Api\V1\Networks\NetworkController;
 use App\Http\Controllers\Api\V1\Networks\ToggleMaintenanceController;
 use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
+use App\Http\Controllers\Api\V1\Provisioning\ProvisioningController;
+use App\Http\Controllers\Api\V1\Provisioning\ResendProvisioningNodeController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
 use App\Http\Controllers\Api\V1\Users\UserController;
@@ -104,6 +106,12 @@ Route::prefix('v1')->group(function () {
 
         // ─── Commands ─────────────────────────────────────────────────
         Route::post('/commands', [CommandController::class, 'store']);
+
+        // ─── Provisioning (superadmin only) ───────────────────────────
+        Route::get('/provisioning', [ProvisioningController::class, 'index']);
+        Route::post('/provisioning', [ProvisioningController::class, 'store']);
+        Route::get('/provisioning/{provisioningBatch}', [ProvisioningController::class, 'show']);
+        Route::post('/provisioning/{provisioningBatch}/nodes/{provisioningBatchNode}/resend', ResendProvisioningNodeController::class);
 
         // Route::apiResource('devices', DeviceController::class);
         // Route::apiResource('alerts',  AlertController::class);

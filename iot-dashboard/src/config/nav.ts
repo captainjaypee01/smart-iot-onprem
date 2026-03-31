@@ -11,12 +11,14 @@ import {
     Network,
     Building2,
     LayoutList,
+    ServerCog,
 } from "lucide-react";
 import type { NavGroup } from "@/types/nav";
 import {
     COMPANY_STRINGS,
     FEATURE_MODULE_STRINGS,
     NAVBAR_STRINGS,
+    PROVISIONING_STRINGS,
     ROLE_STRINGS,
 } from "@/constants/strings";
 
@@ -84,6 +86,12 @@ export const NAV_GROUPS: NavGroup[] = [
                 icon: Layers,
                 superadminOnly: true,
                 featureKey: "node-types",
+            },
+            {
+                label: PROVISIONING_STRINGS.TITLE,
+                path: "/provisioning",
+                icon: ServerCog,
+                superadminOnly: true,
             },
             {
                 label: "Permissions",

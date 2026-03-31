@@ -18,8 +18,9 @@ return new class extends Migration
                 ->constrained('zones')
                 ->nullOnDelete();
             $table->foreignId('node_config_id')
+                ->nullable()
                 ->constrained('node_configs')
-                ->restrictOnDelete();
+                ->nullOnDelete();
             $table->unsignedBigInteger('asset_id')
                 ->nullable()
                 ->comment('FK to assets table, reserved for future use');

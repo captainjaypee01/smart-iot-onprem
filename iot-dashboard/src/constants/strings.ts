@@ -479,3 +479,72 @@ export const COMPANY_STRINGS = {
     TOAST_LOGO_SUCCESS: "Company logo uploaded successfully.",
     TOAST_LOGO_ERROR: "Failed to upload company logo.",
 } as const;
+
+// ─── Node Provisioning module ─────────────────────────────────────
+export const PROVISIONING_STRINGS = {
+    TITLE: "Node Provisioning",
+    SUBTITLE: "Register IoT nodes into networks in batches of up to 10.",
+    NEW_PROVISIONING: "New Provisioning",
+    BACK: "Back",
+
+    // List page
+    COL_NETWORK: "Network",
+    COL_SUBMITTED_BY: "Submitted By",
+    COL_DATE: "Date",
+    COL_TOTAL_NODES: "Total Nodes",
+    COL_STATUS_SUMMARY: "Status Summary",
+    COL_STATUS: "Status",
+    COL_ACTIONS: "Actions",
+    VIEW: "View",
+    FILTER_NETWORK_PLACEHOLDER: "All Networks",
+    FILTER_STATUS_PLACEHOLDER: "All Statuses",
+    NO_BATCHES: "No provisioning batches found.",
+    ERROR_LOAD: "Failed to load provisioning batches.",
+    REFRESH: "Refresh",
+
+    // Status badge labels
+    STATUS_PENDING: "Pending",
+    STATUS_PARTIAL: "Partial",
+    STATUS_COMPLETE: "Complete",
+    STATUS_FAILED: "Failed",
+
+    // New provisioning form
+    NEW_TITLE: "New Provisioning",
+    LABEL_NETWORK: "Network",
+    LABEL_TARGET_NODE_ID: "Target Node ID",
+    TARGET_NODE_ID_HELPER: "Enter a specific gateway address, or 'FFFFFFFF' to broadcast to all gateways.",
+    LABEL_IS_AUTO_REGISTER: "Auto Register",
+    LABEL_SERVICE_ID: "Service ID",
+    LABEL_NODE_ADDRESS: "Node Address",
+    NODE_SECTION_TITLE: "Nodes",
+    ADD_NODE: "Add Node",
+    ADD_NODE_COUNT: (count: number) => `Add Node (${count}/10)`,
+    REMOVE_NODE: "Remove node",
+    ROW_NUMBER: (n: number) => `${n}`,
+    SUBMIT: "Submit Provisioning",
+    SUBMITTING: "Submitting…",
+    SUCCESS_SUBMIT: "Provisioning batch submitted. Primary and broadcast batches created.",
+    ERROR_SUBMIT: "Failed to submit provisioning batch.",
+    ERROR_SERVICE_ID_REQUIRED: "Service ID is required.",
+    ERROR_NODE_ADDRESS_REQUIRED: "Node Address is required.",
+    ERROR_NODE_ADDRESS_MAX: "Node Address must be 10 characters or fewer.",
+    ERROR_TARGET_NODE_ID_REQUIRED: "Target Node ID is required.",
+    ERROR_TARGET_NODE_ID_MAX: "Target Node ID must be 10 characters or fewer.",
+    ERROR_DUPLICATE_SERVICE_ID: "Duplicate Service ID.",
+    NETWORK_NOT_FOUND: "Network not found.",
+
+    // Detail page
+    DETAIL_SUBTITLE: "Provisioning batch detail",
+    LABEL_NETWORK_ADDRESS: "Network Address",
+    LABEL_SUBMITTED_DATE: "Submitted",
+    SUBMITTED_BY_SYSTEM: "System",
+    COL_NODE_NUMBER: "#",
+    COL_SERVICE_ID: "Service ID",
+    COL_NODE_ADDRESS: "Node Address",
+    STATUS_PROVISIONED: "Provisioned",
+    RESEND: "Resend",
+    RESENDING: "Resending…",
+    RESEND_SUCCESS: (serviceId: string) => `Resend submitted for ${serviceId}.`,
+    ERROR_RESEND: "Failed to resend node.",
+    ERROR_LOAD_DETAIL: "Failed to load provisioning batch.",
+} as const;

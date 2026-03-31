@@ -114,6 +114,8 @@ All pivots that exist in the DB. **Never create these again — they already exi
 | `role_networks` | `0001_01_01_000009` | `role_id`, `network_id` | Roles see specific networks |
 | `company_networks` | `2026_03_18_000100_add_fields_to_companies...` | `company_id`, `network_id` | Companies have networks |
 | `role_features` | **NEW** (feature module) | `role_id`, `feature_id` | Roles unlock pages/features |
+| `provisioning_batches` | `2026_04_01_000001_create_provisioning_batches_table` | `network_id`, `submitted_by` | Tracks provisioning transactions per network |
+| `provisioning_batch_nodes` | `2026_04_01_000002_create_provisioning_batch_nodes_table` | `provisioning_batch_id` | Individual nodes within a provisioning batch |
 
 ---
 
@@ -182,6 +184,7 @@ Role answers three questions:
 | 10 | **Node** | 📋 Planned | — | IoT device, network + node type |
 | 11 | **Alert** | 📋 Planned | — | Alarm events from IoT nodes |
 | 12 | **Dashboard** | 📋 Planned | — | Main monitoring view |
+| 13 | **Node Provisioning** | 🔜 Next | `docs/specs/node-provisioning-module-contract.md` | Batch provisioning (max 10 nodes), auto-creates broadcast batch, commands audit trail |
 
 **Status key:** ✅ Done · 🔜 Next · 📋 Planned · ⚠️ Has breaking change pending · ❌ Deprecated
 
@@ -202,6 +205,8 @@ Track every migration file so nothing gets created twice.
 | `2026_03_18_000100_add_fields_to_companies_and_create_company_networks.php` | Alter `companies` + `company_networks` | ✅ Exists |
 | `xxxx_create_role_permissions_table.php` | `role_permissions` | (check repo) |
 | `xxxx_create_features_and_role_features_table.php` | `features` + `role_features` pivot | 🔜 Feature module |
+| `2026_04_01_000001_create_provisioning_batches_table.php` | `provisioning_batches` | 🔜 Node Provisioning |
+| `2026_04_01_000002_create_provisioning_batch_nodes_table.php` | `provisioning_batch_nodes` | 🔜 Node Provisioning |
 
 ---
 
@@ -224,6 +229,7 @@ Next:
   Feature module      ← no FKs on features table; role_features needs roles + features
   Role module         ← needs company_networks (validate role_networks)
                          needs features table (validate role_features)
+  Node Provisioning module ← needs networks (network_id FK), users (submitted_by FK), commands table
 
 Planned:
   Zone module         ← TBD
@@ -335,6 +341,7 @@ src/
 | 2026-03 | `NODE_TYPE_LABELS`, `NODE_TYPE_OPTIONS`, `NodeTypeKey` removed from constants | src/constants/nodeTypes.ts, all consumers |
 | 2026-03 | `GET /auth/me` now returns `features: FeatureSummary[]` and `networks: NetworkSummary[]` — breaking change to auth response | src/types/auth.ts, useAuthStore, sidebar |
 | 2026-03 | Sidebar now generated dynamically from `user.features` — static nav config for feature-gated pages removed | src/config/nav.ts or equivalent, AppRouter.tsx |
+| 2026-04 | `nodes.node_config_id` changed from non-nullable+restrictOnDelete to nullable+nullOnDelete | `0001_01_01_000014_create_nodes_table.php` |
 
 ---
 
