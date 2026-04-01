@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('commands', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('network_id')->unsigned()->constrained('networks');
             $table->string('device_id')->nullable();
             $table->string('type');
-            $table->jsonb('payload');
+            $table->text('payload')->nullable();
             $table->string('status')->default('pending');
             $table->string('correlation_id')->unique();
             $table->timestamp('requested_at')->useCurrent();
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->index('correlation_id');
             $table->index('created_at');
             $table->index(['user_id', 'status']);
+            $table->index('network_id');
         });
     }
 

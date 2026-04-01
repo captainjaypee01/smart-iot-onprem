@@ -16,6 +16,7 @@ class Command extends Model
 
     protected $fillable = [
         'user_id',
+        'network_id',
         'device_id',
         'type',
         'payload',
@@ -31,7 +32,7 @@ class Command extends Model
 
     protected $casts = [
         'user_id' => 'string',
-        'payload' => 'array',
+        'network_id' => 'integer',
         'status' => CommandStatus::class,
         'requested_at' => 'datetime',
         'dispatched_at' => 'datetime',
@@ -42,6 +43,11 @@ class Command extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function network(): BelongsTo
+    {
+        return $this->belongsTo(Network::class);
     }
 
     public function transitionTo(CommandStatus $newStatus): bool

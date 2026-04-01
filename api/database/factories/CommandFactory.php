@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\CommandStatus;
 use App\Models\Command;
+use App\Models\Network;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -24,9 +25,10 @@ class CommandFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'network_id' => Network::factory(),
             'device_id' => 'device-'.Str::random(8),
             'type' => 'set_temperature',
-            'payload' => ['temperature' => fake()->numberBetween(18, 26)],
+            'payload' => json_encode(['temperature' => fake()->numberBetween(18, 26)]),
             'status' => CommandStatus::PENDING,
             'correlation_id' => (string) Str::uuid(),
             'requested_at' => now(),

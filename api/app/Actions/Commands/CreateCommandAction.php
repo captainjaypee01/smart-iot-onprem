@@ -17,6 +17,7 @@ class CreateCommandAction
         return DB::transaction(function () use ($dto) {
             $command = Command::create([
                 'user_id' => $dto->userId,
+                'network_id' => $dto->networkId,
                 'device_id' => $dto->deviceId,
                 'type' => $dto->type,
                 'payload' => $dto->payload,
@@ -33,6 +34,7 @@ class CreateCommandAction
                 'payload' => [
                     'command_id' => $command->id,
                     'type' => $command->type,
+                    'network_id' => $command->network_id,
                     'device_id' => $command->device_id,
                     'correlation_id' => $command->correlation_id,
                     'payload' => $command->payload,

@@ -23,6 +23,7 @@ class CommandResource extends JsonResource
         return [
             'id' => $command->id,
             'user_id' => $command->user_id,
+            'network_id' => $command->network_id,
             'device_id' => $command->device_id,
             'type' => $command->type,
             'payload' => $command->payload,

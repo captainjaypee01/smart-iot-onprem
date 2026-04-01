@@ -24,15 +24,16 @@ final class ResendProvisioningNodeAction
         return DB::transaction(function () use ($batch, $node): ProvisioningBatchNode {
             $command = $this->createCommand->execute(new CreateCommandDTO(
                 userId: $node->provisioning_batch_id !== null ? (string) $batch->submitted_by : null,
+                networkId: $batch->network_id,
                 deviceId: $node->service_id,
                 type: 'node_provisioning',
-                payload: [
+                payload: json_encode([
                     'service_id'     => $node->service_id,
                     'node_address'   => $node->node_address,
                     'network_id'     => $batch->network_id,
                     'packet_id'      => $batch->packet_id,
                     'target_node_id' => $batch->target_node_id,
-                ],
+                ], JSON_THROW_ON_ERROR),
                 correlationId: Str::uuid()->toString(),
             ));
 

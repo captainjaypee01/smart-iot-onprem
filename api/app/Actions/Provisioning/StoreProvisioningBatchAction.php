@@ -85,15 +85,16 @@ final class StoreProvisioningBatchAction
 
         $command = $this->createCommand->execute(new CreateCommandDTO(
             userId: (string) $submittedBy,
+            networkId: $networkId,
             deviceId: $node['service_id'],
             type: 'node_provisioning',
-            payload: [
+            payload: json_encode([
                 'service_id'     => $node['service_id'],
                 'node_address'   => $nodeAddress,
                 'network_id'     => $networkId,
                 'packet_id'      => $batch->packet_id,
                 'target_node_id' => $batch->target_node_id,
-            ],
+            ], JSON_THROW_ON_ERROR),
             correlationId: Str::uuid()->toString(),
         ));
 

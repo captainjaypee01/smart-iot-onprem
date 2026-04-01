@@ -21,6 +21,7 @@ class CommandController extends Controller
     {
         $dto = new CreateCommandDTO(
             userId: (string) $request->user()?->id,
+            networkId: (int) $request->integer('network_id'),
             deviceId: $request->input('device_id'),
             type: $request->input('type'),
             payload: $request->input('payload'),

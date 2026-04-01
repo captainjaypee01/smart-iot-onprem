@@ -8,9 +8,10 @@ readonly class CreateCommandDTO
 {
     public function __construct(
         public ?string $userId,
+        public int $networkId,
         public ?string $deviceId,
         public string $type,
-        public array $payload,
+        public ?string $payload,
         public string $correlationId,
     ) {}
 }

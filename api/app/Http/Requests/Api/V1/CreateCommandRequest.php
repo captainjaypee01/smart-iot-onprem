@@ -16,18 +16,19 @@ class CreateCommandRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'network_id' => ['required', 'integer', 'exists:networks,id'],
             'device_id' => ['nullable', 'string', 'max:255'],
             'type' => ['required', 'string', 'max:255'],
-            'payload' => ['required', 'array'],
+            'payload' => ['nullable', 'string'],
         ];
     }
 
     public function messages(): array
     {
         return [
+            'network_id.required' => 'Network is required',
+            'network_id.exists' => 'The selected network does not exist',
             'type.required' => 'Command type is required',
-            'payload.required' => 'Command payload is required',
-            'payload.array' => 'Command payload must be an object',
         ];
     }
 }
