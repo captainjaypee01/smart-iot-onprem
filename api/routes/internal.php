@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Internal\CommandController;
+use App\Http\Controllers\Api\V1\Commands\InternalCommandController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,8 +16,5 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('internal')
     ->middleware(['internal.token', 'throttle:1000,1'])
     ->group(function () {
-        Route::post('/commands/{id}/mark-dispatched', [CommandController::class, 'markDispatched']);
-        Route::post('/commands/{id}/mark-acked', [CommandController::class, 'markAcked']);
-        Route::post('/commands/{id}/mark-completed', [CommandController::class, 'markCompleted']);
-        Route::post('/commands/{id}/mark-failed', [CommandController::class, 'markFailed']);
+        Route::patch('/commands/{commandId}/status', [InternalCommandController::class, 'updateStatus']);
     });

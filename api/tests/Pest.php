@@ -10,7 +10,19 @@ putenv('DB_DATABASE=:memory:');
 $_ENV['DB_CONNECTION'] = 'sqlite';
 $_ENV['DB_DATABASE'] = ':memory:';
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)->in('Feature');
+
+// ── Shared test helpers ───────────────────────────────────────────────────────
+
+function createSuperadmin(): User
+{
+    return User::factory()->create([
+        'company_id'   => null,
+        'role_id'      => null,
+        'is_superadmin' => true,
+    ]);
+}

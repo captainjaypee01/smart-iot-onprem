@@ -1,0 +1,1 @@
+- [Command Console Module](project_command_console.md) — Key decisions for command-module-contract.md: dual status columns, node_address format, retry_by convention, no-delete rule, internal endpoint pattern

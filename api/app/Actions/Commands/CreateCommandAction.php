@@ -22,7 +22,6 @@ class CreateCommandAction
                 'type' => $dto->type,
                 'payload' => $dto->payload,
                 'status' => CommandStatus::PENDING,
-                'correlation_id' => $dto->correlationId,
                 'requested_at' => now(),
             ]);
 
@@ -36,7 +35,6 @@ class CreateCommandAction
                     'type' => $command->type,
                     'network_id' => $command->network_id,
                     'device_id' => $command->device_id,
-                    'correlation_id' => $command->correlation_id,
                     'payload' => $command->payload,
                 ],
             ]);

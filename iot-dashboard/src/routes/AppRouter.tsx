@@ -44,6 +44,7 @@ const RoleFormPage = lazy(() => import("@/pages/roles/RoleFormPage"));
 const ProvisioningPage = lazy(() => import("@/pages/provisioning/ProvisioningPage"));
 const NewProvisioningPage = lazy(() => import("@/pages/provisioning/NewProvisioningPage"));
 const ProvisioningDetailPage = lazy(() => import("@/pages/provisioning/ProvisioningDetailPage"));
+const CommandConsolePage = lazy(() => import("@/pages/commands/CommandConsolePage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -128,6 +129,14 @@ const AppRouter = () => (
                                 }
                             />
                             <Route path="/profile" element={<ProfilePage />} />
+                            <Route
+                                path="/commands"
+                                element={
+                                    <FeatureRoute featureKey="command-console">
+                                        <CommandConsolePage />
+                                    </FeatureRoute>
+                                }
+                            />
                             {/* Always available within the authenticated app */}
                             <Route path="/403" element={<ForbiddenPage />} />
                             <Route element={<SuperadminOutlet />}>

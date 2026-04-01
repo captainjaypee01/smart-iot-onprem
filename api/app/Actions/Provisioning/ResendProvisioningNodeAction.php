@@ -10,7 +10,6 @@ use App\Enums\ProvisioningNodeStatus;
 use App\Models\ProvisioningBatch;
 use App\Models\ProvisioningBatchNode;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 final class ResendProvisioningNodeAction
 {
@@ -34,7 +33,6 @@ final class ResendProvisioningNodeAction
                     'packet_id'      => $batch->packet_id,
                     'target_node_id' => $batch->target_node_id,
                 ], JSON_THROW_ON_ERROR),
-                correlationId: Str::uuid()->toString(),
             ));
 
             $node->update([

@@ -185,6 +185,7 @@ Role answers three questions:
 | 11 | **Alert** | 📋 Planned | — | Alarm events from IoT nodes |
 | 12 | **Dashboard** | 📋 Planned | — | Main monitoring view |
 | 13 | **Node Provisioning** | 🔜 Next | `docs/specs/node-provisioning-module-contract.md` | Batch provisioning (max 10 nodes), auto-creates broadcast batch, commands audit trail |
+| 14 | **Command Console** | ✅ Done | `docs/specs/command-module-contract.md` | Send `send_data` to IoT nodes; 7-rule message classification; retry job (max 3); internal status update endpoint; history table with auto-refresh |
 
 **Status key:** ✅ Done · 🔜 Next · 📋 Planned · ⚠️ Has breaking change pending · ❌ Deprecated
 
@@ -261,11 +262,14 @@ These formats are used consistently. Never deviate.
 
 | Field | Format | Example | Where |
 |-------|--------|---------|-------|
-| `network_address` | `0x` + 6 uppercase hex | `0xA3F2B1` | Network |
-| `area_id` (node type) | Raw hex, no prefix, uppercase, max 10 chars | `A1B2C3` | Node Type |
+| `network_address` | Raw hex, uppercase, no prefix, max 10 chars | `A1B2C3` | Network |
+| `area_id` (node type) | Raw hex, uppercase, no prefix, max 10 chars | `01000001` | Node Type |
+| `node_address` (command) | Raw hex, uppercase, no prefix, max 10 chars | `A3F2B1` | Command |
 | `company.code` | Uppercase, max 20 chars, regex `/^[A-Z0-9_-]+$/` | `ACME` | Company |
 | Dates | ISO8601 string | `2026-01-01T00:00:00+00:00` | All |
 | Date only | `YYYY-MM-DD` | `2026-03-20` | Network `commissioned_date` |
+
+> **Hex address rule:** All hex address fields (`network_address`, `area_id`, `node_address`) are stored as raw uppercase hex strings with **no `0x` prefix**. Never store or accept the `0x` prefix in the database. Enforce this in seeders, factories, validation, and API resources.
 
 ---
 

@@ -12,3 +12,4 @@ export * from "./location";
 export * from "./strings";
 export * from "./nodeStatus";
 export * from "./auth";
+export * from "./commands";

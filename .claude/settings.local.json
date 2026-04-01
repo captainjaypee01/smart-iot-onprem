@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(docker exec iot-api:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"foreign\\\\|cascade\\\\|delete\" database/migrations/*.php)",
+      "Bash(find database/migrations -type f -name \"*.php\" -exec grep -l \"users\\\\|truncate\\\\|delete\" {} \\\\;)"
+    ]
+  }
+}

@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('network_address', 10)->unique()
-                ->comment('3-byte hex e.g. 0xA3F2B1 — stored uppercase with 0x prefix');
+                ->comment('3-byte hex, uppercase, no prefix e.g. A3F2B1');
             $table->text('description')->nullable();
             $table->text('remarks')->nullable();
             $table->boolean('is_active')->default(true);

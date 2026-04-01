@@ -19,7 +19,7 @@ use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
 use App\Http\Controllers\Api\V1\Features\FeatureController;
 use App\Http\Controllers\Api\V1\Features\ReorderFeaturesController;
 use App\Http\Controllers\Api\V1\Features\ReorderGroupsController;
-use App\Http\Controllers\Api\V1\CommandController;
+use App\Http\Controllers\Api\V1\Commands\CommandController as SendDataCommandController;
 use App\Http\Controllers\Api\V1\Networks\GenerateAddressController;
 use App\Http\Controllers\Api\V1\Networks\NetworkController;
 use App\Http\Controllers\Api\V1\Networks\ToggleMaintenanceController;
@@ -105,7 +105,10 @@ Route::prefix('v1')->group(function () {
             ->only(['index', 'show', 'update', 'store', 'destroy']);
 
         // ─── Commands ─────────────────────────────────────────────────
-        Route::post('/commands', [CommandController::class, 'store']);
+        Route::get('/commands', [SendDataCommandController::class, 'index']);
+        Route::get('/commands/{command}', [SendDataCommandController::class, 'show']);
+        Route::post('/commands', [SendDataCommandController::class, 'store']);
+        Route::post('/commands/{command}/resend', [SendDataCommandController::class, 'resend']);
 
         // ─── Provisioning (superadmin only) ───────────────────────────
         Route::get('/provisioning', [ProvisioningController::class, 'index']);

@@ -12,6 +12,5 @@ readonly class CreateCommandDTO
         public ?string $deviceId,
         public string $type,
         public ?string $payload,
-        public string $correlationId,
     ) {}
 }

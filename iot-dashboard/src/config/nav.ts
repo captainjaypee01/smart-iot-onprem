@@ -12,6 +12,7 @@ import {
     Building2,
     LayoutList,
     ServerCog,
+    Terminal,
 } from "lucide-react";
 import type { NavGroup } from "@/types/nav";
 import {
@@ -21,6 +22,7 @@ import {
     PROVISIONING_STRINGS,
     ROLE_STRINGS,
 } from "@/constants/strings";
+import { COMMAND_STRINGS } from "@/constants/commands";
 
 export const NAV_GROUPS: NavGroup[] = [
     {
@@ -44,6 +46,13 @@ export const NAV_GROUPS: NavGroup[] = [
         title: "IoT Management",
         items: [
             { label: "Device Map", path: "/device-map", icon: Map },
+            {
+                label: COMMAND_STRINGS.NAV_LABEL,
+                path: "/commands",
+                icon: Terminal,
+                featureKey: "command-console",
+                permission: "command.view",
+            },
         ],
     },
     {

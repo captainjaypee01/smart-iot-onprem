@@ -87,6 +87,10 @@ class PermissionSeeder extends Seeder
             ['module' => 'provisioning', 'key' => 'provisioning.view',   'display_name' => 'View Provisioning'],
             ['module' => 'provisioning', 'key' => 'provisioning.create', 'display_name' => 'Create Provisioning Batch'],
             ['module' => 'provisioning', 'key' => 'provisioning.resend', 'display_name' => 'Resend Provisioning Command'],
+
+            // ── Command Console ──────────────────────────────────────────
+            ['module' => 'command', 'key' => 'command.view',   'display_name' => 'View Commands'],
+            ['module' => 'command', 'key' => 'command.create', 'display_name' => 'Send Command'],
         ];
 
         foreach ($permissions as &$p) {
@@ -135,6 +139,7 @@ class PermissionSeeder extends Seeder
                     'user.view',
                     'company.view',
                     'role.view',
+                    'command.view',
                 ],
             ],
             [

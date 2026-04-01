@@ -11,15 +11,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function createSuperadmin(): User
-{
-    return User::factory()->create([
-        'company_id' => null,
-        'role_id' => null,
-        'is_superadmin' => true,
-    ]);
-}
-
 function createNonSuperadmin(): User
 {
     return User::factory()->create([

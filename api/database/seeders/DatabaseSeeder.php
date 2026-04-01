@@ -17,11 +17,13 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call([
-            CompanySeeder::class,       // 1. Companies first — users FK to companies
-            FeatureSeeder::class,       // 2. Features first — system-role pivots depend on it
+            CompanySeeder::class,       // 1. Companies first — users + networks FK to companies
+            FeatureSeeder::class,       // 2. Features — system-role pivots depend on it
             PermissionSeeder::class,    // 3. Permissions before roles
-            RoleSeeder::class,          // 4. Roles + role_permissions
-            UserSeeder::class,          // 5. Users + user_roles
+            RoleSeeder::class,          // 4. Roles + role_permissions + role_companies
+            NodeTypeSeeder::class,      // 5. Node types — networks pivot depends on it
+            NetworkSeeder::class,       // 6. Networks + node-type pivots + company/role assignments
+            UserSeeder::class,          // 7. Users + user_roles (roles must exist first)
         ]);
     }
 }

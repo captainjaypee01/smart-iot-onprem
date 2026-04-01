@@ -133,6 +133,14 @@ class FeatureSeeder extends Seeder
                 'sort_order' => 7,
                 'group_order' => 99,
             ],
+            [
+                'key' => 'command-console',
+                'name' => 'Command Console',
+                'route' => '/commands',
+                'icon' => 'Terminal',
+                'sort_order' => 8,
+                'group_order' => 99,
+            ],
         ];
 
         $features = array_merge($standardFeatures, $superadminFeatures);
