@@ -65,10 +65,15 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 EXPOSE 8000
 CMD ["sh", "-lc", "php artisan serve --host=0.0.0.0 --port=8000"]
 
-# ── dev: same as base, for local bind-mount dev ───────────────────────────────
+# ── dev: entrypoint auto-migrates and installs dev deps on every start ────────
 FROM base AS dev
 
-CMD ["sh", "-lc", "php artisan serve --host=0.0.0.0 --port=8000"]
+# Copy entrypoint before the bind-mount shadows /app, so it always exists
+COPY docker-entrypoint.dev.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
 
 # ── production: hardened, no Composer, opcache tuned ─────────────────────────
 FROM base AS production

@@ -26,8 +26,8 @@ The original migration is replaced in-place. The new schema adds all required co
 Schema::create('networks', function (Blueprint $table) {
     $table->id();
     $table->string('name');
-    $table->string('network_address', 10)->unique()
-        ->comment('3-byte hex e.g. 0xA3F2B1 — stored uppercase with 0x prefix');
+    $table->string('network_address', 6)->unique()
+        ->comment('3-byte hex stored as 6 uppercase chars WITHOUT 0x prefix e.g. A3F2B1');
     $table->text('description')->nullable();
     $table->text('remarks')->nullable();
     $table->boolean('is_active')->default(true);
@@ -393,7 +393,8 @@ All endpoints are superadmin-only. The superadmin guard short-circuits before pe
 - Name (text input)
 - Network Address (text input + "Generate" button beside it)
   - "Generate" calls `POST /api/v1/networks/generate-address` and pre-fills the field
-  - Validates regex `/^0x[0-9A-F]{6}$/i` on blur
+  - Validates regex `/^[0-9A-Fa-f]{6}$/` on blur — no `0x` prefix in the field
+  - `0x` is stripped automatically if accidentally typed or pasted
 - Description (textarea)
 - Remarks (textarea)
 - Is Active (toggle/switch)

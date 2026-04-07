@@ -7,7 +7,7 @@
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
-use App\Http\Controllers\API\V1\Auth\MicrosoftCallbackController;
+use App\Http\Controllers\Api\V1\Auth\MicrosoftCallbackController;
 use App\Http\Controllers\Api\V1\Auth\MicrosoftRedirectController;
 use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
 use App\Http\Controllers\Api\V1\Commands\CommandController as SendDataCommandController;

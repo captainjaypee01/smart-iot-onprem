@@ -289,9 +289,14 @@ export const NetworkFormDialog = ({
                                 <Input
                                     id="network-address"
                                     value={networkAddress}
-                                    onChange={(event) =>
-                                        setNetworkAddress(event.target.value)
-                                    }
+                                    placeholder="e.g. A3F2B1"
+                                    onChange={(event) => {
+                                        // Strip any accidental 0x/0X prefix so users
+                                        // never store or send it
+                                        const raw = event.target.value;
+                                        const stripped = raw.replace(/^0x/i, "");
+                                        setNetworkAddress(stripped);
+                                    }}
                                     onBlur={handleBlurAddress}
                                     className={cn(
                                         "bg-background text-foreground dark:bg-background dark:text-foreground font-mono",

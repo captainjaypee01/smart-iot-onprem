@@ -39,7 +39,8 @@
       "Bash(echo \"TYPECHECK_EXIT:$?\")",
       "Bash(echo \"TSC_EXIT:$?\")",
       "Bash(echo \"BUILD_EXIT:$?\")",
-      "Bash(ls tsconfig*.json)"
+      "Bash(ls tsconfig*.json)",
+      "Bash(netsh interface:*)"
     ]
   }
 }

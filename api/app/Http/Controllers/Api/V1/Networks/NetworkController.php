@@ -49,21 +49,6 @@ class NetworkController extends Controller
 
         $networks = $query->orderBy('name')->paginate($perPage);
 
-        // Index/search responses format addresses with a `0x` prefix for display,
-        // even though the DB stores the plain 6-hex-digit form.
-        $networks->getCollection()->transform(static function (Network $network): Network {
-            $addr = (string) $network->network_address;
-            if (str_starts_with($addr, '0x') || str_starts_with($addr, '0X')) {
-                $hex = substr($addr, 2);
-            } else {
-                $hex = $addr;
-            }
-
-            $network->network_address = '0x'.strtoupper($hex);
-
-            return $network;
-        });
-
         return NetworkResource::collection($networks);
     }
 

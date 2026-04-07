@@ -1,14 +1,12 @@
 # observability/alertmanager/alertmanager.yml
-# Routes alerts to Slack and/or email. Fill in your credentials.
+# Alertmanager configuration.
+#
+# Dev: all receivers are no-ops (alerts are received but not forwarded).
+# Prod/UAT: set SLACK_WEBHOOK_CRITICAL and SLACK_WEBHOOK_WARNING env vars on the
+#           alertmanager container and uncomment the slack_configs blocks below.
 
 global:
   resolve_timeout: 5m
-  # SMTP settings (uncomment and configure for email alerts)
-  # smtp_smarthost:  'smtp.gmail.com:587'
-  # smtp_from:       'alerts@your-domain.com'
-  # smtp_auth_username: 'alerts@your-domain.com'
-  # smtp_auth_password: 'REPLACE_APP_PASSWORD'
-  # smtp_require_tls: true
 
 templates:
   - '/etc/alertmanager/templates/*.tmpl'
@@ -21,13 +19,11 @@ route:
   receiver: default
 
   routes:
-    # Critical alerts — immediate notification
     - match:
         severity: critical
       receiver: critical-alerts
       continue: true
 
-    # Warning alerts — grouped, less urgent
     - match:
         severity: warning
       receiver: warning-alerts
@@ -35,38 +31,37 @@ route:
 receivers:
 
   - name: default
-    # Catch-all — does nothing, prevents errors
     webhook_configs: []
 
   - name: critical-alerts
-    slack_configs:
-      - api_url: '${SLACK_WEBHOOK_URL}'          # set in env
-        channel: '#iot-alerts-critical'
-        title: '[CRITICAL] {{ .GroupLabels.alertname }}'
-        text: |
-          {{ range .Alerts }}
-          *Alert:* {{ .Annotations.summary }}
-          *Description:* {{ .Annotations.description }}
-          *Env:* {{ .Labels.env }}
-          {{ end }}
-        send_resolved: true
-    # email_configs:
-    #   - to: 'oncall@your-domain.com'
-    #     subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    webhook_configs: []
+    # ── Slack (uncomment + set env vars on the alertmanager container) ──────────
+    # slack_configs:
+    #   - api_url: '${SLACK_WEBHOOK_CRITICAL}'
+    #     channel: '#iot-alerts-critical'
+    #     title: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    #     text: |
+    #       {{ range .Alerts }}
+    #       *Alert:* {{ .Annotations.summary }}
+    #       *Description:* {{ .Annotations.description }}
+    #       *Env:* {{ .Labels.env }}
+    #       {{ end }}
+    #     send_resolved: true
 
   - name: warning-alerts
-    slack_configs:
-      - api_url: '${SLACK_WEBHOOK_URL}'
-        channel: '#iot-alerts-warning'
-        title: '[WARNING] {{ .GroupLabels.alertname }}'
-        text: |
-          {{ range .Alerts }}
-          *Alert:* {{ .Annotations.summary }}
-          {{ end }}
-        send_resolved: true
+    webhook_configs: []
+    # ── Slack (uncomment + set env vars on the alertmanager container) ──────────
+    # slack_configs:
+    #   - api_url: '${SLACK_WEBHOOK_WARNING}'
+    #     channel: '#iot-alerts-warning'
+    #     title: '[WARNING] {{ .GroupLabels.alertname }}'
+    #     text: |
+    #       {{ range .Alerts }}
+    #       *Alert:* {{ .Annotations.summary }}
+    #       {{ end }}
+    #     send_resolved: true
 
 inhibit_rules:
-  # Suppress warning if critical is already firing for the same alert
   - source_match:
       severity: critical
     target_match:

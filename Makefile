@@ -8,9 +8,31 @@ DEV_COMPOSE  = docker compose -f docker-compose.yml -f docker-compose.dev.yml --
 UAT_COMPOSE  = docker compose -f docker-compose.yml -f docker-compose.uat.yml --env-file .env.uat
 PROD_COMPOSE = docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod
 
-dev: ## Start development stack
+dev: ## Start development stack (auto-migrates on first run)
 	$(DEV_COMPOSE) up -d --build
-	@echo "🚀 Dev stack up — Dashboard: http://localhost:5173 | Grafana: http://localhost:3000"
+	@echo ""
+	@echo "Dev stack starting..."
+	@echo "  Dashboard : http://localhost:5173"
+	@echo "  API       : http://localhost:8000"
+	@echo "  Mailpit   : http://localhost:8025"
+	@echo "  Grafana   : http://localhost:3200"
+	@echo ""
+	@echo "First time? Run: make seed"
+	@echo "To tail API logs: make logs SERVICE=api"
+	@echo ""
+
+setup: ## First-time dev setup — starts stack, waits for API, then seeds DB
+	$(DEV_COMPOSE) up -d --build
+	@echo "Waiting for API to be healthy..."
+	@$(DEV_COMPOSE) exec -T api sh -c 'until curl -fsS http://localhost:8000/api/v1/health >/dev/null 2>&1; do sleep 2; done'
+	@echo "Seeding database..."
+	$(DEV_COMPOSE) exec api php artisan db:seed
+	@echo ""
+	@echo "Setup complete!"
+	@echo "  Dashboard : http://localhost:5173"
+	@echo "  API       : http://localhost:8000"
+	@echo "  Mailpit   : http://localhost:8025 (catches all dev emails)"
+	@echo ""
 
 uat: ## Start UAT stack
 	$(UAT_COMPOSE) up -d --build

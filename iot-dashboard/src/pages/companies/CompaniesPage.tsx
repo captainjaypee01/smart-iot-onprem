@@ -135,7 +135,7 @@ export default function CompaniesPage() {
                 cell: (row) => (
                     <Badge
                         variant="secondary"
-                        className="font-mono text-xs bg-muted px-2 py-1 dark:bg-muted"
+                        className="font-mono text-xs px-2 py-1 dark:bg-muted"
                     >
                         {row.code}
                     </Badge>

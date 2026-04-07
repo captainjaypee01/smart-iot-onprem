@@ -9,15 +9,22 @@ services:
     env_file:
       - ./api/.env.dev              # replaces ./api/.env from base
     environment:
-      DB_HOST:    postgres
+      DB_HOST:    postgres          # override: use Docker service name
       REDIS_HOST: redis
-    command: sh -lc "php artisan serve --host=0.0.0.0 --port=8000"
+    # CMD from Dockerfile: php artisan serve --host=0.0.0.0 --port=8000
+    # Entrypoint (docker-entrypoint.dev.sh) runs composer install + migrate first
     volumes:
       - ./api:/app                  # live source mount — changes apply instantly
       - api_storage:/app/storage
     ports:
       - "${API_PORT:-8000}:8000"
       - "9003:9003"                 # Xdebug
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/v1/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 90s             # entrypoint: composer install + migrate can take ~30-60s
 
   queue:
     build:
@@ -27,6 +34,7 @@ services:
     environment:
       DB_HOST:    postgres
       REDIS_HOST: redis
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600"]
     volumes:
       - ./api:/app
       - api_storage:/app/storage
@@ -39,6 +47,7 @@ services:
     environment:
       DB_HOST:    postgres
       REDIS_HOST: redis
+    command: ["sh", "-c", "while true; do php artisan outbox:publish --limit=100; sleep 5; done"]
     volumes:
       - ./api:/app
       - api_storage:/app/storage
@@ -79,6 +88,6 @@ services:
     container_name: iot-mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025"
+      - "2525:1025"   # 1025 is blocked by Windows — map to 2525 on host
       - "8025:8025"
     networks: [iot_net]

@@ -20,8 +20,8 @@ Smart IoT on-premises management platform consisting of:
 ### Docker-based development (primary workflow)
 
 ```bash
-cp .env.dev .env         # First time only
-make dev                 # Start full dev stack
+make setup               # First time only — starts stack, migrates, seeds
+make dev                 # Start full dev stack (auto-migrates on every start)
 make down                # Stop all services
 make logs SERVICE=api    # Tail a service's logs
 make shell-api           # Exec into API container
@@ -30,7 +30,7 @@ make migrate-fresh       # Drop + re-migrate + seed
 make test-api            # Run API test suite
 ```
 
-Dev endpoints: Dashboard `http://localhost:5173`, API `http://localhost:8000`, Grafana `http://localhost:3000`.
+Dev endpoints: Dashboard `http://localhost:5173`, API `http://localhost:8000`, Grafana `http://localhost:3200`, Mailpit `http://localhost:8025`.
 
 ### API (Laravel) — run inside container or with local PHP 8.4
 

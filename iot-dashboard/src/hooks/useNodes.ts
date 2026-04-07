@@ -10,7 +10,8 @@ import type { Node, NodeListResponse, NodeStatus } from "@/types/nodes";
 import type { PaginatedResponse } from "@/types";
 import { toast } from "sonner";
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+// Nodes API not yet available — keep mock on until endpoints are ready.
+const USE_MOCK = true;
 const NODES_PER_PAGE = 10;
 
 // Unified fetch — adapts real API (object params) and mock (positional args) to the same return shape

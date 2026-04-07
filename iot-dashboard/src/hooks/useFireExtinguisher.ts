@@ -13,7 +13,8 @@ import type { FeKpi, Fault } from "@/types/dashboard";
 import type { TempBuilding } from "@/mocks/temperatureData";
 import type { PaginatedResponse } from "@/types";
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+// Fire Extinguisher API not yet available — keep mock on until endpoints are ready.
+const USE_MOCK = true;
 
 const api = {
     getFeKpi: USE_MOCK ? mockGetFeKpi : getFeKpi,

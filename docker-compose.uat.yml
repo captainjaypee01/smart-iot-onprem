@@ -71,6 +71,6 @@ services:
     container_name: iot-mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025"
+      - "2525:1025"   # 1025 is blocked by Windows — map to 2525 on host
       - "8025:8025"
     networks: [iot_net]

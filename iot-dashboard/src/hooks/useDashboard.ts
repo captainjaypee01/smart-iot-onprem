@@ -18,8 +18,8 @@ import { POLL_INTERVAL_NORMAL, POLL_INTERVAL_SLOW, FAULTS_PAGE_SIZE } from "@/co
 import type { DashboardKpi, ModuleSummary, Fault, HeatmapBuilding } from "@/types/dashboard";
 import type { PaginatedResponse } from "@/types";
 
-// Single flag — reads from .env.development / .env.production
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+// Dashboard API not yet available — keep mock on until endpoints are ready.
+const USE_MOCK = true;
 
 const api = {
     getDashboardKpi: USE_MOCK ? mockGetDashboardKpi : getDashboardKpi,

@@ -42,12 +42,7 @@ final class StoreNetworkAction
 
     private function normalizeAddress(string $address): string
     {
-        if (str_starts_with($address, '0x') || str_starts_with($address, '0X')) {
-            $hex = substr($address, 2);
-        } else {
-            $hex = $address;
-        }
-
-        return strtoupper($hex);
+        // Validation already rejects any 0x prefix — just uppercase here.
+        return strtoupper($address);
     }
 }

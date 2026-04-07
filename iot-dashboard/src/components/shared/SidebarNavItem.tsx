@@ -27,7 +27,7 @@ const SidebarNavItem = ({ item, isCollapsed, onClick }: SidebarNavItemProps) => 
             onClick={onClick}
             className={({ isActive }) =>
                 cn(
-                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ml-2",
                     "transition-colors duration-150",
                     // inactive
                     "text-white/70 hover:bg-white/10 hover:text-white",
@@ -38,7 +38,7 @@ const SidebarNavItem = ({ item, isCollapsed, onClick }: SidebarNavItemProps) => 
                 )
             }
         >
-            <Icon className="h-[18px] w-[18px] shrink-0" />
+            {/* <Icon className="h-[18px] w-[18px] shrink-0" /> */}
 
             {!isCollapsed && (
                 <>

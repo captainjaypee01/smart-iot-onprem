@@ -113,7 +113,7 @@ const NetworksPage = () => {
             header: NETWORK_STRINGS.LABEL_NETWORK_ADDRESS,
             cell: (row) => (
                 <Badge variant="outline" className="font-mono text-xs">
-                    {row.network_address}
+                    0x{row.network_address}
                 </Badge>
             ),
         },
