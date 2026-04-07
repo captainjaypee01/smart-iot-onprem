@@ -58,4 +58,3 @@ final class StorePermissionRequest extends FormRequest
         }
     }
 }
-

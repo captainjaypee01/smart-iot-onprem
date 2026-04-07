@@ -40,4 +40,3 @@ final class StoreFeatureRequest extends FormRequest
         ];
     }
 }
-

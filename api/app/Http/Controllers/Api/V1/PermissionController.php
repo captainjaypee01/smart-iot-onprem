@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Api\V1\Controller;
 use App\Http\Requests\Api\V1\Permissions\StorePermissionRequest;
 use App\Http\Requests\Api\V1\Permissions\UpdatePermissionRequest;
 use App\Http\Resources\Api\V1\PermissionResource;
@@ -161,8 +160,7 @@ final class PermissionController extends Controller
             'zone' => 'Zone Management',
             'node' => 'Node Management',
             'fault' => 'Fault Management',
-            default => ucfirst($module) . ' Management',
+            default => ucfirst($module).' Management',
         };
     }
 }
-

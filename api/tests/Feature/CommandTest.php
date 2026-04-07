@@ -6,17 +6,17 @@ use App\Models\Network;
 use App\Models\User;
 
 test('authenticated user can create a command', function () {
-    $user    = User::factory()->create(['is_superadmin' => true]);
+    $user = User::factory()->create(['is_superadmin' => true]);
     $network = Network::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/commands', [
-        'network_id'          => $network->id,
-        'node_address'        => 'A3F2B1',
-        'source_ep'           => 10,
-        'dest_ep'             => 1,
-        'payload'             => 'DEADBEEF',
+        'network_id' => $network->id,
+        'node_address' => 'A3F2B1',
+        'source_ep' => 10,
+        'dest_ep' => 1,
+        'payload' => 'DEADBEEF',
         'include_tracking_id' => 'manual',
-        'packet_id'           => 'AB12',
+        'packet_id' => 'AB12',
     ]);
 
     $response->assertStatus(201)
@@ -54,8 +54,8 @@ test('command creation validates network exists', function () {
     $user = User::factory()->create(['is_superadmin' => true]);
 
     $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/commands', [
-        'network_id'          => 99999,
-        'node_address'        => 'A3F2B1',
+        'network_id' => 99999,
+        'node_address' => 'A3F2B1',
         'include_tracking_id' => 'none',
     ]);
 
@@ -65,12 +65,12 @@ test('command creation validates network exists', function () {
 
 describe('auto packet ID — sequential generation', function () {
     test('first command gets packet id 0001', function () {
-        $user    = User::factory()->create(['is_superadmin' => true]);
+        $user = User::factory()->create(['is_superadmin' => true]);
         $network = Network::factory()->create();
 
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/commands', [
-            'network_id'          => $network->id,
-            'node_address'        => 'A3F2B1',
+            'network_id' => $network->id,
+            'node_address' => 'A3F2B1',
             'include_tracking_id' => 'auto',
         ]);
 
@@ -79,19 +79,19 @@ describe('auto packet ID — sequential generation', function () {
     });
 
     test('subsequent commands increment the packet id', function () {
-        $user    = User::factory()->create(['is_superadmin' => true]);
+        $user = User::factory()->create(['is_superadmin' => true]);
         $network = Network::factory()->create();
 
         // Seed an existing command with a known packet_id
         Command::factory()->create([
             'network_id' => $network->id,
-            'packet_id'  => '0005',
+            'packet_id' => '0005',
             'no_packet_id' => false,
         ]);
 
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/commands', [
-            'network_id'          => $network->id,
-            'node_address'        => 'A3F2B1',
+            'network_id' => $network->id,
+            'node_address' => 'A3F2B1',
             'include_tracking_id' => 'auto',
         ]);
 
@@ -100,18 +100,18 @@ describe('auto packet ID — sequential generation', function () {
     });
 
     test('packet id wraps from FFFE back to 0001', function () {
-        $user    = User::factory()->create(['is_superadmin' => true]);
+        $user = User::factory()->create(['is_superadmin' => true]);
         $network = Network::factory()->create();
 
         Command::factory()->create([
-            'network_id'   => $network->id,
-            'packet_id'    => 'FFFE',
+            'network_id' => $network->id,
+            'packet_id' => 'FFFE',
             'no_packet_id' => false,
         ]);
 
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/commands', [
-            'network_id'          => $network->id,
-            'node_address'        => 'A3F2B1',
+            'network_id' => $network->id,
+            'node_address' => 'A3F2B1',
             'include_tracking_id' => 'auto',
         ]);
 
@@ -122,7 +122,7 @@ describe('auto packet ID — sequential generation', function () {
 
 describe('GET /api/v1/commands/{command}', function () {
     test('superadmin can view any command', function () {
-        $user    = User::factory()->create(['is_superadmin' => true]);
+        $user = User::factory()->create(['is_superadmin' => true]);
         $network = Network::factory()->create();
         $command = Command::factory()->create([
             'network_id' => $network->id,

@@ -82,27 +82,28 @@ export const useNetworks = (params: UseNetworksParams): UseNetworksReturn => {
 export interface UseNetworkOptionsReturn {
     options: NetworkOption[];
     isLoading: boolean;
+    refetch: () => Promise<void>;
 }
 
 export const useNetworkOptions = (): UseNetworkOptionsReturn => {
     const [options, setOptions] = useState<NetworkOption[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
-    useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            try {
-                const response = await getNetworkOptions();
-                setOptions(response.data);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        void load();
+    const load = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await getNetworkOptions();
+            setOptions(response.data);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
 
-    return { options, isLoading };
+    useEffect(() => {
+        void load();
+    }, [load]);
+
+    return { options, isLoading, refetch: load };
 };
 
 export interface UseGenerateAddressReturn {

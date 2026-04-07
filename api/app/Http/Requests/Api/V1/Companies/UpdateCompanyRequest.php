@@ -85,4 +85,3 @@ class UpdateCompanyRequest extends FormRequest
         return $rules;
     }
 }
-

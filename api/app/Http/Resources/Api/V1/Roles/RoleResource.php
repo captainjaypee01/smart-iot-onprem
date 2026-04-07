@@ -11,7 +11,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class RoleResource extends JsonResource
 {
     /**
-     * @param Request $request
+     * @param  Request  $request
      * @return array<string, mixed>
      */
     public function toArray($request): array
@@ -107,4 +107,3 @@ class RoleResource extends JsonResource
         ];
     }
 }
-

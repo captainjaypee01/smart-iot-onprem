@@ -401,4 +401,3 @@ describe('node type authorization', function (): void {
     });
 }
 );
-

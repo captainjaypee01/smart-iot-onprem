@@ -15,15 +15,15 @@ uses(RefreshDatabase::class);
 /**
  * Build a valid store payload.
  *
- * @param array<int, array{service_id: string, node_address: string}> $nodes
+ * @param  array<int, array{service_id: string, node_address: string}>  $nodes
  */
 function buildBatchPayload(int $networkId, array $nodes): array
 {
     return [
-        'network_id'      => $networkId,
-        'target_node_id'  => 'ffffffff',
+        'network_id' => $networkId,
+        'target_node_id' => 'ffffffff',
         'is_auto_register' => false,
-        'nodes'           => $nodes,
+        'nodes' => $nodes,
     ];
 }
 
@@ -35,7 +35,7 @@ function buildNode(string $serviceId, string $nodeAddress = 'AABBCC0001'): array
 describe('POST /api/v1/provisioning', function (): void {
     it('superadmin can create a batch with 1 node and returns 201 with correct shape', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/provisioning', buildBatchPayload($network->id, [
@@ -66,7 +66,7 @@ describe('POST /api/v1/provisioning', function (): void {
 
     it('superadmin can create a batch with 10 nodes', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $nodes = array_map(
             fn (int $i) => buildNode("SVC-{$i}", strtoupper(substr(sha1((string) $i), 0, 10))),
@@ -85,7 +85,7 @@ describe('POST /api/v1/provisioning', function (): void {
     });
 
     it('returns 403 for non-superadmin', function (): void {
-        $user    = User::factory()->create(['is_superadmin' => false]);
+        $user = User::factory()->create(['is_superadmin' => false]);
         $network = Network::factory()->create();
 
         $this->actingAs($user, 'sanctum')
@@ -105,7 +105,7 @@ describe('POST /api/v1/provisioning', function (): void {
 
     it('returns 422 when nodes array exceeds 10', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $nodes = array_map(
             fn (int $i) => buildNode("SVC-{$i}", strtoupper(substr(sha1((string) $i), 0, 10))),
@@ -120,7 +120,7 @@ describe('POST /api/v1/provisioning', function (): void {
 
     it('returns 422 for duplicate service_id within the batch payload', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/provisioning', buildBatchPayload($network->id, [
@@ -133,15 +133,15 @@ describe('POST /api/v1/provisioning', function (): void {
 
     it('returns 422 when service_id already exists in the nodes table', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         DB::table('nodes')->insert([
-            'network_id'   => $network->id,
-            'name'         => 'Existing Node',
+            'network_id' => $network->id,
+            'name' => 'Existing Node',
             'node_address' => 'AABBCCDD01',
-            'service_id'   => 'EXISTING-SVC',
-            'created_at'   => now(),
-            'updated_at'   => now(),
+            'service_id' => 'EXISTING-SVC',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->actingAs($superadmin, 'sanctum')
@@ -158,7 +158,7 @@ describe('POST /api/v1/provisioning', function (): void {
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/provisioning', [
                 'target_node_id' => 'ffffffff',
-                'nodes'          => [buildNode('SVC-001')],
+                'nodes' => [buildNode('SVC-001')],
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['network_id']);
@@ -166,7 +166,7 @@ describe('POST /api/v1/provisioning', function (): void {
 
     it('stores node_address as uppercase regardless of input case', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/provisioning', buildBatchPayload($network->id, [

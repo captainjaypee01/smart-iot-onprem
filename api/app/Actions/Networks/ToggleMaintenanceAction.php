@@ -15,13 +15,13 @@ final class ToggleMaintenanceAction
     {
         return DB::transaction(function () use ($network, $isMaintenance, $maintenanceStartAt, $maintenanceEndAt): Network {
             if ($isMaintenance === true) {
-                $network->is_maintenance       = true;
+                $network->is_maintenance = true;
                 $network->maintenance_start_at = $maintenanceStartAt;
-                $network->maintenance_end_at   = $maintenanceEndAt;
+                $network->maintenance_end_at = $maintenanceEndAt;
             } else {
-                $network->is_maintenance       = false;
+                $network->is_maintenance = false;
                 $network->maintenance_start_at = null;
-                $network->maintenance_end_at   = null;
+                $network->maintenance_end_at = null;
             }
 
             $network->save();
@@ -30,4 +30,3 @@ final class ToggleMaintenanceAction
         });
     }
 }
-

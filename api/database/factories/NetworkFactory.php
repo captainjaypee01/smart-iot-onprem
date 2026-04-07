@@ -18,10 +18,9 @@ class NetworkFactory extends Factory
     {
         return [
             'name' => $this->faker->unique()->company(),
-            'network_address' => '0x' . strtoupper(substr($this->faker->sha1(), 0, 6)),
+            'network_address' => '0x'.strtoupper(substr($this->faker->sha1(), 0, 6)),
             'description' => $this->faker->optional()->sentence(),
             'is_active' => true,
         ];
     }
 }
-

@@ -13,4 +13,3 @@ final class DeleteFeatureAction
         $feature->delete();
     }
 }
-

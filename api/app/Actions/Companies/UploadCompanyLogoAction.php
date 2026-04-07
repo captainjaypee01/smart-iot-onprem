@@ -1,4 +1,5 @@
 <?php
+
 // app/Actions/Companies/UploadCompanyLogoAction.php
 
 declare(strict_types=1);
@@ -25,4 +26,3 @@ final class UploadCompanyLogoAction
         return $company;
     }
 }
-

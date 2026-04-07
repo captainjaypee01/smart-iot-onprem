@@ -31,4 +31,3 @@ final class UpdatePermissionRequest extends FormRequest
         ];
     }
 }
-

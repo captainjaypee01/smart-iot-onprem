@@ -1,11 +1,12 @@
 <?php
 
 // database/seeders/RoleSeeder.php
-// Creates the three system roles and assigns permissions to each.
+// Creates the three tenant-scoped roles and assigns permissions to each.
 //
 // Role hierarchy:
 //   SuperAdmin  — is_superadmin flag on User, no role row needed (bypasses all checks)
-//   Admin       — full permissions on all modules (system role)
+//   Admin       — company administrator: same permission bundle as "Company Admin" in PermissionSeeder
+//                 (no gateway/command/platform CRUD — those are operator / superadmin modules)
 //   Operator    — read + action permissions, no user management (non-system role)
 
 namespace Database\Seeders;
@@ -19,14 +20,21 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Admin — full access ───────────────────────────────────────────────
+        // ── Admin — tenant company administrator (not platform superadmin) ───────
         $admin = Role::firstOrCreate(
             ['name' => 'Admin'],
-            ['description' => 'Full access to all features within the company.', 'is_system_role' => true]
+            [
+                'description' => 'Manages users and operations within their company; no platform/superadmin modules.',
+                'is_system_role' => true,
+            ]
         );
 
-        $adminPermissions = Permission::pluck('id');
-        $admin->permissions()->sync($adminPermissions);
+        $adminPermissionIds = Permission::query()
+            ->whereIn('key', PermissionSeeder::tenantCompanyAdminPermissionKeys())
+            ->pluck('id')
+            ->all();
+
+        $admin->permissions()->sync($adminPermissionIds);
 
         // ── Operator — operational access, no user/admin controls ─────────────
         $operator = Role::firstOrCreate(
@@ -83,6 +91,10 @@ class RoleSeeder extends Seeder
             \Illuminate\Support\Facades\DB::table('role_companies')->insertOrIgnore($pairs);
         }
 
-        $this->command->info('  ✓ Roles seeded (Admin, Operator, Viewer).');
+        // Tenant Admin exists now — assign sidebar features (group_order < 99) + networks pivot.
+        // PermissionSeeder runs first and only seeds Platform Admin; this completes the "Admin" role.
+        PermissionSeeder::seedRoleFeatureAndNetworkPivotsForRole('Admin', true);
+
+        $this->command->info('  ✓ Roles seeded (Admin, Operator, Viewer) + tenant Admin feature pivots.');
     }
 }

@@ -28,9 +28,9 @@ class NodeTypeController extends Controller
 
         if ($search = (string) $request->query('search', '')) {
             $query->where(function ($q) use ($search): void {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('area_id', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%');
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('area_id', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%');
             });
         }
 
@@ -133,4 +133,3 @@ class NodeTypeController extends Controller
         return response()->json(['data' => $data]);
     }
 }
-

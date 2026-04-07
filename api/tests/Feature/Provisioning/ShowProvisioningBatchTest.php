@@ -12,9 +12,9 @@ uses(RefreshDatabase::class);
 describe('GET /api/v1/provisioning/{batch}', function (): void {
     it('superadmin can view a batch with its nodes', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $batch      = ProvisioningBatch::factory()->create([
+        $batch = ProvisioningBatch::factory()->create([
             'submitted_by' => $superadmin->id,
-            'total_nodes'  => 2,
+            'total_nodes' => 2,
         ]);
         ProvisioningBatchNode::factory()->count(2)->create([
             'provisioning_batch_id' => $batch->id,
@@ -44,7 +44,7 @@ describe('GET /api/v1/provisioning/{batch}', function (): void {
     });
 
     it('returns 403 for non-superadmin', function (): void {
-        $user  = User::factory()->create(['is_superadmin' => false]);
+        $user = User::factory()->create(['is_superadmin' => false]);
         $batch = ProvisioningBatch::factory()->create();
 
         $this->actingAs($user, 'sanctum')

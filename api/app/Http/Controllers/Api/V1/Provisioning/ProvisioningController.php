@@ -60,7 +60,7 @@ class ProvisioningController extends Controller
 
         return response()->json([
             'data' => [
-                'primary'   => new ProvisioningBatchResource($result['primary']),
+                'primary' => new ProvisioningBatchResource($result['primary']),
                 'broadcast' => new ProvisioningBatchResource($result['broadcast']),
             ],
         ], Response::HTTP_CREATED);

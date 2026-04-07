@@ -45,6 +45,8 @@ const ProvisioningPage = lazy(() => import("@/pages/provisioning/ProvisioningPag
 const NewProvisioningPage = lazy(() => import("@/pages/provisioning/NewProvisioningPage"));
 const ProvisioningDetailPage = lazy(() => import("@/pages/provisioning/ProvisioningDetailPage"));
 const CommandConsolePage = lazy(() => import("@/pages/commands/CommandConsolePage"));
+const GatewayListPage = lazy(() => import("@/pages/gateways/GatewayListPage"));
+const GatewayDetailPage = lazy(() => import("@/pages/gateways/GatewayDetailPage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -129,17 +131,17 @@ const AppRouter = () => (
                                 }
                             />
                             <Route path="/profile" element={<ProfilePage />} />
-                            <Route
-                                path="/commands"
-                                element={
-                                    <FeatureRoute featureKey="command-console">
-                                        <CommandConsolePage />
-                                    </FeatureRoute>
-                                }
-                            />
                             {/* Always available within the authenticated app */}
                             <Route path="/403" element={<ForbiddenPage />} />
                             <Route element={<SuperadminOutlet />}>
+                                <Route
+                                    path="/commands"
+                                    element={
+                                        <FeatureRoute featureKey="command-console">
+                                            <CommandConsolePage />
+                                        </FeatureRoute>
+                                    }
+                                />
                                 <Route
                                     path="/networks"
                                     element={<NetworksPage />}
@@ -165,6 +167,26 @@ const AppRouter = () => (
                                 <Route path="/provisioning/new" element={<NewProvisioningPage />} />
                                 <Route path="/provisioning/:id" element={<ProvisioningDetailPage />} />
                             </Route>
+                            {/* Gateway Settings — internal platform role access (Platform Admin, etc.)
+                                Not inside SuperadminOutlet: non-superadmin platform personnel
+                                with gateway.* permissions can access this via role assignment.
+                                FeatureRoute guards by gateway_settings feature key (group_order 99). */}
+                            <Route
+                                path="/gateways"
+                                element={
+                                    <FeatureRoute featureKey="gateway_settings">
+                                        <GatewayListPage />
+                                    </FeatureRoute>
+                                }
+                            />
+                            <Route
+                                path="/gateways/:id"
+                                element={
+                                    <FeatureRoute featureKey="gateway_settings">
+                                        <GatewayDetailPage />
+                                    </FeatureRoute>
+                                }
+                            />
                             <Route element={<CompanyAdminOutlet />}>
                                 <Route
                                     path="/settings/company"

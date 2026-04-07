@@ -21,7 +21,7 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('rejects missing X-Internal-Token', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Pending,
         ]);
 
@@ -35,7 +35,7 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('rejects wrong X-Internal-Token', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Pending,
         ]);
 
@@ -69,7 +69,7 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('updates processing_status successfully', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Pending,
         ]);
 
@@ -89,15 +89,15 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('updates processing_status and message_status together', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Sent,
-            'message_status'    => MessageStatus::WaitingResponse,
+            'message_status' => MessageStatus::WaitingResponse,
         ]);
 
         $response = $this->withHeader('X-Internal-Token', 'test-internal-token')
             ->patchJson("/internal/commands/{$command->id}/status", [
                 'processing_status' => ProcessingStatus::Sent->value,
-                'message_status'    => MessageStatus::NodeResponded->value,
+                'message_status' => MessageStatus::NodeResponded->value,
             ]);
 
         $response->assertStatus(200);
@@ -108,14 +108,14 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('sets error_message on failure', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Sent,
         ]);
 
         $response = $this->withHeader('X-Internal-Token', 'test-internal-token')
             ->patchJson("/internal/commands/{$command->id}/status", [
                 'processing_status' => ProcessingStatus::Failed->value,
-                'error_message'     => 'Node did not respond',
+                'error_message' => 'Node did not respond',
             ]);
 
         $response->assertStatus(200);
@@ -140,9 +140,9 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('sets completed_at when transitioning to Sent', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Processing,
-            'completed_at'      => null,
+            'completed_at' => null,
         ]);
 
         $this->withHeader('X-Internal-Token', 'test-internal-token')
@@ -158,9 +158,9 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('sets completed_at when transitioning to Failed', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Processing,
-            'completed_at'      => null,
+            'completed_at' => null,
         ]);
 
         $this->withHeader('X-Internal-Token', 'test-internal-token')
@@ -176,18 +176,18 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('updates acked_at and dispatched_at when provided', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Pending,
         ]);
 
-        $ackedAt      = '2026-04-01T10:00:05+00:00';
+        $ackedAt = '2026-04-01T10:00:05+00:00';
         $dispatchedAt = '2026-04-01T10:00:02+00:00';
 
         $this->withHeader('X-Internal-Token', 'test-internal-token')
             ->patchJson("/internal/commands/{$command->id}/status", [
                 'processing_status' => ProcessingStatus::Sent->value,
-                'acked_at'          => $ackedAt,
-                'dispatched_at'     => $dispatchedAt,
+                'acked_at' => $ackedAt,
+                'dispatched_at' => $dispatchedAt,
             ])
             ->assertStatus(200);
 
@@ -199,7 +199,7 @@ describe('PATCH /internal/commands/{id}/status', function (): void {
     it('returns CommandResource shape with status labels', function (): void {
         $network = Network::factory()->create();
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Pending,
         ]);
 

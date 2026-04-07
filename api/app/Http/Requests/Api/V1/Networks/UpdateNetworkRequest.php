@@ -54,4 +54,3 @@ class UpdateNetworkRequest extends FormRequest
         ];
     }
 }
-

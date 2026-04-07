@@ -25,4 +25,3 @@ class ReorderFeaturesRequest extends FormRequest
         ];
     }
 }
-

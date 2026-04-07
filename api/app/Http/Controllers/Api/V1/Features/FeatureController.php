@@ -9,8 +9,8 @@ use App\Actions\Features\StoreFeatureAction;
 use App\DTO\Features\StoreFeatureDTO;
 use App\Http\Controllers\Api\V1\Controller;
 use App\Http\Requests\Api\V1\Features\DeleteFeatureRequest;
-use App\Http\Requests\Api\V1\Features\UpdateFeatureRequest;
 use App\Http\Requests\Api\V1\Features\StoreFeatureRequest;
+use App\Http\Requests\Api\V1\Features\UpdateFeatureRequest;
 use App\Http\Resources\Api\V1\Features\FeatureGroupResource;
 use App\Http\Resources\Api\V1\Features\FeatureResource;
 use App\Models\Feature;
@@ -72,7 +72,7 @@ class FeatureController extends Controller
             isActive: (bool) $validated['is_active'],
         );
 
-        $feature = (new StoreFeatureAction())->execute($dto);
+        $feature = (new StoreFeatureAction)->execute($dto);
 
         return response()->json(
             (new FeatureResource($feature))->toArray($request),
@@ -84,7 +84,7 @@ class FeatureController extends Controller
     {
         $this->authorizeSuperadmin();
 
-        (new DeleteFeatureAction())->execute($feature);
+        (new DeleteFeatureAction)->execute($feature);
 
         return response()->json([], Response::HTTP_NO_CONTENT);
     }
@@ -109,7 +109,7 @@ class FeatureController extends Controller
     }
 
     /**
-     * @param iterable<int, Feature> $features
+     * @param  iterable<int, Feature>  $features
      * @return array<int, array{group:string,features:array<int,Feature>}>
      */
     private function groupFeatures(iterable $features): array
@@ -132,4 +132,3 @@ class FeatureController extends Controller
         return array_values($groups);
     }
 }
-

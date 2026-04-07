@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\Artisan;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
-use function Pest\Laravel\deleteJson;
-use function Pest\Laravel\putJson;
 
 uses(RefreshDatabase::class);
 
@@ -250,4 +248,3 @@ test('superadmin can delete a feature (DELETE /features/{feature})', function ()
     $deleted = Feature::query()->where('id', $featureId)->exists();
     expect($deleted)->toBeFalse();
 });
-

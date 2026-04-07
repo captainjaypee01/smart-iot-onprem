@@ -28,4 +28,3 @@ class CompanyFactory extends Factory
         ];
     }
 }
-

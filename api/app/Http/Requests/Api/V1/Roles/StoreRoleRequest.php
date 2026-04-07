@@ -54,7 +54,7 @@ class StoreRoleRequest extends FormRequest
                 ? ['sometimes', 'boolean']
                 : ['prohibited'],
             'feature_ids' => ['sometimes', 'array'],
-            'feature_ids.*' => ['integer', new FeatureAssignable()],
+            'feature_ids.*' => ['integer', new FeatureAssignable],
             'permission_ids' => ['sometimes', 'array'],
             'permission_ids.*' => ['integer', 'exists:permissions,id'],
             'network_ids' => ['sometimes', 'array'],
@@ -62,4 +62,3 @@ class StoreRoleRequest extends FormRequest
         ];
     }
 }
-

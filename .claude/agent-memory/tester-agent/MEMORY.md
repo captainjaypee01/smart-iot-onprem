@@ -1,0 +1,14 @@
+- [->after() column hint pattern](feedback_after_column_hint.md) — MySQL-only positional hint used across migrations; silently ignored on Postgres; flag as LOW warning, not a failure
+- [GatewayCommandType enum — RESOLVED](project_gateway_command_type_mismatch.md) — Was 2 cases/spurious case; fixed to 9 spec cases; enum is now aligned with spec
+- [GatewayDiagnosticType and GatewayServiceName unspecced](project_unspecced_enums_gateway.md) — Two Gateway enums have no spec section; cannot validate correctness without spec update
+- [Computed attribute $appends pattern](feedback_appends_computed_attributes.md) — Models with Attribute::make() often omit $appends; flag LOW warning if absent; confirm in Resource layer
+- [Missing factory HIGH failure pattern](feedback_factory_missing.md) — Models using HasFactory without a factory file are a HIGH failure; blocks all downstream tests
+- [Docker container stopped — static fallback](feedback_docker_blocked_checks.md) — If `docker compose exec` returns empty, container is stopped; flag dynamic checks as BLOCKED and proceed statically
+- [Missing correlation_id in command actions](feedback_correlation_id_missing.md) — Command create actions often omit correlation_id; check both the action's create array AND Command::$fillable; flag both absences as CRITICAL
+- [Outbox value assertion gap](feedback_outbox_value_assertion.md) — Tests checking only toHaveKey('command_id') miss value correctness; always verify value equals HTTP response command ID; flag as MEDIUM
+- [Command type enum coverage](feedback_command_type_coverage.md) — Test suites must cover all allowed type values from spec; fewer than full coverage is MEDIUM; recommend Pest dataset()
+- [DTO dead field — action ignores DTO property](feedback_dto_dead_field_cross_layer.md) — Action may hardcode a value instead of reading dto->field; verify every DTO property is consumed; flag cross-layer inconsistency as HIGH
+- [ResourceCollection custom toArray() suppresses pagination](feedback_resource_collection_pagination.md) — Bare `return ['data' => ...]` in toArray() drops meta/links; HIGH failure; use AnonymousResourceCollection instead
+- [Networks options missing gateway_prefix](feedback_networks_options_gateway_prefix.md) — Cross-module spec extension: gateway spec requires gateway_prefix in /networks/options; absent in NetworkController and NetworkOption TS type
+- [ResourceCollection $collects type redeclaration](feedback_collects_type_redeclaration.md) — `public string $collects` in subclass crashes PHP 8; parent is untyped; drop the type annotation; flag as CRITICAL
+- [JsonResource response wrapping via response()->json()](feedback_json_resource_response_wrapping.md) — Passing a JsonResource to response()->json() strips the {"data":...} envelope; return the resource directly with ->response()->setStatusCode(N); flag as CRITICAL

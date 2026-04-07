@@ -20,17 +20,17 @@ class ResendCommandAction
 
         return DB::transaction(function () use ($command, $userId): Command {
             $command->update([
-                'retry_count'       => $command->retry_count + 1,
-                'retry_at'          => now(),
-                'retry_by'          => $userId,
+                'retry_count' => $command->retry_count + 1,
+                'retry_at' => now(),
+                'retry_by' => $userId,
                 'processing_status' => ProcessingStatus::Pending,
             ]);
 
             OutboxEvent::create([
                 'aggregate_type' => 'command',
-                'aggregate_id'   => $command->id,
-                'event_name'     => 'command.send_data.resend',
-                'payload'        => ['command_id' => $command->id],
+                'aggregate_id' => $command->id,
+                'event_name' => 'command.send_data.resend',
+                'payload' => ['command_id' => $command->id],
             ]);
 
             return $command->refresh();

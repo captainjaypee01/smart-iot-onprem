@@ -49,7 +49,7 @@ class RoleController extends Controller
         }
 
         if ($search = (string) $request->query('search', '')) {
-            $query->where('name', 'like', '%' . $search . '%');
+            $query->where('name', 'like', '%'.$search.'%');
         }
 
         $roles = $query
@@ -100,7 +100,7 @@ class RoleController extends Controller
             networkIds: $validated['network_ids'] ?? [],
         );
 
-        $role = (new StoreRoleAction())->execute($dto);
+        $role = (new StoreRoleAction)->execute($dto);
 
         return response()->json((new RoleResource($role))->toArray($request), Response::HTTP_CREATED);
     }
@@ -127,7 +127,7 @@ class RoleController extends Controller
             networkIds: $networkIds,
         );
 
-        $updated = (new UpdateRoleAction())->execute($role, $dto);
+        $updated = (new UpdateRoleAction)->execute($role, $dto);
 
         return response()->json((new RoleResource($updated))->toArray($request), Response::HTTP_OK);
     }
@@ -199,4 +199,3 @@ class RoleController extends Controller
         return response()->json(['data' => $data]);
     }
 }
-

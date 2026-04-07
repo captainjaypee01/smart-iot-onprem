@@ -12,7 +12,7 @@ namespace App\DTO\NodeTypes;
 readonly class StoreNodeTypeDTO
 {
     /**
-     * @param SensorSlot[] $sensors
+     * @param  SensorSlot[]  $sensors
      */
     public function __construct(
         public string $name,
@@ -21,4 +21,3 @@ readonly class StoreNodeTypeDTO
         public array $sensors = [],
     ) {}
 }
-

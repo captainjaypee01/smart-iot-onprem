@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Provisioning;
 
-use App\DTO\Commands\CreateCommandDTO;
 use App\Actions\Commands\CreateCommandAction;
+use App\DTO\Commands\CreateCommandDTO;
 use App\Enums\ProvisioningNodeStatus;
 use App\Models\ProvisioningBatch;
 use App\Models\ProvisioningBatchNode;
@@ -27,17 +27,17 @@ final class ResendProvisioningNodeAction
                 deviceId: $node->service_id,
                 type: 'node_provisioning',
                 payload: json_encode([
-                    'service_id'     => $node->service_id,
-                    'node_address'   => $node->node_address,
-                    'network_id'     => $batch->network_id,
-                    'packet_id'      => $batch->packet_id,
+                    'service_id' => $node->service_id,
+                    'node_address' => $node->node_address,
+                    'network_id' => $batch->network_id,
+                    'packet_id' => $batch->packet_id,
                     'target_node_id' => $batch->target_node_id,
                 ], JSON_THROW_ON_ERROR),
             ));
 
             $node->update([
                 'last_command_id' => $command->id,
-                'status'          => ProvisioningNodeStatus::Pending,
+                'status' => ProvisioningNodeStatus::Pending,
             ]);
 
             $this->recomputeBatchStatus->execute($batch);

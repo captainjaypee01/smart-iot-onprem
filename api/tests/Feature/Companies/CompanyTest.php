@@ -668,4 +668,3 @@ describe('company logo upload', function (): void {
         Storage::disk()->assertMissing('logos/old.png');
     });
 });
-

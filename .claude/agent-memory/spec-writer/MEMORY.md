@@ -1,1 +1,2 @@
 - [Command Console Module](project_command_console.md) — Key decisions for command-module-contract.md: dual status columns, node_address format, retry_by convention, no-delete rule, internal endpoint pattern
+- [Gateway Module](project_gateway_module.md) — Key decisions for gateway-module-contract.md: gateway_id generation, sink_id counter (withTrashed), status derivation at query time, network gateway_prefix placement, soft-delete required

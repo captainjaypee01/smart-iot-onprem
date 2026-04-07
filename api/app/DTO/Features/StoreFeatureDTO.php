@@ -15,7 +15,5 @@ final readonly class StoreFeatureDTO
         public ?string $icon,
         public int $sortOrder,
         public bool $isActive,
-    ) {
-    }
+    ) {}
 }
-

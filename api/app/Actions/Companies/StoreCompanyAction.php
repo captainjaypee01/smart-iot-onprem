@@ -1,4 +1,5 @@
 <?php
+
 // app/Actions/Companies/StoreCompanyAction.php
 
 declare(strict_types=1);
@@ -12,7 +13,7 @@ final class StoreCompanyAction
 {
     public function execute(StoreCompanyDTO $dto): Company
     {
-        $company = new Company();
+        $company = new Company;
 
         $company->name = $dto->name;
         $company->code = \strtoupper($dto->code);
@@ -37,4 +38,3 @@ final class StoreCompanyAction
         return $company->load('networks');
     }
 }
-

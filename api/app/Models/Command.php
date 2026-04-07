@@ -62,26 +62,26 @@ class Command extends Model
 
     protected $casts = [
         // Legacy
-        'status'            => CommandStatus::class,
+        'status' => CommandStatus::class,
 
         // New
-        'network_id'        => 'integer',
-        'created_by'        => 'integer',
-        'retry_by'          => 'integer',
-        'request_id'        => 'integer',
-        'source_ep'         => 'integer',
-        'dest_ep'           => 'integer',
-        'no_packet_id'      => 'boolean',
+        'network_id' => 'integer',
+        'created_by' => 'integer',
+        'retry_by' => 'integer',
+        'request_id' => 'integer',
+        'source_ep' => 'integer',
+        'dest_ep' => 'integer',
+        'no_packet_id' => 'boolean',
         'processing_status' => ProcessingStatus::class,
-        'message_status'    => MessageStatus::class,
-        'retry_count'       => 'integer',
+        'message_status' => MessageStatus::class,
+        'retry_count' => 'integer',
 
         // Dates
-        'requested_at'  => 'datetime',
+        'requested_at' => 'datetime',
         'dispatched_at' => 'datetime',
-        'acked_at'      => 'datetime',
-        'completed_at'  => 'datetime',
-        'retry_at'      => 'datetime',
+        'acked_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'retry_at' => 'datetime',
     ];
 
     // ── Relations ─────────────────────────────────────────────────────────────
@@ -143,9 +143,9 @@ class Command extends Model
 
         match ($newStatus) {
             CommandStatus::DISPATCHED => $this->dispatched_at = now(),
-            CommandStatus::ACKED      => $this->acked_at = now(),
-            CommandStatus::COMPLETED  => $this->completed_at = now(),
-            default                   => null,
+            CommandStatus::ACKED => $this->acked_at = now(),
+            CommandStatus::COMPLETED => $this->completed_at = now(),
+            default => null,
         };
 
         return $this->save();

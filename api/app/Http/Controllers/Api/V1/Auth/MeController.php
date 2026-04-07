@@ -75,7 +75,6 @@ class MeController extends Controller
     }
 
     /**
-     * @param int|null $roleId
      * @return array<int, array{key:string,name:string,route:string,icon:?string,group:string,group_order:int,sort_order:int}>
      */
     private function getRoleFeatures(?int $roleId): array
@@ -133,8 +132,6 @@ class MeController extends Controller
     }
 
     /**
-     * @param int|null $roleId
-     * @param int $companyId
      * @return array<int, array{id:int,name:string,network_address:string}>
      */
     private function getRoleNetworks(?int $roleId, int $companyId): array

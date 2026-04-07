@@ -164,8 +164,8 @@ return new class extends Migration
 
     private function createPartition(Carbon $month): void
     {
-        $name  = 'commands_' . $month->format('Y_m');
-        $from  = $month->format('Y-m-01');
+        $name = 'commands_'.$month->format('Y_m');
+        $from = $month->format('Y-m-01');
         $until = $month->copy()->addMonth()->format('Y-m-01');
 
         DB::statement("

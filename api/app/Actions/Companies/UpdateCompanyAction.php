@@ -1,4 +1,5 @@
 <?php
+
 // app/Actions/Companies/UpdateCompanyAction.php
 
 declare(strict_types=1);
@@ -72,4 +73,3 @@ final class UpdateCompanyAction
         return $company->load('networks');
     }
 }
-

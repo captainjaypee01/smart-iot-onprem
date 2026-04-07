@@ -9,7 +9,7 @@ namespace App\DTO\Networks;
 readonly class StoreNetworkDTO
 {
     /**
-     * @param int[]|null $nodeTypeIds
+     * @param  int[]|null  $nodeTypeIds
      */
     public function __construct(
         public string $name,
@@ -29,4 +29,3 @@ readonly class StoreNetworkDTO
         public ?array $nodeTypeIds = null,
     ) {}
 }
-

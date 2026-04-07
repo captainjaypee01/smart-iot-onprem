@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Provisioning;
 
+use App\Actions\Commands\CreateCommandAction;
 use App\DTO\Commands\CreateCommandDTO;
 use App\DTO\Provisioning\StoreProvisioningBatchDTO;
-use App\Actions\Commands\CreateCommandAction;
 use App\Enums\ProvisioningNodeStatus;
 use App\Models\ProvisioningBatch;
 use App\Models\ProvisioningBatchNode;
@@ -25,31 +25,31 @@ final class StoreProvisioningBatchAction
     public function execute(StoreProvisioningBatchDTO $dto): array
     {
         return DB::transaction(function () use ($dto): array {
-            $primaryPacketId   = $this->generatePacketId->execute();
+            $primaryPacketId = $this->generatePacketId->execute();
             $broadcastPacketId = $this->generatePacketId->execute();
 
             $primaryBatch = ProvisioningBatch::create([
-                'network_id'      => $dto->networkId,
-                'submitted_by'    => $dto->submittedBy,
-                'packet_id'       => $primaryPacketId,
-                'target_node_id'  => $dto->targetNodeId,
-                'status'          => 'pending',
-                'total_nodes'     => count($dto->nodes),
+                'network_id' => $dto->networkId,
+                'submitted_by' => $dto->submittedBy,
+                'packet_id' => $primaryPacketId,
+                'target_node_id' => $dto->targetNodeId,
+                'status' => 'pending',
+                'total_nodes' => count($dto->nodes),
                 'provisioned_nodes' => 0,
                 'is_auto_register' => $dto->isAutoRegister,
-                'command_sent'    => "PROVISIONING_CMD:{$primaryPacketId}",
+                'command_sent' => "PROVISIONING_CMD:{$primaryPacketId}",
             ]);
 
             $broadcastBatch = ProvisioningBatch::create([
-                'network_id'      => $dto->networkId,
-                'submitted_by'    => $dto->submittedBy,
-                'packet_id'       => $broadcastPacketId,
-                'target_node_id'  => 'ffffffff',
-                'status'          => 'pending',
-                'total_nodes'     => count($dto->nodes),
+                'network_id' => $dto->networkId,
+                'submitted_by' => $dto->submittedBy,
+                'packet_id' => $broadcastPacketId,
+                'target_node_id' => 'ffffffff',
+                'status' => 'pending',
+                'total_nodes' => count($dto->nodes),
                 'provisioned_nodes' => 0,
                 'is_auto_register' => $dto->isAutoRegister,
-                'command_sent'    => "PROVISIONING_CMD:{$broadcastPacketId}",
+                'command_sent' => "PROVISIONING_CMD:{$broadcastPacketId}",
             ]);
 
             foreach ($dto->nodes as $node) {
@@ -58,14 +58,14 @@ final class StoreProvisioningBatchAction
             }
 
             return [
-                'primary'   => $primaryBatch->load('nodes'),
+                'primary' => $primaryBatch->load('nodes'),
                 'broadcast' => $broadcastBatch->load('nodes'),
             ];
         });
     }
 
     /**
-     * @param array{service_id: string, node_address: string} $node
+     * @param  array{service_id: string, node_address: string}  $node
      */
     private function createNodeWithCommand(
         ProvisioningBatch $batch,
@@ -77,9 +77,9 @@ final class StoreProvisioningBatchAction
 
         /** @var ProvisioningBatchNode $batchNode */
         $batchNode = $batch->nodes()->create([
-            'service_id'   => $node['service_id'],
+            'service_id' => $node['service_id'],
             'node_address' => $nodeAddress,
-            'status'       => ProvisioningNodeStatus::Pending,
+            'status' => ProvisioningNodeStatus::Pending,
         ]);
 
         $command = $this->createCommand->execute(new CreateCommandDTO(
@@ -88,10 +88,10 @@ final class StoreProvisioningBatchAction
             deviceId: $node['service_id'],
             type: 'node_provisioning',
             payload: json_encode([
-                'service_id'     => $node['service_id'],
-                'node_address'   => $nodeAddress,
-                'network_id'     => $networkId,
-                'packet_id'      => $batch->packet_id,
+                'service_id' => $node['service_id'],
+                'node_address' => $nodeAddress,
+                'network_id' => $networkId,
+                'packet_id' => $batch->packet_id,
                 'target_node_id' => $batch->target_node_id,
             ], JSON_THROW_ON_ERROR),
         ));

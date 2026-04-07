@@ -55,6 +55,7 @@ export interface NetworkOption {
     name: string;
     network_address: string;
     is_active: boolean;
+    gateway_prefix?: string | null;
 }
 
 export interface GenerateAddressResponse {

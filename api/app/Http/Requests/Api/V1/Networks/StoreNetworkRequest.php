@@ -51,4 +51,3 @@ class StoreNetworkRequest extends FormRequest
         ];
     }
 }
-

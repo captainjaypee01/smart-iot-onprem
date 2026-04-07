@@ -1,0 +1,34 @@
+meta {
+  name: Update Gateway
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/gateways/{{gatewayId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sanctumToken}}
+}
+
+body:json {
+  {
+    "name": "Updated Gateway Name",
+    "is_test_mode": true
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("name updated", function() {
+    expect(res.getBody().data.name).to.equal("Updated Gateway Name");
+  });
+  test("is_test_mode updated", function() {
+    expect(res.getBody().data.is_test_mode).to.equal(true);
+  });
+}

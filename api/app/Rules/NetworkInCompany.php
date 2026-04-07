@@ -26,4 +26,3 @@ class NetworkInCompany implements Rule
         return 'The selected network is not assigned to this company.';
     }
 }
-

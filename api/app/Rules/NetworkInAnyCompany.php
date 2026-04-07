@@ -14,15 +14,15 @@ use Illuminate\Support\Facades\DB;
 class NetworkInAnyCompany implements Rule
 {
     /**
-     * @param int[] $companyIds
+     * @param  int[]  $companyIds
      */
     public function __construct(
         private array $companyIds
     ) {}
 
     /**
-     * @param mixed $attribute
-     * @param mixed $value
+     * @param  mixed  $attribute
+     * @param  mixed  $value
      */
     public function passes($attribute, $value): bool
     {
@@ -41,4 +41,3 @@ class NetworkInAnyCompany implements Rule
         return 'The selected network is not assigned to any of the selected companies.';
     }
 }
-

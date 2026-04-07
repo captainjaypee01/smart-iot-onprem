@@ -27,4 +27,3 @@ class ReorderGroupsController extends Controller
         );
     }
 }
-

@@ -21,8 +21,8 @@ uses(TestCase::class, RefreshDatabase::class)->in('Feature');
 function createSuperadmin(): User
 {
     return User::factory()->create([
-        'company_id'   => null,
-        'role_id'      => null,
+        'company_id' => null,
+        'role_id' => null,
         'is_superadmin' => true,
     ]);
 }

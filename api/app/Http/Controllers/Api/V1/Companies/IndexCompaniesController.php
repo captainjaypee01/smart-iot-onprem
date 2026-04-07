@@ -40,4 +40,3 @@ class IndexCompaniesController extends Controller
         ]);
     }
 }
-

@@ -23,4 +23,3 @@ class FeatureAssignable implements Rule
         return 'The selected feature is not available for role assignment.';
     }
 }
-

@@ -30,9 +30,9 @@ class NetworkController extends Controller
 
         if ($search = (string) $request->query('search', '')) {
             $query->where(function ($q) use ($search): void {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('network_address', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%');
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('network_address', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%');
             });
         }
 
@@ -59,7 +59,7 @@ class NetworkController extends Controller
                 $hex = $addr;
             }
 
-            $network->network_address = '0x' . strtoupper($hex);
+            $network->network_address = '0x'.strtoupper($hex);
 
             return $network;
         });
@@ -176,16 +176,16 @@ class NetworkController extends Controller
                         ->where('company_networks.company_id', $companyId);
                 });
             })
-            ->get(['id', 'name', 'network_address', 'is_active'])
+            ->get(['id', 'name', 'network_address', 'is_active', 'gateway_prefix'])
             ->map(static fn (Network $network): array => [
                 'id' => $network->id,
                 'name' => $network->name,
                 'network_address' => $network->network_address,
                 'is_active' => (bool) $network->is_active,
+                'gateway_prefix' => $network->gateway_prefix,
             ])
             ->all();
 
         return response()->json(['data' => $data]);
     }
 }
-

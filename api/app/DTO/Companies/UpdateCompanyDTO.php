@@ -1,4 +1,5 @@
 <?php
+
 // app/DTO/Companies/UpdateCompanyDTO.php
 
 declare(strict_types=1);
@@ -27,7 +28,5 @@ final readonly class UpdateCompanyDTO
          * @var int[]|null
          */
         public ?array $networkIds,
-    ) {
-    }
+    ) {}
 }
-

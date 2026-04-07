@@ -34,9 +34,9 @@ class CreateSendDataCommandAction
     public function execute(CreateSendDataCommandDTO $dto): Command
     {
         $nodeAddress = strtoupper($dto->nodeAddress);
-        $noPacketId  = $dto->trackingMode === 'none';
+        $noPacketId = $dto->trackingMode === 'none';
 
-        $messageStatus    = $this->classifyMessageStatus($nodeAddress, $dto->destEp);
+        $messageStatus = $this->classifyMessageStatus($nodeAddress, $dto->destEp);
         $processingStatus = ProcessingStatus::Pending;
 
         return DB::transaction(function () use (
@@ -50,37 +50,37 @@ class CreateSendDataCommandAction
             // generation is safe under concurrent requests (lockForUpdate
             // prevents two transactions from reading the same last row).
             $packetId = match ($dto->trackingMode) {
-                'none'   => null,
-                'auto'   => $this->nextPacketId(),
+                'none' => null,
+                'auto' => $this->nextPacketId(),
                 'manual' => strtoupper($dto->packetId ?? ''),
-                default  => null,
+                default => null,
             };
 
             $command = Command::create([
-                'network_id'        => $dto->networkId,
-                'created_by'        => $dto->createdBy,
-                'type'              => 'send_data',
-                'node_address'      => $nodeAddress,
-                'request_id'        => random_int(100_000_000, 4_294_967_295),
-                'source_ep'         => $dto->sourceEp,
-                'dest_ep'           => $dto->destEp,
-                'payload'           => $dto->payload,
-                'no_packet_id'      => $noPacketId,
-                'packet_id'         => $packetId,
+                'network_id' => $dto->networkId,
+                'created_by' => $dto->createdBy,
+                'type' => 'send_data',
+                'node_address' => $nodeAddress,
+                'request_id' => random_int(100_000_000, 4_294_967_295),
+                'source_ep' => $dto->sourceEp,
+                'dest_ep' => $dto->destEp,
+                'payload' => $dto->payload,
+                'no_packet_id' => $noPacketId,
+                'packet_id' => $packetId,
                 'processing_status' => $processingStatus,
-                'message_status'    => $messageStatus,
-                'retry_count'       => 0,
-                'requested_at'      => now(),
+                'message_status' => $messageStatus,
+                'retry_count' => 0,
+                'requested_at' => now(),
 
                 // Legacy columns — defaulted for Command Console commands
-                'status'   => 'pending',
+                'status' => 'pending',
             ]);
 
             OutboxEvent::create([
                 'aggregate_type' => 'command',
-                'aggregate_id'   => $command->id,
-                'event_name'     => 'command.send_data.created',
-                'payload'        => ['command_id' => $command->id],
+                'aggregate_id' => $command->id,
+                'event_name' => 'command.send_data.created',
+                'payload' => ['command_id' => $command->id],
             ]);
 
             return $command;

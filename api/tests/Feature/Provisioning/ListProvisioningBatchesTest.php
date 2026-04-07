@@ -26,7 +26,7 @@ describe('GET /api/v1/provisioning', function (): void {
                         'total_nodes', 'provisioned_nodes', 'status_summary', 'created_at',
                     ],
                 ],
-                'meta'  => ['current_page', 'last_page', 'per_page', 'total'],
+                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
                 'links' => ['first', 'next', 'prev', 'last'],
             ]);
 
@@ -35,7 +35,7 @@ describe('GET /api/v1/provisioning', function (): void {
 
     it('does not include nodes in the list response', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $batch      = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
+        $batch = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
         ProvisioningBatchNode::factory()->count(2)->create(['provisioning_batch_id' => $batch->id]);
 
         $response = $this->actingAs($superadmin, 'sanctum')
@@ -48,8 +48,8 @@ describe('GET /api/v1/provisioning', function (): void {
 
     it('filters results by network_id', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $networkA   = Network::factory()->create();
-        $networkB   = Network::factory()->create();
+        $networkA = Network::factory()->create();
+        $networkB = Network::factory()->create();
 
         ProvisioningBatch::factory()->count(2)->create(['network_id' => $networkA->id]);
         ProvisioningBatch::factory()->count(3)->create(['network_id' => $networkB->id]);

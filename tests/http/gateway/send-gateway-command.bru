@@ -1,0 +1,34 @@
+meta {
+  name: Send Gateway Command
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/gateways/{{gatewayId}}/commands
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sanctumToken}}
+}
+
+body:json {
+  {
+    "type": "get_configs",
+    "payload": "DEADBEEF"
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("type matches request", function() {
+    expect(res.getBody().data.type).to.equal("get_configs");
+  });
+  test("node_address is gateway_id", function() {
+    expect(res.getBody().data.node_address).to.be.a("string");
+  });
+}

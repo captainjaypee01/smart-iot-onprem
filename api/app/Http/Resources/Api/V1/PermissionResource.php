@@ -35,4 +35,3 @@ final class PermissionResource extends JsonResource
         ];
     }
 }
-

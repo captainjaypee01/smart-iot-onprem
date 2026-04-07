@@ -6,18 +6,18 @@ namespace App\Enums;
 
 enum ProcessingStatus: int
 {
-    case Pending    = 1;
+    case Pending = 1;
     case Processing = 2;
-    case Sent       = 3;
-    case Failed     = 4;
+    case Sent = 3;
+    case Failed = 4;
 
     public function label(): string
     {
         return match ($this) {
-            self::Pending    => 'Pending',
+            self::Pending => 'Pending',
             self::Processing => 'Processing',
-            self::Sent       => 'Sent',
-            self::Failed     => 'Failed',
+            self::Sent => 'Sent',
+            self::Failed => 'Failed',
         };
     }
 

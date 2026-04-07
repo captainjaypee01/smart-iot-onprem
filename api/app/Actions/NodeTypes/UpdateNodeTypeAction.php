@@ -34,7 +34,7 @@ class UpdateNodeTypeAction
     }
 
     /**
-     * @param array<int, array{name: string, unit?: string|null}> $sensors
+     * @param  array<int, array{name: string, unit?: string|null}>  $sensors
      */
     private function applySensors(NodeType $nodeType, array $sensors): void
     {
@@ -53,4 +53,3 @@ class UpdateNodeTypeAction
         }
     }
 }
-

@@ -42,4 +42,3 @@ class FeatureGroupResource extends JsonResource
         ];
     }
 }
-

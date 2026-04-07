@@ -26,7 +26,7 @@ class ReorderGroupsRequest extends FormRequest
     }
 
     /**
-     * @param mixed $validator
+     * @param  mixed  $validator
      */
     public function withValidator($validator): void
     {
@@ -48,4 +48,3 @@ class ReorderGroupsRequest extends FormRequest
         });
     }
 }
-

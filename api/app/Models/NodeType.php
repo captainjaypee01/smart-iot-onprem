@@ -22,4 +22,3 @@ class NodeType extends Model
             ->withPivot('network_id', 'node_type_id');
     }
 }
-

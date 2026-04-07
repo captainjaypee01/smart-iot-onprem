@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Network extends Model
 {
@@ -35,5 +36,9 @@ class Network extends Model
         return $this->belongsToMany(NodeType::class, 'network_node_types')
             ->withPivot('network_id', 'node_type_id');
     }
-}
 
+    public function gateways(): HasMany
+    {
+        return $this->hasMany(Gateway::class);
+    }
+}

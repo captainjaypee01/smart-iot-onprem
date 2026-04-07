@@ -21,12 +21,11 @@ final class GenerateNetworkAddressAction
                 throw new RuntimeException('Could not generate a unique network address.');
             }
 
-            $raw   = now()->toIso8601String() . $name . Str::random(16);
-            $hash  = md5($raw);
-            $hex6  = strtoupper(substr($hash, 0, 6));
+            $raw = now()->toIso8601String().$name.Str::random(16);
+            $hash = md5($raw);
+            $hex6 = strtoupper(substr($hash, 0, 6));
         } while (Network::where('network_address', $hex6)->exists());
 
         return $hex6;
     }
 }
-

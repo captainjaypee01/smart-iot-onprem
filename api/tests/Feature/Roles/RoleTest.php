@@ -18,10 +18,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 
 use function Pest\Laravel\actingAs;
-use function Pest\Laravel\deleteJson;
-use function Pest\Laravel\getJson;
-use function Pest\Laravel\postJson;
-use function Pest\Laravel\putJson;
 
 uses(RefreshDatabase::class);
 
@@ -1127,4 +1123,3 @@ describe('role options', function (): void {
         $response->assertStatus(401);
     });
 });
-

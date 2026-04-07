@@ -53,9 +53,9 @@ class UpdateCommandStatusRequest extends FormRequest
     {
         return [
             'processing_status.required' => 'Processing status is required.',
-            'processing_status.in'       => 'Processing status must be one of: 1 (Pending), 2 (Processing), 3 (Sent), 4 (Failed).',
-            'message_status.in'          => 'Message status must be a value between 1 and 10.',
-            'error_message.max'          => 'Error message must not exceed 1000 characters.',
+            'processing_status.in' => 'Processing status must be one of: 1 (Pending), 2 (Processing), 3 (Sent), 4 (Failed).',
+            'message_status.in' => 'Message status must be a value between 1 and 10.',
+            'error_message.max' => 'Error message must not exceed 1000 characters.',
         ];
     }
 }

@@ -18,11 +18,11 @@ class StoreProvisioningBatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'network_id'          => ['required', 'integer', 'exists:networks,id'],
-            'target_node_id'      => ['required', 'string', 'max:10'],
-            'is_auto_register'    => ['sometimes', 'boolean'],
-            'nodes'               => ['required', 'array', 'min:1', 'max:10'],
-            'nodes.*.service_id'  => ['required', 'string', 'max:255'],
+            'network_id' => ['required', 'integer', 'exists:networks,id'],
+            'target_node_id' => ['required', 'string', 'max:10'],
+            'is_auto_register' => ['sometimes', 'boolean'],
+            'nodes' => ['required', 'array', 'min:1', 'max:10'],
+            'nodes.*.service_id' => ['required', 'string', 'max:255'],
             'nodes.*.node_address' => ['required', 'string', 'max:10'],
         ];
     }

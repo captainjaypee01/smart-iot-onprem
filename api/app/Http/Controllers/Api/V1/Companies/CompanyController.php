@@ -30,8 +30,8 @@ class CompanyController extends Controller
 
         if ($search = (string) $request->query('search', '')) {
             $query->where(function ($q) use ($search): void {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('code', 'like', '%' . $search . '%');
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('code', 'like', '%'.$search.'%');
             });
         }
 
@@ -177,4 +177,3 @@ class CompanyController extends Controller
         return response()->json(['data' => $data]);
     }
 }
-

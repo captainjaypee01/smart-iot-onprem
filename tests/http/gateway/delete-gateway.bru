@@ -1,0 +1,21 @@
+meta {
+  name: Delete Gateway
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/gateways/{{gatewayId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sanctumToken}}
+}
+
+tests {
+  test("status 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

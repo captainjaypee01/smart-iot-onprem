@@ -1,0 +1,42 @@
+meta {
+  name: Get Single Gateway
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/gateways/{{gatewayId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sanctumToken}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("response shape", function() {
+    const d = res.getBody().data;
+    expect(d).to.have.property("id");
+    expect(d).to.have.property("gateway_id");
+    expect(d).to.have.property("sink_id");
+    expect(d).to.have.property("network");
+    expect(d.network).to.have.property("id");
+    expect(d.network).to.have.property("name");
+    expect(d.network).to.have.property("network_address");
+    expect(d).to.have.property("name");
+    expect(d).to.have.property("description");
+    expect(d).to.have.property("is_test_mode");
+    expect(d).to.have.property("status");
+    expect(d).to.have.property("last_seen_at");
+    expect(d).to.have.property("created_at");
+    expect(d).to.have.property("updated_at");
+  });
+  test("status is one of: online, offline, unknown", function() {
+    const status = res.getBody().data.status;
+    expect(["online","offline","unknown"]).to.include(status);
+  });
+}

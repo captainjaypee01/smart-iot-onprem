@@ -32,4 +32,3 @@ class ToggleMaintenanceRequest extends FormRequest
         ];
     }
 }
-

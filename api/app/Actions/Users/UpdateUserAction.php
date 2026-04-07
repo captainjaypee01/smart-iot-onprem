@@ -32,7 +32,7 @@ class UpdateUserAction
         if (Arr::has($data, 'first_name') || Arr::has($data, 'last_name')) {
             $firstName = $data['first_name'] ?? $user->first_name;
             $lastName = $data['last_name'] ?? $user->last_name;
-            $data['name'] = trim($firstName . ' ' . $lastName);
+            $data['name'] = trim($firstName.' '.$lastName);
         }
 
         if (Arr::has($data, 'email') && $data['email'] !== $user->email) {

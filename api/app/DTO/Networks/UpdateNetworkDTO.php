@@ -9,7 +9,7 @@ namespace App\DTO\Networks;
 readonly class UpdateNetworkDTO
 {
     /**
-     * @param int[]|null $nodeTypeIds
+     * @param  int[]|null  $nodeTypeIds
      */
     public function __construct(
         public ?string $name = null,
@@ -30,4 +30,3 @@ readonly class UpdateNetworkDTO
         public ?array $nodeTypeIds = null,
     ) {}
 }
-

@@ -8,7 +8,6 @@ namespace App\Http\Requests\Api\V1\NodeTypes;
 
 use App\Models\NodeType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreNodeTypeRequest extends FormRequest
 {
@@ -81,4 +80,3 @@ class StoreNodeTypeRequest extends FormRequest
         });
     }
 }
-

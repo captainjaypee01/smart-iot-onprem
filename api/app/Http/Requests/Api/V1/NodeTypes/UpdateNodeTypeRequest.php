@@ -96,4 +96,3 @@ class UpdateNodeTypeRequest extends FormRequest
         });
     }
 }
-

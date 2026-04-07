@@ -10,22 +10,23 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\API\V1\Auth\MicrosoftCallbackController;
 use App\Http\Controllers\Api\V1\Auth\MicrosoftRedirectController;
 use App\Http\Controllers\Api\V1\Auth\SetPasswordController;
+use App\Http\Controllers\Api\V1\Commands\CommandController as SendDataCommandController;
 use App\Http\Controllers\Api\V1\Companies\CompanyController;
 use App\Http\Controllers\Api\V1\Companies\UploadCompanyLogoController;
-use App\Http\Controllers\Api\V1\HealthController;
-use App\Http\Controllers\Api\V1\Roles\RoleController;
-use App\Http\Controllers\Api\V1\PermissionController;
-use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
 use App\Http\Controllers\Api\V1\Features\FeatureController;
 use App\Http\Controllers\Api\V1\Features\ReorderFeaturesController;
 use App\Http\Controllers\Api\V1\Features\ReorderGroupsController;
-use App\Http\Controllers\Api\V1\Commands\CommandController as SendDataCommandController;
+use App\Http\Controllers\Api\V1\GatewayController;
+use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Networks\GenerateAddressController;
 use App\Http\Controllers\Api\V1\Networks\NetworkController;
 use App\Http\Controllers\Api\V1\Networks\ToggleMaintenanceController;
-use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
+use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
+use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\Provisioning\ProvisioningController;
 use App\Http\Controllers\Api\V1\Provisioning\ResendProvisioningNodeController;
+use App\Http\Controllers\Api\V1\Roles\RoleController;
+use App\Http\Controllers\Api\V1\Settings\SessionSettingsController;
 use App\Http\Controllers\Api\V1\Users\DisableUserController;
 use App\Http\Controllers\Api\V1\Users\ResendInviteController;
 use App\Http\Controllers\Api\V1\Users\UserController;
@@ -115,6 +116,14 @@ Route::prefix('v1')->group(function () {
         Route::post('/provisioning', [ProvisioningController::class, 'store']);
         Route::get('/provisioning/{provisioningBatch}', [ProvisioningController::class, 'show']);
         Route::post('/provisioning/{provisioningBatch}/nodes/{provisioningBatchNode}/resend', ResendProvisioningNodeController::class);
+
+        // ─── Gateways (superadmin only) ───────────────────────────────
+        Route::get('/gateways', [GatewayController::class, 'index']);
+        Route::post('/gateways', [GatewayController::class, 'store']);
+        Route::get('/gateways/{gateway}', [GatewayController::class, 'show']);
+        Route::patch('/gateways/{gateway}', [GatewayController::class, 'update']);
+        Route::delete('/gateways/{gateway}', [GatewayController::class, 'destroy']);
+        Route::post('/gateways/{gateway}/commands', [GatewayController::class, 'sendCommand']);
 
         // Route::apiResource('devices', DeviceController::class);
         // Route::apiResource('alerts',  AlertController::class);

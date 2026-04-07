@@ -23,4 +23,3 @@ final class DeleteFeatureRequest extends FormRequest
         return [];
     }
 }
-

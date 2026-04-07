@@ -1,0 +1,30 @@
+meta {
+  name: Internal Update Last Seen
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/internal/gateways/{{gatewayId}}/last-seen
+  body: none
+  auth: none
+}
+
+headers {
+  X-Internal-Token: {{internalToken}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("response shape", function() {
+    const d = res.getBody().data;
+    expect(d).to.have.property("id");
+    expect(d).to.have.property("gateway_id");
+    expect(d).to.have.property("last_seen_at");
+  });
+  test("last_seen_at is not null", function() {
+    expect(res.getBody().data.last_seen_at).to.not.equal(null);
+  });
+}

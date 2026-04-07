@@ -17,7 +17,7 @@ class PermissionFactory extends Factory
     public function definition(): array
     {
         $module = $this->faker->unique()->word();
-        $key = strtolower($module . '.view');
+        $key = strtolower($module.'.view');
 
         return [
             'key' => $key,
@@ -27,4 +27,3 @@ class PermissionFactory extends Factory
         ];
     }
 }
-

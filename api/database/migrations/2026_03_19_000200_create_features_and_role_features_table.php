@@ -54,4 +54,3 @@ the same group. Only updated via PUT /features/reorder-groups.');
         Schema::dropIfExists('features');
     }
 };
-

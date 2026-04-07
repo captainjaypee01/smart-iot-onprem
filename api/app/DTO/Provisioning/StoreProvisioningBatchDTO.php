@@ -7,7 +7,7 @@ namespace App\DTO\Provisioning;
 readonly class StoreProvisioningBatchDTO
 {
     /**
-     * @param array<int, array{service_id: string, node_address: string}> $nodes
+     * @param  array<int, array{service_id: string, node_address: string}>  $nodes
      */
     public function __construct(
         public int $networkId,

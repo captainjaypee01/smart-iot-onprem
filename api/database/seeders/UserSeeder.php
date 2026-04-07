@@ -5,7 +5,7 @@
 //
 // Accounts created:
 //   superadmin@iot.local   password  — SuperAdmin (no company, no role)
-//   admin@acme.local       password  — Admin role @ Acme Corporation
+//   admin@acme.local       password  — Tenant Admin (company admin permission bundle, not platform/superadmin)
 //   operator@acme.local    password  — Operator role @ Acme Corporation
 //   viewer@globex.local    password  — Viewer role @ Globex Industries
 

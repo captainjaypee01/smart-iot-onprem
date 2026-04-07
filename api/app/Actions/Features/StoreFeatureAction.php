@@ -25,4 +25,3 @@ final class StoreFeatureAction
         return $feature->refresh();
     }
 }
-

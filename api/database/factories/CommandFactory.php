@@ -25,25 +25,25 @@ class CommandFactory extends Factory
     public function definition(): array
     {
         return [
-            'network_id'        => Network::factory(),
-            'created_by'        => User::factory(),
-            'type'              => 'send_data',
-            'node_address'      => strtoupper(fake()->regexify('[0-9A-F]{6}')),
-            'request_id'        => fake()->numberBetween(100_000_000, 4_294_967_295),
-            'source_ep'         => fake()->numberBetween(1, 255),
-            'dest_ep'           => fake()->numberBetween(1, 255),
-            'payload'           => strtoupper(fake()->regexify('[0-9A-F]{8}')),
-            'no_packet_id'      => false,
-            'packet_id'         => strtoupper(fake()->regexify('[0-9A-F]{4}')),
+            'network_id' => Network::factory(),
+            'created_by' => User::factory(),
+            'type' => 'send_data',
+            'node_address' => strtoupper(fake()->regexify('[0-9A-F]{6}')),
+            'request_id' => fake()->numberBetween(100_000_000, 4_294_967_295),
+            'source_ep' => fake()->numberBetween(1, 255),
+            'dest_ep' => fake()->numberBetween(1, 255),
+            'payload' => strtoupper(fake()->regexify('[0-9A-F]{8}')),
+            'no_packet_id' => false,
+            'packet_id' => strtoupper(fake()->regexify('[0-9A-F]{4}')),
             'processing_status' => ProcessingStatus::Pending,
-            'message_status'    => MessageStatus::WaitingResponse,
-            'retry_count'       => 0,
-            'requested_at'      => now(),
+            'message_status' => MessageStatus::WaitingResponse,
+            'retry_count' => 0,
+            'requested_at' => now(),
 
             // Legacy
-            'user_id'   => null,
+            'user_id' => null,
             'device_id' => null,
-            'status'    => CommandStatus::PENDING,
+            'status' => CommandStatus::PENDING,
         ];
     }
 
@@ -54,7 +54,7 @@ class CommandFactory extends Factory
     {
         return $this->state([
             'processing_status' => ProcessingStatus::Failed,
-            'error_message'     => 'No reply after 3 retries',
+            'error_message' => 'No reply after 3 retries',
         ]);
     }
 
@@ -64,8 +64,8 @@ class CommandFactory extends Factory
     public function provisioning(): static
     {
         return $this->state([
-            'type'           => 'node_provisioning',
-            'node_address'   => null,
+            'type' => 'node_provisioning',
+            'node_address' => null,
             'message_status' => null,
         ]);
     }

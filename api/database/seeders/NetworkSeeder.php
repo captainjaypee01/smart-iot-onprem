@@ -23,28 +23,28 @@ class NetworkSeeder extends Seeder
 {
     public function run(): void
     {
-        $acme   = Company::where('code', 'ACME')->firstOrFail();
+        $acme = Company::where('code', 'ACME')->firstOrFail();
         $globex = Company::where('code', 'GLOBEX')->firstOrFail();
 
         // ── Node types we'll attach (by area_id) ──────────────────────────────
-        $fireExt   = NodeType::where('area_id', '01000001')->first();
-        $smoke     = NodeType::where('area_id', '01000002')->first();
+        $fireExt = NodeType::where('area_id', '01000001')->first();
+        $smoke = NodeType::where('area_id', '01000002')->first();
         $tempHumid = NodeType::where('area_id', '01000003')->first();
-        $gas       = NodeType::where('area_id', '01000004')->first();
-        $door      = NodeType::where('area_id', '01000005')->first();
+        $gas = NodeType::where('area_id', '01000004')->first();
+        $door = NodeType::where('area_id', '01000005')->first();
 
         // ── Networks ──────────────────────────────────────────────────────────
         $acmeNetwork = Network::firstOrCreate(
             ['network_address' => 'A1B2C3'],
             [
-                'name'              => 'Acme HQ — Building A',
-                'description'       => 'Primary sensor network for Acme Corporation headquarters.',
+                'name' => 'Acme HQ — Building A',
+                'description' => 'Primary sensor network for Acme Corporation headquarters.',
                 'diagnostic_interval' => 30,
-                'alarm_threshold'   => 5,
+                'alarm_threshold' => 5,
                 'alarm_threshold_unit' => 'minutes',
-                'wirepas_version'   => '5.2',
-                'is_active'         => true,
-                'is_maintenance'    => false,
+                'wirepas_version' => '5.2',
+                'is_active' => true,
+                'is_maintenance' => false,
                 'has_monthly_report' => true,
                 'commissioned_date' => '2024-01-01',
             ]
@@ -53,14 +53,14 @@ class NetworkSeeder extends Seeder
         $globexNetwork = Network::firstOrCreate(
             ['network_address' => 'D4E5F6'],
             [
-                'name'              => 'Globex — Main Floor',
-                'description'       => 'IoT mesh network deployed across the Globex main production floor.',
+                'name' => 'Globex — Main Floor',
+                'description' => 'IoT mesh network deployed across the Globex main production floor.',
                 'diagnostic_interval' => 10,
-                'alarm_threshold'   => 3,
+                'alarm_threshold' => 3,
                 'alarm_threshold_unit' => 'minutes',
-                'wirepas_version'   => '5.2',
-                'is_active'         => true,
-                'is_maintenance'    => false,
+                'wirepas_version' => '5.2',
+                'is_active' => true,
+                'is_maintenance' => false,
                 'has_monthly_report' => false,
                 'commissioned_date' => '2024-06-01',
             ]
@@ -90,9 +90,9 @@ class NetworkSeeder extends Seeder
         // ── role_networks — give seeded roles access to their company's network ─
         // Admin / Operator / Viewer roles are all company-scoped so they each
         // get access to the network that belongs to their company.
-        $adminRole    = Role::where('name', 'Admin')->first();
+        $adminRole = Role::where('name', 'Admin')->first();
         $operatorRole = Role::where('name', 'Operator')->first();
-        $viewerRole   = Role::where('name', 'Viewer')->first();
+        $viewerRole = Role::where('name', 'Viewer')->first();
 
         $rolePairs = [];
 

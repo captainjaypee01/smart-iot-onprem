@@ -18,20 +18,20 @@ final class StoreNetworkAction
             $normalizedAddress = $this->normalizeAddress($dto->networkAddress);
 
             $network = Network::create([
-                'name'                  => $dto->name,
-                'network_address'       => $normalizedAddress,
-                'description'           => $dto->description,
-                'remarks'               => $dto->remarks,
-                'is_active'             => $dto->isActive,
-                'diagnostic_interval'   => $dto->diagnosticInterval,
-                'alarm_threshold'       => $dto->alarmThreshold,
-                'alarm_threshold_unit'  => $dto->alarmThresholdUnit,
-                'wirepas_version'       => $dto->wirepasVersion,
-                'commissioned_date'     => $dto->commissionedDate,
-                'is_maintenance'        => $dto->isMaintenance,
-                'maintenance_start_at'  => $dto->maintenanceStartAt,
-                'maintenance_end_at'    => $dto->maintenanceEndAt,
-                'has_monthly_report'    => $dto->hasMonthlyReport,
+                'name' => $dto->name,
+                'network_address' => $normalizedAddress,
+                'description' => $dto->description,
+                'remarks' => $dto->remarks,
+                'is_active' => $dto->isActive,
+                'diagnostic_interval' => $dto->diagnosticInterval,
+                'alarm_threshold' => $dto->alarmThreshold,
+                'alarm_threshold_unit' => $dto->alarmThresholdUnit,
+                'wirepas_version' => $dto->wirepasVersion,
+                'commissioned_date' => $dto->commissionedDate,
+                'is_maintenance' => $dto->isMaintenance,
+                'maintenance_start_at' => $dto->maintenanceStartAt,
+                'maintenance_end_at' => $dto->maintenanceEndAt,
+                'has_monthly_report' => $dto->hasMonthlyReport,
             ]);
 
             $network->nodeTypes()->sync($dto->nodeTypeIds ?? []);
@@ -51,4 +51,3 @@ final class StoreNetworkAction
         return strtoupper($hex);
     }
 }
-

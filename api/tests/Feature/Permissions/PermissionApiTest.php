@@ -9,13 +9,8 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
-use Illuminate\Testing\TestResponse;
 
 use function Pest\Laravel\actingAs;
-use function Pest\Laravel\deleteJson;
-use function Pest\Laravel\getJson;
-use function Pest\Laravel\postJson;
-use function Pest\Laravel\putJson;
 
 beforeEach(function (): void {
     $this->seed(PermissionSeeder::class);
@@ -155,4 +150,3 @@ test('delete permission returns conflict when in use', function (): void {
 
     $response->assertStatus(409);
 });
-

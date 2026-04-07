@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Actions\Features;
 
 use App\Models\Feature;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ReorderGroupsAction
 {
     /**
-     * @param array<int, array{group:string, group_order:int}> $groups
+     * @param  array<int, array{group:string, group_order:int}>  $groups
      * @return array<int, array{group:string, features: array<int, Feature>}>
      */
     public function execute(array $groups): array
@@ -73,4 +73,3 @@ class ReorderGroupsAction
         return array_values($groups);
     }
 }
-

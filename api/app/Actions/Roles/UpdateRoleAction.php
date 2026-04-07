@@ -23,7 +23,7 @@ class UpdateRoleAction
                 $updates['is_system_role'] = $dto->isSystemRole;
             }
 
-            if (!empty($updates)) {
+            if (! empty($updates)) {
                 $role->update($updates);
             }
 
@@ -48,4 +48,3 @@ class UpdateRoleAction
         });
     }
 }
-

@@ -12,7 +12,7 @@ namespace App\DTO\NodeTypes;
 readonly class UpdateNodeTypeDTO
 {
     /**
-     * @param SensorSlot[]|null $sensors
+     * @param  SensorSlot[]|null  $sensors
      */
     public function __construct(
         public ?string $name = null,
@@ -22,4 +22,3 @@ readonly class UpdateNodeTypeDTO
         public ?array $sensors = null,
     ) {}
 }
-

@@ -14,11 +14,11 @@ uses(RefreshDatabase::class);
 describe('POST /api/v1/provisioning/{batch}/nodes/{node}/resend', function (): void {
     it('superadmin can resend a pending node', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $batch      = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
-        $node       = ProvisioningBatchNode::factory()->create([
+        $batch = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
+        $node = ProvisioningBatchNode::factory()->create([
             'provisioning_batch_id' => $batch->id,
-            'status'                => ProvisioningNodeStatus::Pending,
-            'last_command_id'       => null,
+            'status' => ProvisioningNodeStatus::Pending,
+            'last_command_id' => null,
         ]);
 
         $commandCountBefore = Command::count();
@@ -41,10 +41,10 @@ describe('POST /api/v1/provisioning/{batch}/nodes/{node}/resend', function (): v
 
     it('superadmin can resend a failed node', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $batch      = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
-        $node       = ProvisioningBatchNode::factory()->create([
+        $batch = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
+        $node = ProvisioningBatchNode::factory()->create([
             'provisioning_batch_id' => $batch->id,
-            'status'                => ProvisioningNodeStatus::Failed,
+            'status' => ProvisioningNodeStatus::Failed,
         ]);
 
         $commandCountBefore = Command::count();
@@ -63,10 +63,10 @@ describe('POST /api/v1/provisioning/{batch}/nodes/{node}/resend', function (): v
 
     it('returns 422 when resending an already provisioned node', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $batch      = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
-        $node       = ProvisioningBatchNode::factory()->create([
+        $batch = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
+        $node = ProvisioningBatchNode::factory()->create([
             'provisioning_batch_id' => $batch->id,
-            'status'                => ProvisioningNodeStatus::Provisioned,
+            'status' => ProvisioningNodeStatus::Provisioned,
         ]);
 
         $this->actingAs($superadmin, 'sanctum')
@@ -77,9 +77,9 @@ describe('POST /api/v1/provisioning/{batch}/nodes/{node}/resend', function (): v
 
     it('returns 404 when the node belongs to a different batch', function (): void {
         $superadmin = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
-        $batchA     = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
-        $batchB     = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
-        $node       = ProvisioningBatchNode::factory()->create(['provisioning_batch_id' => $batchA->id]);
+        $batchA = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
+        $batchB = ProvisioningBatch::factory()->create(['submitted_by' => $superadmin->id]);
+        $node = ProvisioningBatchNode::factory()->create(['provisioning_batch_id' => $batchA->id]);
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson("/api/v1/provisioning/{$batchB->id}/nodes/{$node->id}/resend")
@@ -87,9 +87,9 @@ describe('POST /api/v1/provisioning/{batch}/nodes/{node}/resend', function (): v
     });
 
     it('returns 403 for non-superadmin', function (): void {
-        $user  = User::factory()->create(['is_superadmin' => false]);
+        $user = User::factory()->create(['is_superadmin' => false]);
         $batch = ProvisioningBatch::factory()->create();
-        $node  = ProvisioningBatchNode::factory()->create(['provisioning_batch_id' => $batch->id]);
+        $node = ProvisioningBatchNode::factory()->create(['provisioning_batch_id' => $batch->id]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/provisioning/{$batch->id}/nodes/{$node->id}/resend")

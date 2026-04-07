@@ -9,10 +9,10 @@ readonly class UpdateRoleDTO
     /**
      * null means "field omitted, do not touch that pivot".
      *
-     * @param int[]|null $featureIds
-     * @param int[]|null $permissionIds
-     * @param int[]|null $networkIds
-     * @param int[]|null $companyIds
+     * @param  int[]|null  $featureIds
+     * @param  int[]|null  $permissionIds
+     * @param  int[]|null  $networkIds
+     * @param  int[]|null  $companyIds
      */
     public function __construct(
         public ?string $name,
@@ -24,4 +24,3 @@ readonly class UpdateRoleDTO
         public ?array $networkIds,
     ) {}
 }
-

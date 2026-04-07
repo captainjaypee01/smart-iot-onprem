@@ -38,4 +38,3 @@ final class ToggleMaintenanceController extends Controller
         );
     }
 }
-

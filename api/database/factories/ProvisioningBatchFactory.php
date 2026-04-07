@@ -20,19 +20,19 @@ class ProvisioningBatchFactory extends Factory
     public function definition(): array
     {
         return [
-            'network_id'        => Network::factory(),
-            'packet_id'         => strtolower(bin2hex(random_bytes(2))),
-            'target_node_id'    => 'ffffffff',
-            'submitted_by'      => User::factory()->state([
+            'network_id' => Network::factory(),
+            'packet_id' => strtolower(bin2hex(random_bytes(2))),
+            'target_node_id' => 'ffffffff',
+            'submitted_by' => User::factory()->state([
                 'is_superadmin' => true,
-                'company_id'    => null,
-                'role_id'       => null,
+                'company_id' => null,
+                'role_id' => null,
             ]),
-            'status'            => ProvisioningBatchStatus::Pending,
-            'total_nodes'       => 1,
+            'status' => ProvisioningBatchStatus::Pending,
+            'total_nodes' => 1,
             'provisioned_nodes' => 0,
-            'is_auto_register'  => false,
-            'command_sent'      => 'PROVISIONING_CMD:' . strtolower(bin2hex(random_bytes(2))),
+            'is_auto_register' => false,
+            'command_sent' => 'PROVISIONING_CMD:'.strtolower(bin2hex(random_bytes(2))),
         ];
     }
 }

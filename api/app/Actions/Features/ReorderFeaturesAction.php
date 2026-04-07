@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Actions\Features;
 
 use App\Models\Feature;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ReorderFeaturesAction
 {
     /**
-     * @param array<int, array{id:int, sort_order:int}> $features
+     * @param  array<int, array{id:int, sort_order:int}>  $features
      * @return array<int, array{group:string, features: array<int, Feature>}>
      */
     public function execute(array $features): array
@@ -62,4 +62,3 @@ class ReorderFeaturesAction
         return array_values($groups);
     }
 }
-

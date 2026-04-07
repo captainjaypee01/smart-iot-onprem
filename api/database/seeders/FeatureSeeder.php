@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Feature;
+use Illuminate\Database\Seeder;
 
 class FeatureSeeder extends Seeder
 {
@@ -141,6 +141,14 @@ class FeatureSeeder extends Seeder
                 'sort_order' => 8,
                 'group_order' => 99,
             ],
+            [
+                'key' => 'gateway_settings',
+                'name' => 'Gateway Settings',
+                'route' => '/gateways',
+                'icon' => 'Router',
+                'sort_order' => 9,
+                'group_order' => 99,
+            ],
         ];
 
         $features = array_merge($standardFeatures, $superadminFeatures);
@@ -166,7 +174,7 @@ class FeatureSeeder extends Seeder
             ]);
         }
 
-        $this->command?->info('  ✓ Features seeded: ' . count($features) . ' entries.');
+        $this->command?->info('  ✓ Features seeded: '.count($features).' entries.');
     }
 
     private function groupForOrder(int $groupOrder): string
@@ -180,4 +188,3 @@ class FeatureSeeder extends Seeder
         };
     }
 }
-

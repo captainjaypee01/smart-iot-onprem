@@ -1,0 +1,17 @@
+meta {
+  name: Unauthenticated List Gateways Returns 401
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/gateways
+  body: none
+  auth: none
+}
+
+tests {
+  test("unauthenticated returns 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

@@ -1,0 +1,43 @@
+meta {
+  name: Create Gateway
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/gateways
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sanctumToken}}
+}
+
+body:json {
+  {
+    "network_id": {{networkId}},
+    "name": "Test Gateway",
+    "description": "Bruno test gateway",
+    "gateway_prefix": "BRUNOTEST"
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("gateway_id generated", function() {
+    expect(res.getBody().data.gateway_id).to.be.a("string");
+    expect(res.getBody().data.gateway_id).to.include("_");
+  });
+  test("sink_id is 01 for first gateway", function() {
+    expect(res.getBody().data.sink_id).to.equal("01");
+  });
+  test("is_test_mode defaults false", function() {
+    expect(res.getBody().data.is_test_mode).to.equal(false);
+  });
+  test("status is unknown on creation", function() {
+    expect(res.getBody().data.status).to.equal("unknown");
+  });
+}

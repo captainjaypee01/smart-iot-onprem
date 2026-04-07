@@ -19,9 +19,9 @@ final class RecomputeBatchStatusAction
 
         $status = match (true) {
             $provisioned === $total => ProvisioningBatchStatus::Complete,
-            $failed === $total      => ProvisioningBatchStatus::Failed,
-            $provisioned > 0        => ProvisioningBatchStatus::Partial,
-            default                 => ProvisioningBatchStatus::Pending,
+            $failed === $total => ProvisioningBatchStatus::Failed,
+            $provisioned > 0 => ProvisioningBatchStatus::Partial,
+            default => ProvisioningBatchStatus::Pending,
         };
 
         $batch->update([

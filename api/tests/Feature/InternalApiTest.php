@@ -38,7 +38,7 @@ test('internal endpoint can mark command as dispatched', function () {
     $response = $this->withHeader('X-Internal-Token', 'test-internal-token')
         ->patchJson("/internal/commands/{$command->id}/status", [
             'processing_status' => ProcessingStatus::Processing->value,
-            'dispatched_at'     => now()->toIso8601String(),
+            'dispatched_at' => now()->toIso8601String(),
         ]);
 
     $response->assertStatus(200)
@@ -56,7 +56,7 @@ test('internal endpoint can mark command as acked', function () {
     $response = $this->withHeader('X-Internal-Token', 'test-internal-token')
         ->patchJson("/internal/commands/{$command->id}/status", [
             'processing_status' => ProcessingStatus::Sent->value,
-            'acked_at'          => now()->toIso8601String(),
+            'acked_at' => now()->toIso8601String(),
         ]);
 
     $response->assertStatus(200);
@@ -73,7 +73,7 @@ test('internal endpoint can mark command as failed', function () {
     $response = $this->withHeader('X-Internal-Token', 'test-internal-token')
         ->patchJson("/internal/commands/{$command->id}/status", [
             'processing_status' => ProcessingStatus::Failed->value,
-            'error_message'     => 'Device is offline',
+            'error_message' => 'Device is offline',
         ]);
 
     $response->assertStatus(200);

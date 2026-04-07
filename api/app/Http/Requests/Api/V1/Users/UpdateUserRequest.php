@@ -16,9 +16,9 @@ class UpdateUserRequest extends FormRequest
         $authUser = $this->user();
         $targetUser = $this->route('user');
 
-         if (! $authUser->hasPermission('user.update')) {
-             return false;
-         }
+        if (! $authUser->hasPermission('user.update')) {
+            return false;
+        }
 
         if ($authUser->is_superadmin) {
             return true;

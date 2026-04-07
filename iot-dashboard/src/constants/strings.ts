@@ -480,6 +480,161 @@ export const COMPANY_STRINGS = {
     TOAST_LOGO_ERROR: "Failed to upload company logo.",
 } as const;
 
+// ─── Gateway Settings module ──────────────────────────────────────
+export const GATEWAY_STRINGS = {
+    TITLE: 'Gateway Settings',
+    SUBTITLE: 'Manage Wirepas gateway devices and send diagnostic commands.',
+    NAV_LABEL: 'Gateway Settings',
+
+    // Toolbar
+    ADD_GATEWAY: 'Add Gateway',
+
+    // Table columns
+    COL_NAME: 'Name',
+    COL_GATEWAY_ID: 'Gateway ID',
+    COL_NETWORK: 'Network',
+    COL_SINK_ID: 'Sink ID',
+    COL_STATUS: 'Status',
+    COL_TEST_MODE: 'Test Mode',
+    COL_LAST_SEEN: 'Last Seen',
+    COL_ACTIONS: 'Actions',
+
+    // Status badge labels
+    STATUS_ONLINE: 'Online',
+    STATUS_OFFLINE: 'Offline',
+    STATUS_UNKNOWN: 'Unknown',
+
+    // Test mode badge
+    TEST_MODE_ON: 'Test Mode',
+    TEST_MODE_OFF: 'Production',
+
+    // Filters
+    FILTER_NETWORK_PLACEHOLDER: 'All Networks',
+    FILTER_STATUS_PLACEHOLDER: 'All Statuses',
+    FILTER_TEST_MODE_LABEL: 'Test Mode Only',
+
+    // Form dialog
+    DIALOG_TITLE_CREATE: 'Add Gateway',
+    DIALOG_TITLE_EDIT: 'Edit Gateway',
+    LABEL_NETWORK: 'Network',
+    PLACEHOLDER_NETWORK: 'Select a network',
+    LABEL_NAME: 'Name',
+    PLACEHOLDER_NAME: 'e.g. Gateway Floor 1',
+    LABEL_DESCRIPTION: 'Description',
+    PLACEHOLDER_DESCRIPTION: 'Optional installation notes…',
+    LABEL_IS_TEST_MODE: 'Test Mode',
+    LABEL_GATEWAY_ID: 'Gateway ID',
+    LABEL_SINK_ID: 'Sink ID',
+    LABEL_GATEWAY_PREFIX: 'Gateway Prefix',
+    PLACEHOLDER_GATEWAY_PREFIX: 'e.g. ABC123',
+    GATEWAY_PREFIX_HELPER: 'Uppercase alphanumeric, max 10 characters. Required for the first gateway in this network.',
+    GATEWAY_PREFIX_ALREADY_SET: 'This network already has a gateway prefix. New gateways will use the same prefix automatically.',
+    ERROR_NETWORK_REQUIRED: 'Network is required.',
+    ERROR_PREFIX_REQUIRED: 'Gateway prefix is required for the first gateway on this network.',
+    ERROR_PREFIX_INVALID: 'Prefix must be uppercase alphanumeric only (e.g. ABC123).',
+    ERROR_PREFIX_MAX: 'Prefix must be 10 characters or fewer.',
+    ERROR_NAME_REQUIRED: 'Name is required.',
+    ERROR_DESCRIPTION_MAX: 'Description must be 1000 characters or fewer.',
+    GATEWAY_ID_READONLY_HELPER: 'Auto-generated. Cannot be changed after creation.',
+    BUTTON_CREATE: 'Create Gateway',
+    BUTTON_UPDATE: 'Update Gateway',
+    SUCCESS_CREATE: 'Gateway created successfully.',
+    ERROR_CREATE: 'Failed to create gateway.',
+    SUCCESS_UPDATE: 'Gateway updated successfully.',
+    ERROR_UPDATE: 'Failed to update gateway.',
+
+    // Delete dialog
+    CONFIRM_DELETE_TITLE: 'Delete Gateway',
+    CONFIRM_DELETE_DESCRIPTION: (gatewayId: string, name: string) =>
+        `Are you sure you want to delete gateway ${gatewayId} — ${name}? This action cannot be undone.`,
+    SUCCESS_DELETE: 'Gateway deleted.',
+    ERROR_DELETE: 'Failed to delete gateway.',
+
+    // Send command dialog
+    SEND_COMMAND_TITLE: 'Send Gateway Command',
+    LABEL_COMMAND_TYPE: 'Command Type',
+    PLACEHOLDER_COMMAND_TYPE: 'Select a command type',
+    LABEL_PAYLOAD: 'Payload (hex)',
+    PLACEHOLDER_PAYLOAD: 'e.g. DEADBEEF',
+    PAYLOAD_HELPER: 'Optional hex string payload (0-9, A-F characters only).',
+    CONFIRM_COMMAND_TITLE: 'Confirm Command',
+    CONFIRM_COMMAND_DESCRIPTION: (type: string, gateway: string) =>
+        `Send "${type}" command to gateway "${gateway}"?`,
+    BUTTON_SEND_COMMAND: 'Send Command',
+    BUTTON_SENDING: 'Sending…',
+    SUCCESS_SEND_COMMAND: 'Command sent successfully.',
+    ERROR_SEND_COMMAND: 'Failed to send command.',
+    ERROR_PAYLOAD_HEX: 'Payload must contain only hex characters (0–9, A–F).',
+    ERROR_COMMAND_TYPE_REQUIRED: 'Command type is required.',
+
+    // Extended gateway fields
+    LABEL_SERVICE_ID: 'Service ID',
+    LABEL_ASSET_ID: 'Asset ID',
+    LABEL_DEVICE_KEY: 'Device Key',
+    LABEL_LOCATION: 'Location',
+    LABEL_IP_ADDRESS: 'IP Address',
+    LABEL_GATEWAY_VERSION: 'Gateway Version',
+    PLACEHOLDER_SERVICE_ID: 'e.g. SVC-001',
+    PLACEHOLDER_ASSET_ID: 'e.g. ASSET-001',
+    PLACEHOLDER_DEVICE_KEY: 'e.g. dk-abc123',
+    PLACEHOLDER_LOCATION: 'e.g. Floor 1, Server Room',
+    PLACEHOLDER_GATEWAY_VERSION: 'e.g. 2.1.0',
+    IP_ADDRESS_HELPER: 'Automatically populated when the gateway connects.',
+    GATEWAY_VERSION_HELPER: 'Automatically populated when the gateway connects.',
+    ERROR_SERVICE_ID_REQUIRED: 'Service ID is required.',
+
+    // Send command dialog — typed actions
+    LABEL_DIAGNOSTIC_TYPE: 'Diagnostic Type',
+    LABEL_SERVICE_NAME: 'Service Name',
+    BUTTON_RESTART_GATEWAY: 'Restart Gateway',
+    BUTTON_GET_DIAGNOSTIC: 'Get Diagnostic',
+    BUTTON_UPLOAD_LOGS: 'Upload Log Files',
+    CONFIRM_RESTART_GATEWAY: 'Are you sure you want to restart this gateway? The gateway will be temporarily offline.',
+    CONFIRM_RESTART_GATEWAY_TITLE: 'Restart Gateway',
+    SUCCESS_RESTART_GATEWAY: 'Restart command sent successfully.',
+    SUCCESS_SEND_DIAGNOSTIC: 'Diagnostic command sent successfully.',
+
+    // Detail page
+    DETAIL_SUBTITLE: 'Gateway detail',
+    LABEL_STATUS: 'Status',
+    LABEL_LAST_SEEN: 'Last Seen',
+    LABEL_CREATED_AT: 'Created',
+    LABEL_UPDATED_AT: 'Updated',
+    NEVER_SEEN: 'Never connected',
+    SEND_COMMAND: 'Send Command',
+    EDIT_GATEWAY: 'Edit Gateway',
+    BACK_TO_GATEWAYS: 'Back to Gateways',
+
+    // Row actions
+    ACTION_VIEW: 'View',
+    ACTION_EDIT: 'Edit',
+    ACTION_DELETE: 'Delete',
+    ACTION_SEND_COMMAND: 'Send Command',
+
+    // Empty / error
+    NO_GATEWAYS: 'No gateways found.',
+    ERROR_LOAD: 'Failed to load gateways.',
+    ERROR_LOAD_DETAIL: 'Failed to load gateway.',
+} as const;
+
+export const GATEWAY_STATUS_LABELS: Record<'online' | 'offline' | 'unknown', string> = {
+    online: GATEWAY_STRINGS.STATUS_ONLINE,
+    offline: GATEWAY_STRINGS.STATUS_OFFLINE,
+    unknown: GATEWAY_STRINGS.STATUS_UNKNOWN,
+} as const;
+
+export const GATEWAY_COMMAND_TYPE_OPTIONS: { value: string; label: string }[] = [
+    { value: 'get_configs', label: 'Get Configs' },
+    { value: 'otap_load_scratchpad', label: 'OTAP Load Scratchpad' },
+    { value: 'otap_process_scratchpad', label: 'OTAP Process Scratchpad' },
+    { value: 'otap_set_target_scratchpad', label: 'OTAP Set Target Scratchpad' },
+    { value: 'otap_status', label: 'OTAP Status' },
+    { value: 'upload_software_update', label: 'Upload Software Update' },
+    { value: 'diagnostic', label: 'Diagnostic' },
+    { value: 'sync_gateway_time', label: 'Sync Gateway Time' },
+    { value: 'renew_certificate', label: 'Renew Certificate' },
+] as const;
+
 // ─── Node Provisioning module ─────────────────────────────────────
 export const PROVISIONING_STRINGS = {
     TITLE: "Node Provisioning",

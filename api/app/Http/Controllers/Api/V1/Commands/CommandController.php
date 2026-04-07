@@ -95,14 +95,14 @@ class CommandController extends Controller
         Gate::authorize('create', Command::class);
 
         $dto = new CreateSendDataCommandDTO(
-            networkId:   (int) $request->validated('network_id'),
-            createdBy:   $request->user()->id,
+            networkId: (int) $request->validated('network_id'),
+            createdBy: $request->user()->id,
             nodeAddress: (string) $request->validated('node_address'),
-            sourceEp:    $request->filled('source_ep') ? (int) $request->validated('source_ep') : null,
-            destEp:      $request->filled('dest_ep') ? (int) $request->validated('dest_ep') : null,
-            payload:     $request->filled('payload') ? (string) $request->validated('payload') : null,
+            sourceEp: $request->filled('source_ep') ? (int) $request->validated('source_ep') : null,
+            destEp: $request->filled('dest_ep') ? (int) $request->validated('dest_ep') : null,
+            payload: $request->filled('payload') ? (string) $request->validated('payload') : null,
             trackingMode: (string) $request->validated('include_tracking_id'),
-            packetId:     $request->filled('packet_id') ? (string) $request->validated('packet_id') : null,
+            packetId: $request->filled('packet_id') ? (string) $request->validated('packet_id') : null,
         );
 
         $command = $this->createAction->execute($dto);

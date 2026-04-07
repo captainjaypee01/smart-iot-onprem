@@ -13,6 +13,49 @@ use Illuminate\Support\Facades\Schema;
 
 class PermissionSeeder extends Seeder
 {
+    /**
+     * Permission keys for tenant company administrators (Alice Admin, etc.).
+     * Must stay aligned with the seeded "Company Admin" system role below.
+     * Excludes platform / superadmin-only modules: gateways, command console,
+     * companies CRUD, networks CRUD, permissions, features, provisioning, etc.
+     *
+     * @return list<string>
+     */
+    public static function tenantCompanyAdminPermissionKeys(): array
+    {
+        return [
+            'network.view',
+            'zone.view',
+            'zone.create',
+            'zone.update',
+            'zone.delete',
+            'zone.assign_user',
+            'zone.remove_user',
+            'zone.assign_node',
+            'zone.remove_node',
+            'node.view',
+            'node.create',
+            'node.update',
+            'node.view_readings',
+            'node.view_alarms',
+            'fault.view',
+            'fault.investigate',
+            'fault.verify',
+            'fault.resolve',
+            'user.view',
+            'user.create',
+            'user.update',
+            'user.delete',
+            'user.disable',
+            'user.resend_invite',
+            'user.change_status',
+            'user.change_company',
+            'role.view',
+            'role.assign_user',
+            'company.view',
+        ];
+    }
+
     public function run(): void
     {
         $permissions = [
@@ -91,6 +134,13 @@ class PermissionSeeder extends Seeder
             // ── Command Console ──────────────────────────────────────────
             ['module' => 'command', 'key' => 'command.view',   'display_name' => 'View Commands'],
             ['module' => 'command', 'key' => 'command.create', 'display_name' => 'Send Command'],
+
+            // ── Gateway ──────────────────────────────────────────────────────
+            ['module' => 'gateway', 'key' => 'gateway.view',         'display_name' => 'View Gateways'],
+            ['module' => 'gateway', 'key' => 'gateway.create',       'display_name' => 'Create Gateway'],
+            ['module' => 'gateway', 'key' => 'gateway.update',       'display_name' => 'Update Gateway'],
+            ['module' => 'gateway', 'key' => 'gateway.delete',       'display_name' => 'Delete Gateway'],
+            ['module' => 'gateway', 'key' => 'gateway.send_command', 'display_name' => 'Send Gateway Command'],
         ];
 
         foreach ($permissions as &$p) {
@@ -104,14 +154,14 @@ class PermissionSeeder extends Seeder
             ['display_name', 'module', 'updated_at']
         );
 
-        $this->command->info('Permissions seeded: ' . count($permissions) . ' entries.');
+        $this->command->info('Permissions seeded: '.count($permissions).' entries.');
 
         // ── Default System Roles ──────────────────────────────────────
         $this->seedRoles();
 
-        // Ensure superadmin-equivalent roles also have feature/network pivots.
-        // Some environments may rely on role-based pivots instead of `users.is_superadmin`.
-        $this->seedRoleFeatureAndNetworkPivotsForSystemRoles();
+        // Platform Admin (internal) gets all features + all networks.
+        // Tenant "Admin" is created in RoleSeeder — its pivots are seeded there.
+        self::seedRoleFeatureAndNetworkPivotsForRole('Platform Admin', false);
     }
 
     private function seedRoles(): void
@@ -140,43 +190,14 @@ class PermissionSeeder extends Seeder
                     'company.view',
                     'role.view',
                     'command.view',
+                    'gateway.view',
                 ],
             ],
             [
                 'name' => 'Company Admin',
                 'description' => 'Manages users, roles, and nodes within their own company',
                 'is_system_role' => true,
-                'permissions' => [
-                    'network.view',
-                    'zone.view',
-                    'zone.create',
-                    'zone.update',
-                    'zone.delete',
-                    'zone.assign_user',
-                    'zone.remove_user',
-                    'zone.assign_node',
-                    'zone.remove_node',
-                    'node.view',
-                    'node.create',
-                    'node.update',
-                    'node.view_readings',
-                    'node.view_alarms',
-                    'fault.view',
-                    'fault.investigate',
-                    'fault.verify',
-                    'fault.resolve',
-                    'user.view',
-                    'user.create',
-                    'user.update',
-                    'user.delete',
-                    'user.disable',
-                    'user.resend_invite',
-                    'user.change_status',
-                    'user.change_company',
-                    'role.view',
-                    'role.assign_user',
-                    'company.view',
-                ],
+                'permissions' => self::tenantCompanyAdminPermissionKeys(),
             ],
             [
                 'name' => 'Zone Manager',
@@ -277,27 +298,36 @@ class PermissionSeeder extends Seeder
             }
 
             $permissionIds = collect($permissionKeys)
-                ->filter(fn(string $key) => $allPermissionIds->has($key))
-                ->map(fn(string $key) => (int) $allPermissionIds[$key])
+                ->filter(fn (string $key) => $allPermissionIds->has($key))
+                ->map(fn (string $key) => (int) $allPermissionIds[$key])
                 ->values();
 
             DB::table('role_permissions')->where('role_id', $roleId)->delete();
 
             if ($permissionIds->isNotEmpty()) {
                 DB::table('role_permissions')->insert(
-                    $permissionIds->map(fn(int $permissionId) => [
+                    $permissionIds->map(fn (int $permissionId) => [
                         'role_id' => $roleId,
                         'permission_id' => $permissionId,
                     ])->all()
                 );
             }
 
-            $this->command->info("Role seeded: {$roleData['name']} with " . $permissionIds->count() . ' permissions.');
+            $this->command->info("Role seeded: {$roleData['name']} with ".$permissionIds->count().' permissions.');
         }
     }
 
-    private function seedRoleFeatureAndNetworkPivotsForSystemRoles(): void
-    {
+    /**
+     * Replace role_features and role_networks for one role.
+     *
+     * @param  bool  $tenantScopedFeatures  When true, only features with group_order < 99
+     *                                      (see FeatureSeeder: "admin" / superadmin sidebar group).
+     *                                      Platform internal roles use false (all active features).
+     */
+    public static function seedRoleFeatureAndNetworkPivotsForRole(
+        string $roleName,
+        bool $tenantScopedFeatures,
+    ): void {
         if (! Schema::hasTable('features') || ! Schema::hasTable('role_features')) {
             return;
         }
@@ -306,61 +336,56 @@ class PermissionSeeder extends Seeder
             return;
         }
 
-        $systemRoleNames = ['Platform Admin', 'Admin'];
+        $roleId = DB::table('roles')
+            ->where('name', $roleName)
+            ->value('id');
 
-        $now = now();
-
-        $activeFeatureIds = DB::table('features')
-            ->where('is_active', true)
-            ->pluck('id')
-            ->all();
+        if ($roleId === null) {
+            return;
+        }
 
         $activeNetworkIds = DB::table('networks')
             ->where('is_active', true)
             ->pluck('id')
             ->all();
 
-        foreach ($systemRoleNames as $roleName) {
-            $roleId = DB::table('roles')
-                ->where('name', $roleName)
-                ->value('id');
+        $featureQuery = DB::table('features')->where('is_active', true);
 
-            if ($roleId === null) {
-                continue;
-            }
-
-            // Replace-all: remove existing pivots then insert the expected full set.
-            DB::table('role_features')
-                ->where('role_id', (int) $roleId)
-                ->delete();
-
-            if ($activeFeatureIds !== []) {
-                DB::table('role_features')->insert(
-                    collect($activeFeatureIds)
-                        ->map(static fn (int $featureId): array => [
-                            'role_id' => (int) $roleId,
-                            'feature_id' => $featureId,
-                        ])
-                        ->all(),
-                );
-            }
-
-            DB::table('role_networks')
-                ->where('role_id', (int) $roleId)
-                ->delete();
-
-            if ($activeNetworkIds !== []) {
-                DB::table('role_networks')->insert(
-                    collect($activeNetworkIds)
-                        ->map(static fn (int $networkId): array => [
-                            'role_id' => (int) $roleId,
-                            'network_id' => $networkId,
-                        ])
-                        ->all(),
-                );
-            }
-
-            $this->command->info("Seeded role pivots for system role: {$roleName} at {$now->toIso8601String()}.");
+        if ($tenantScopedFeatures) {
+            $featureQuery->where('group_order', '<', 99);
         }
+
+        $activeFeatureIds = $featureQuery->pluck('id')->all();
+
+        DB::table('role_features')
+            ->where('role_id', (int) $roleId)
+            ->delete();
+
+        if ($activeFeatureIds !== []) {
+            DB::table('role_features')->insert(
+                collect($activeFeatureIds)
+                    ->map(static fn (int $featureId): array => [
+                        'role_id' => (int) $roleId,
+                        'feature_id' => $featureId,
+                    ])
+                    ->all(),
+            );
+        }
+
+        DB::table('role_networks')
+            ->where('role_id', (int) $roleId)
+            ->delete();
+
+        if ($activeNetworkIds !== []) {
+            DB::table('role_networks')->insert(
+                collect($activeNetworkIds)
+                    ->map(static fn (int $networkId): array => [
+                        'role_id' => (int) $roleId,
+                        'network_id' => $networkId,
+                    ])
+                    ->all(),
+            );
+        }
+
     }
 }

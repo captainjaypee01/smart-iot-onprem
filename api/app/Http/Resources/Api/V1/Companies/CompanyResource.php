@@ -56,4 +56,3 @@ class CompanyResource extends JsonResource
         ];
     }
 }
-

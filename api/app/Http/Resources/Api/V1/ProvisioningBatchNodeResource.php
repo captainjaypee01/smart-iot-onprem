@@ -19,12 +19,12 @@ class ProvisioningBatchNodeResource extends JsonResource
         $node = $this->resource;
 
         return [
-            'id'              => $node->id,
-            'service_id'      => $node->service_id,
-            'node_address'    => $node->node_address,
-            'status'          => $node->status->value,
+            'id' => $node->id,
+            'service_id' => $node->service_id,
+            'node_address' => $node->node_address,
+            'status' => $node->status->value,
             'last_command_id' => $node->last_command_id,
-            'created_at'      => $node->created_at->toIso8601String(),
+            'created_at' => $node->created_at->toIso8601String(),
         ];
     }
 }

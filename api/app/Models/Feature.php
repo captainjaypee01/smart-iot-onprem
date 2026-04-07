@@ -15,4 +15,3 @@ class Feature extends Model
 
     protected $guarded = [];
 }
-

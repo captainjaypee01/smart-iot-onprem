@@ -13,11 +13,13 @@ import {
     LayoutList,
     ServerCog,
     Terminal,
+    Router,
 } from "lucide-react";
 import type { NavGroup } from "@/types/nav";
 import {
     COMPANY_STRINGS,
     FEATURE_MODULE_STRINGS,
+    GATEWAY_STRINGS,
     NAVBAR_STRINGS,
     PROVISIONING_STRINGS,
     ROLE_STRINGS,
@@ -46,13 +48,6 @@ export const NAV_GROUPS: NavGroup[] = [
         title: "IoT Management",
         items: [
             { label: "Device Map", path: "/device-map", icon: Map },
-            {
-                label: COMMAND_STRINGS.NAV_LABEL,
-                path: "/commands",
-                icon: Terminal,
-                featureKey: "command-console",
-                permission: "command.view",
-            },
         ],
     },
     {
@@ -83,6 +78,14 @@ export const NAV_GROUPS: NavGroup[] = [
         title: "Superadmin",
         items: [
             {
+                label: COMMAND_STRINGS.NAV_LABEL,
+                path: "/commands",
+                icon: Terminal,
+                superadminOnly: true,
+                featureKey: "command-console",
+                permission: "command.view",
+            },
+            {
                 label: "Networks",
                 path: "/networks",
                 icon: Network,
@@ -101,6 +104,13 @@ export const NAV_GROUPS: NavGroup[] = [
                 path: "/provisioning",
                 icon: ServerCog,
                 superadminOnly: true,
+            },
+            {
+                label: GATEWAY_STRINGS.NAV_LABEL,
+                path: "/gateways",
+                icon: Router,
+                featureKey: "gateway_settings",
+                permission: "gateway.view",
             },
             {
                 label: "Permissions",

@@ -1,4 +1,5 @@
 <?php
+
 // app/DTO/Companies/StoreCompanyDTO.php
 
 declare(strict_types=1);
@@ -27,7 +28,5 @@ final readonly class StoreCompanyDTO
          * @var int[]
          */
         public array $networkIds,
-    ) {
-    }
+    ) {}
 }
-

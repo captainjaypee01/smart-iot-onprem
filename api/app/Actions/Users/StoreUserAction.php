@@ -22,7 +22,7 @@ class StoreUserAction
     public function execute(StoreUserDTO $dto): User
     {
         return DB::transaction(function () use ($dto): User {
-            $name = trim($dto->firstName . ' ' . $dto->lastName);
+            $name = trim($dto->firstName.' '.$dto->lastName);
 
             $password = $dto->useInvite ? null : ($dto->password !== null ? Hash::make($dto->password) : null);
             $emailVerifiedAt = ! $dto->useInvite ? now() : null;

@@ -97,4 +97,3 @@ final class UpdateNetworkAction
         return strtoupper($hex);
     }
 }
-

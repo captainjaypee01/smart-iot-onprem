@@ -11,7 +11,7 @@ class StoreNodeTypeAction
 {
     public function execute(StoreNodeTypeDTO $dto): NodeType
     {
-        $nodeType = new NodeType();
+        $nodeType = new NodeType;
         $nodeType->name = $dto->name;
         $nodeType->area_id = strtoupper($dto->areaId);
         $nodeType->description = $dto->description;
@@ -24,7 +24,7 @@ class StoreNodeTypeAction
     }
 
     /**
-     * @param array<int, array{name: string, unit?: string|null}> $sensors
+     * @param  array<int, array{name: string, unit?: string|null}>  $sensors
      */
     private function applySensors(NodeType $nodeType, array $sensors): void
     {
@@ -43,4 +43,3 @@ class StoreNodeTypeAction
         }
     }
 }
-

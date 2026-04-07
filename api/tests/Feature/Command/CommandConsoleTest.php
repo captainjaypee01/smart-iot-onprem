@@ -21,7 +21,7 @@ use App\Models\User;
  */
 function createCommandUser(array $networkIds = []): User
 {
-    $viewPermission   = Permission::firstOrCreate(
+    $viewPermission = Permission::firstOrCreate(
         ['key' => 'command.view'],
         ['display_name' => 'View Commands', 'module' => 'command']
     );
@@ -39,7 +39,7 @@ function createCommandUser(array $networkIds = []): User
 
     return User::factory()->create([
         'is_superadmin' => false,
-        'role_id'       => $role->id,
+        'role_id' => $role->id,
     ]);
 }
 
@@ -49,13 +49,13 @@ function createCommandUser(array $networkIds = []): User
 function validCommandPayload(int $networkId, array $overrides = []): array
 {
     return array_merge([
-        'network_id'          => $networkId,
-        'node_address'        => 'A3F2B1',
-        'source_ep'           => 10,
-        'dest_ep'             => 1,
-        'payload'             => 'DEADBEEF',
+        'network_id' => $networkId,
+        'node_address' => 'A3F2B1',
+        'source_ep' => 10,
+        'dest_ep' => 1,
+        'payload' => 'DEADBEEF',
         'include_tracking_id' => 'manual',
-        'packet_id'           => 'AB12',
+        'packet_id' => 'AB12',
     ], $overrides);
 }
 
@@ -72,7 +72,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('returns 403 when user lacks command.create permission', function (): void {
         $network = Network::factory()->create();
-        $user    = User::factory()->create(['is_superadmin' => false]);
+        $user = User::factory()->create(['is_superadmin' => false]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id))
@@ -81,7 +81,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('superadmin can create a send_data command', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id));
@@ -108,7 +108,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('stores node_address as uppercase', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
@@ -121,12 +121,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('sets no_packet_id=true when include_tracking_id=none and nullifies packet_id', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'include_tracking_id' => 'none',
-                'packet_id'           => null,
+                'packet_id' => null,
             ]));
 
         $response->assertStatus(201);
@@ -136,7 +136,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('auto-generates request_id in the expected range', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id));
@@ -150,7 +150,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('writes an outbox event atomically on create', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id));
@@ -175,7 +175,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('rejects invalid node_address (non-hex characters)', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
@@ -187,7 +187,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('rejects node_address exceeding 10 characters', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
@@ -199,12 +199,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('rejects packet_id that is not exactly 4 hex characters', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'include_tracking_id' => 'manual',
-                'packet_id'           => 'AB', // only 2 chars
+                'packet_id' => 'AB', // only 2 chars
             ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors(['packet_id']);
@@ -212,12 +212,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('requires packet_id when include_tracking_id is manual', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'include_tracking_id' => 'manual',
-                'packet_id'           => null,
+                'packet_id' => null,
             ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors(['packet_id']);
@@ -225,7 +225,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('rejects non-hex payload', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
@@ -236,9 +236,9 @@ describe('POST /api/v1/commands', function (): void {
     });
 
     it('rejects network_id not in user accessible networks for non-superadmin', function (): void {
-        $network      = Network::factory()->create();
+        $network = Network::factory()->create();
         $otherNetwork = Network::factory()->create();
-        $user         = createCommandUser([$network->id]); // only has access to $network
+        $user = createCommandUser([$network->id]); // only has access to $network
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($otherNetwork->id))
@@ -248,7 +248,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('allows non-superadmin to send to their accessible network', function (): void {
         $network = Network::factory()->create();
-        $user    = createCommandUser([$network->id]);
+        $user = createCommandUser([$network->id]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id));
@@ -261,11 +261,11 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies dest_ep=9 as AlarmAcknowledge', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
-                'dest_ep'      => 9,
+                'dest_ep' => 9,
                 'node_address' => 'A3F2B1',
             ]));
 
@@ -276,12 +276,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies FFFFFFFF as NetworkMessage', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => 'FFFFFFFF',
-                'dest_ep'      => 1,
+                'dest_ep' => 1,
             ]));
 
         $response->assertStatus(201);
@@ -291,12 +291,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies FFFFFFFE as SinkMessage', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => 'FFFFFFFE',
-                'dest_ep'      => 1,
+                'dest_ep' => 1,
             ]));
 
         $response->assertStatus(201);
@@ -306,12 +306,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies 80XXXXFF as ZoneMessage', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => '80AABBFF',
-                'dest_ep'      => 1,
+                'dest_ep' => 1,
             ]));
 
         $response->assertStatus(201);
@@ -321,12 +321,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies 80XXXXAA (starts 80, not ends FF) as ZoneGroupMessage', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => '80AABB01',
-                'dest_ep'      => 1,
+                'dest_ep' => 1,
             ]));
 
         $response->assertStatus(201);
@@ -336,7 +336,7 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies node_address matching node_types.area_id as GroupMessage', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         // Create a NodeType with area_id matching the node_address
         NodeType::factory()->create(['area_id' => 'AABBCC']);
@@ -344,7 +344,7 @@ describe('POST /api/v1/commands', function (): void {
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => 'AABBCC',
-                'dest_ep'      => 1,
+                'dest_ep' => 1,
             ]));
 
         $response->assertStatus(201);
@@ -354,14 +354,14 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies area_id match as GroupMessage case-insensitively', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         NodeType::factory()->create(['area_id' => 'aabbcc']); // lowercase in DB
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => 'AABBCC', // uppercase input
-                'dest_ep'      => 1,
+                'dest_ep' => 1,
             ]));
 
         $response->assertStatus(201);
@@ -370,12 +370,12 @@ describe('POST /api/v1/commands', function (): void {
 
     it('classifies default address as WaitingResponse', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => 'A3F2B1',
-                'dest_ep'      => 1,
+                'dest_ep' => 1,
             ]));
 
         $response->assertStatus(201);
@@ -385,13 +385,13 @@ describe('POST /api/v1/commands', function (): void {
 
     it('AlarmAcknowledge takes priority over NetworkMessage (dest_ep=9 wins)', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         // Even though node_address is FFFFFFFF (NetworkMessage), dest_ep=9 should win
         $response = $this->actingAs($superadmin, 'sanctum')
             ->postJson('/api/v1/commands', validCommandPayload($network->id, [
                 'node_address' => 'FFFFFFFF',
-                'dest_ep'      => 9,
+                'dest_ep' => 9,
             ]));
 
         $response->assertStatus(201);
@@ -418,8 +418,8 @@ describe('GET /api/v1/commands', function (): void {
 
     it('superadmin sees all commands across all networks', function (): void {
         $superadmin = createSuperadmin();
-        $network1   = Network::factory()->create();
-        $network2   = Network::factory()->create();
+        $network1 = Network::factory()->create();
+        $network2 = Network::factory()->create();
 
         Command::factory()->create(['network_id' => $network1->id, 'type' => 'send_data']);
         Command::factory()->create(['network_id' => $network2->id, 'type' => 'send_data']);
@@ -450,7 +450,7 @@ describe('GET /api/v1/commands', function (): void {
 
     it('excludes node_provisioning commands from the list', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         Command::factory()->create(['network_id' => $network->id, 'type' => 'send_data']);
         Command::factory()->provisioning()->create(['network_id' => $network->id]);
@@ -465,7 +465,7 @@ describe('GET /api/v1/commands', function (): void {
 
     it('returns paginated results with meta and links', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         Command::factory()->count(5)->create(['network_id' => $network->id, 'type' => 'send_data']);
 
@@ -482,8 +482,8 @@ describe('GET /api/v1/commands', function (): void {
 
     it('filters by network_id', function (): void {
         $superadmin = createSuperadmin();
-        $network1   = Network::factory()->create();
-        $network2   = Network::factory()->create();
+        $network1 = Network::factory()->create();
+        $network2 = Network::factory()->create();
 
         Command::factory()->count(2)->create(['network_id' => $network1->id, 'type' => 'send_data']);
         Command::factory()->count(3)->create(['network_id' => $network2->id, 'type' => 'send_data']);
@@ -497,21 +497,21 @@ describe('GET /api/v1/commands', function (): void {
 
     it('filters by processing_status', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         Command::factory()->create([
-            'network_id'        => $network->id,
-            'type'              => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'processing_status' => ProcessingStatus::Pending,
         ]);
         Command::factory()->create([
-            'network_id'        => $network->id,
-            'type'              => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'processing_status' => ProcessingStatus::Sent,
         ]);
 
         $response = $this->actingAs($superadmin, 'sanctum')
-            ->getJson('/api/v1/commands?processing_status=' . ProcessingStatus::Pending->value);
+            ->getJson('/api/v1/commands?processing_status='.ProcessingStatus::Pending->value);
 
         $response->assertStatus(200);
         expect($response->json('data'))->toHaveCount(1)
@@ -520,21 +520,21 @@ describe('GET /api/v1/commands', function (): void {
 
     it('filters by message_status', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         Command::factory()->create([
-            'network_id'     => $network->id,
-            'type'           => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'message_status' => MessageStatus::WaitingResponse,
         ]);
         Command::factory()->create([
-            'network_id'     => $network->id,
-            'type'           => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'message_status' => MessageStatus::AlarmAcknowledge,
         ]);
 
         $response = $this->actingAs($superadmin, 'sanctum')
-            ->getJson('/api/v1/commands?message_status=' . MessageStatus::AlarmAcknowledge->value);
+            ->getJson('/api/v1/commands?message_status='.MessageStatus::AlarmAcknowledge->value);
 
         $response->assertStatus(200);
         expect($response->json('data'))->toHaveCount(1)
@@ -543,16 +543,16 @@ describe('GET /api/v1/commands', function (): void {
 
     it('filters by node_address case-insensitively', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         Command::factory()->create([
-            'network_id'   => $network->id,
-            'type'         => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'node_address' => 'A3F2B1',
         ]);
         Command::factory()->create([
-            'network_id'   => $network->id,
-            'type'         => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'node_address' => 'BBBBBB',
         ]);
 
@@ -566,16 +566,16 @@ describe('GET /api/v1/commands', function (): void {
 
     it('filters by date_from and date_to', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         Command::factory()->create([
             'network_id' => $network->id,
-            'type'       => 'send_data',
+            'type' => 'send_data',
             'created_at' => '2026-03-01 12:00:00',
         ]);
         Command::factory()->create([
             'network_id' => $network->id,
-            'type'       => 'send_data',
+            'type' => 'send_data',
             'created_at' => '2026-04-01 12:00:00',
         ]);
 
@@ -588,16 +588,16 @@ describe('GET /api/v1/commands', function (): void {
 
     it('returns results sorted by created_at DESC', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $older = Command::factory()->create([
             'network_id' => $network->id,
-            'type'       => 'send_data',
+            'type' => 'send_data',
             'created_at' => now()->subHours(2),
         ]);
         $newer = Command::factory()->create([
             'network_id' => $network->id,
-            'type'       => 'send_data',
+            'type' => 'send_data',
             'created_at' => now(),
         ]);
 
@@ -616,11 +616,11 @@ describe('GET /api/v1/commands/{command}', function (): void {
 
     it('superadmin can fetch a single command by ID', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $command = Command::factory()->create([
             'network_id' => $network->id,
-            'type'       => 'send_data',
+            'type' => 'send_data',
         ]);
 
         $response = $this->actingAs($superadmin, 'sanctum')
@@ -631,13 +631,13 @@ describe('GET /api/v1/commands/{command}', function (): void {
     });
 
     it('returns 403 for a user on a different network', function (): void {
-        $ownNetwork   = Network::factory()->create();
+        $ownNetwork = Network::factory()->create();
         $otherNetwork = Network::factory()->create();
-        $user         = createCommandUser([$ownNetwork->id]); // no access to otherNetwork
+        $user = createCommandUser([$ownNetwork->id]); // no access to otherNetwork
 
         $command = Command::factory()->create([
             'network_id' => $otherNetwork->id,
-            'type'       => 'send_data',
+            'type' => 'send_data',
         ]);
 
         $this->actingAs($user, 'sanctum')
@@ -660,7 +660,7 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('returns 403 when user lacks command.create permission', function (): void {
         $network = Network::factory()->create();
-        $user    = User::factory()->create(['is_superadmin' => false]);
+        $user = User::factory()->create(['is_superadmin' => false]);
         $command = Command::factory()->create(['network_id' => $network->id]);
 
         $this->actingAs($user, 'sanctum')
@@ -669,13 +669,13 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
     });
 
     it('returns 403 when user tries to resend another user\'s command', function (): void {
-        $network      = Network::factory()->create();
-        $owner        = createCommandUser([$network->id]);
-        $otherUser    = createCommandUser([$network->id]);
+        $network = Network::factory()->create();
+        $owner = createCommandUser([$network->id]);
+        $otherUser = createCommandUser([$network->id]);
 
         $command = Command::factory()->create([
             'network_id' => $network->id,
-            'type'       => 'send_data',
+            'type' => 'send_data',
             'created_by' => $owner->id,
         ]);
 
@@ -686,13 +686,13 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('allows command creator to resend their own command', function (): void {
         $network = Network::factory()->create();
-        $user    = createCommandUser([$network->id]);
+        $user = createCommandUser([$network->id]);
 
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
-            'type'              => 'send_data',
-            'created_by'        => $user->id,
-            'retry_count'       => 0,
+            'network_id' => $network->id,
+            'type' => 'send_data',
+            'created_by' => $user->id,
+            'retry_count' => 0,
             'processing_status' => ProcessingStatus::Sent,
         ]);
 
@@ -706,14 +706,14 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('superadmin can resend any command', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
-        $otherUser  = User::factory()->create();
+        $network = Network::factory()->create();
+        $otherUser = User::factory()->create();
 
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
-            'type'              => 'send_data',
-            'created_by'        => $otherUser->id,
-            'retry_count'       => 0,
+            'network_id' => $network->id,
+            'type' => 'send_data',
+            'created_by' => $otherUser->id,
+            'retry_count' => 0,
             'processing_status' => ProcessingStatus::Pending,
         ]);
 
@@ -726,12 +726,12 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('returns 422 when retry_count >= 3', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $command = Command::factory()->failed()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Pending, // not Failed, but max retries
-            'retry_count'       => 3,
+            'retry_count' => 3,
         ]);
 
         $this->actingAs($superadmin, 'sanctum')
@@ -741,13 +741,13 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('returns 422 when processing_status is Failed', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
-            'type'              => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'processing_status' => ProcessingStatus::Failed,
-            'retry_count'       => 1,
+            'retry_count' => 1,
         ]);
 
         $this->actingAs($superadmin, 'sanctum')
@@ -757,12 +757,12 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('returns 422 when command type is not send_data', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $command = Command::factory()->provisioning()->create([
-            'network_id'        => $network->id,
+            'network_id' => $network->id,
             'processing_status' => ProcessingStatus::Pending,
-            'retry_count'       => 0,
+            'retry_count' => 0,
         ]);
 
         $this->actingAs($superadmin, 'sanctum')
@@ -772,14 +772,14 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('increments retry_count, sets retry_by, and resets processing_status to Pending', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
-            'type'              => 'send_data',
-            'created_by'        => $superadmin->id,
+            'network_id' => $network->id,
+            'type' => 'send_data',
+            'created_by' => $superadmin->id,
             'processing_status' => ProcessingStatus::Sent,
-            'retry_count'       => 1,
+            'retry_count' => 1,
         ]);
 
         $response = $this->actingAs($superadmin, 'sanctum')
@@ -796,13 +796,13 @@ describe('POST /api/v1/commands/{command}/resend', function (): void {
 
     it('writes outbox event on resend', function (): void {
         $superadmin = createSuperadmin();
-        $network    = Network::factory()->create();
+        $network = Network::factory()->create();
 
         $command = Command::factory()->create([
-            'network_id'        => $network->id,
-            'type'              => 'send_data',
+            'network_id' => $network->id,
+            'type' => 'send_data',
             'processing_status' => ProcessingStatus::Pending,
-            'retry_count'       => 0,
+            'retry_count' => 0,
         ]);
 
         $this->actingAs($superadmin, 'sanctum')

@@ -645,4 +645,3 @@ describe('toggle maintenance', function (): void {
         $response->assertStatus(403);
     });
 });
-

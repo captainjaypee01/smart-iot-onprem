@@ -7,9 +7,9 @@ namespace App\DTO\Roles;
 readonly class StoreRoleDTO
 {
     /**
-     * @param int[] $featureIds
-     * @param int[] $permissionIds
-     * @param int[] $networkIds
+     * @param  int[]  $featureIds
+     * @param  int[]  $permissionIds
+     * @param  int[]  $networkIds
      */
     public function __construct(
         public string $name,
@@ -21,4 +21,3 @@ readonly class StoreRoleDTO
         public array $networkIds,
     ) {}
 }
-

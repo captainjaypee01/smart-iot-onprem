@@ -90,22 +90,22 @@ class CreateSendDataCommandRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'network_id.required'       => 'A network must be selected.',
-            'network_id.exists'         => 'The selected network does not exist.',
-            'node_address.required'     => 'Node address is required.',
-            'node_address.regex'        => 'Node address must contain only hexadecimal characters (0-9, A-F).',
-            'node_address.max'          => 'Node address must not exceed 10 characters.',
-            'source_ep.integer'         => 'Source endpoint must be an integer.',
-            'source_ep.min'             => 'Source endpoint must be at least 1.',
-            'source_ep.max'             => 'Source endpoint must not exceed 255.',
-            'dest_ep.integer'           => 'Destination endpoint must be an integer.',
-            'dest_ep.min'               => 'Destination endpoint must be at least 1.',
-            'dest_ep.max'               => 'Destination endpoint must not exceed 255.',
-            'payload.regex'             => 'Payload must contain only hexadecimal characters.',
+            'network_id.required' => 'A network must be selected.',
+            'network_id.exists' => 'The selected network does not exist.',
+            'node_address.required' => 'Node address is required.',
+            'node_address.regex' => 'Node address must contain only hexadecimal characters (0-9, A-F).',
+            'node_address.max' => 'Node address must not exceed 10 characters.',
+            'source_ep.integer' => 'Source endpoint must be an integer.',
+            'source_ep.min' => 'Source endpoint must be at least 1.',
+            'source_ep.max' => 'Source endpoint must not exceed 255.',
+            'dest_ep.integer' => 'Destination endpoint must be an integer.',
+            'dest_ep.min' => 'Destination endpoint must be at least 1.',
+            'dest_ep.max' => 'Destination endpoint must not exceed 255.',
+            'payload.regex' => 'Payload must contain only hexadecimal characters.',
             'include_tracking_id.required' => 'The include_tracking_id field is required.',
-            'include_tracking_id.in'       => 'Tracking ID mode must be one of: auto, manual, none.',
-            'packet_id.regex'              => 'Packet ID must be exactly 4 hexadecimal characters.',
-            'packet_id.required_if'        => 'Packet ID is required when tracking mode is manual.',
+            'include_tracking_id.in' => 'Tracking ID mode must be one of: auto, manual, none.',
+            'packet_id.regex' => 'Packet ID must be exactly 4 hexadecimal characters.',
+            'packet_id.required_if' => 'Packet ID is required when tracking mode is manual.',
         ];
     }
 }

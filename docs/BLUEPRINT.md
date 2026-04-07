@@ -88,16 +88,22 @@ The platform is **operator-led**: the deployment owner provisions **companies**,
                                                │  diagnostic_int   │
                                                │  wirepas_version  │
                                                │  commissioned_date│
+                                               │  gateway_prefix   │ ← added by Gateway module
                                                │  flags            │
-                                               └──────┬────────────┘
-                                                      │ network_node_types
-                                               ┌──────▼──────────┐
-                                               │ node_types       │
-                                               │  id · name       │
-                                               │  area_id (hex)   │
-                                               │  sensor_1..8_    │
-                                               │  name/unit       │
-                                               └─────────────────┘
+                                               └──────┬─────┬──────┘
+                                                      │     │ gateways.network_id
+                                       network_node_  │  ┌──▼─────────────────┐
+                                       types          │  │ gateways            │
+                                               ┌──────▼──│  id · gateway_id   │
+                                               │ node_   │  sink_id · name     │
+                                               │ types   │  is_test_mode       │
+                                               │  id ·   │  last_seen_at       │
+                                               │  name   │  deleted_at         │
+                                               │  area_  └────────────────────┘
+                                               │  id     │
+                                               │  sensor │
+                                               │  1..8   │
+                                               └─────────┘
 ```
 
 ---
@@ -186,6 +192,7 @@ Role answers three questions:
 | 12 | **Dashboard** | 📋 Planned | — | Main monitoring view |
 | 13 | **Node Provisioning** | 🔜 Next | `docs/specs/node-provisioning-module-contract.md` | Batch provisioning (max 10 nodes), auto-creates broadcast batch, commands audit trail |
 | 14 | **Command Console** | ✅ Done | `docs/specs/command-module-contract.md` | Send `send_data` to IoT nodes; 7-rule message classification; retry job (max 3); internal status update endpoint; history table with auto-refresh |
+| 15 | **Gateway** | ✅ Done | `docs/specs/gateway-module-contract.md` | Wirepas gateway CRUD; composite `gateway_id` (`{prefix}_{sink_id}`); derived online/offline/unknown status; send command to gateway; internal last-seen endpoint; role-based access (Platform Admin full, Platform Support read-only) |
 
 **Status key:** ✅ Done · 🔜 Next · 📋 Planned · ⚠️ Has breaking change pending · ❌ Deprecated
 
@@ -208,6 +215,8 @@ Track every migration file so nothing gets created twice.
 | `xxxx_create_features_and_role_features_table.php` | `features` + `role_features` pivot | 🔜 Feature module |
 | `2026_04_01_000001_create_provisioning_batches_table.php` | `provisioning_batches` | 🔜 Node Provisioning |
 | `2026_04_01_000002_create_provisioning_batch_nodes_table.php` | `provisioning_batch_nodes` | 🔜 Node Provisioning |
+| `2026_04_06_000001_add_gateway_prefix_to_networks_table.php` | Alter `networks` — add `gateway_prefix` column | 🔜 Gateway module |
+| `2026_04_06_000002_create_gateways_table.php` | `gateways` | 🔜 Gateway module |
 
 ---
 
@@ -231,6 +240,8 @@ Next:
   Role module         ← needs company_networks (validate role_networks)
                          needs features table (validate role_features)
   Node Provisioning module ← needs networks (network_id FK), users (submitted_by FK), commands table
+  Gateway module           ← needs networks (network_id FK + gateway_prefix column)
+                              needs commands table (gateway command dispatch)
 
 Planned:
   Zone module         ← TBD
@@ -254,6 +265,8 @@ Planned:
 | `GET /api/v1/features/options` | Feature | Role form (assign features/pages) | All auth users |
 | `GET /api/v1/permissions` (grouped) | Permission | Role form (assign permissions) | All auth users |
 
+> **Permission Seeder note (Gateway module):** Add five new entries to `PermissionSeeder.php` under `module = 'gateway'`: `gateway.view`, `gateway.create`, `gateway.update`, `gateway.delete`, `gateway.send_command`. Assign all five to the `Platform Admin` system role. No other system role should receive gateway permissions — this module is superadmin-only by design.
+
 ---
 
 ## Shared Field Formats
@@ -265,6 +278,9 @@ These formats are used consistently. Never deviate.
 | `network_address` | Raw hex, uppercase, no prefix, max 10 chars | `A1B2C3` | Network |
 | `area_id` (node type) | Raw hex, uppercase, no prefix, max 10 chars | `01000001` | Node Type |
 | `node_address` (command) | Raw hex, uppercase, no prefix, max 10 chars | `A3F2B1` | Command |
+| `sink_id` (gateway) | Zero-padded 2-digit integer string | `01`, `02` | Gateway |
+| `gateway_prefix` (network) | Uppercase alphanumeric, max 10 chars, regex `/^[A-Z0-9]+$/` | `ABC123` | Network, Gateway |
+| `gateway_id` (gateway) | `{gateway_prefix}_{sink_id}`, uppercase | `ABC123_01` | Gateway |
 | `company.code` | Uppercase, max 20 chars, regex `/^[A-Z0-9_-]+$/` | `ACME` | Company |
 | Dates | ISO8601 string | `2026-01-01T00:00:00+00:00` | All |
 | Date only | `YYYY-MM-DD` | `2026-03-20` | Network `commissioned_date` |
@@ -275,13 +291,16 @@ These formats are used consistently. Never deviate.
 
 ## Soft Delete vs Hard Delete
 
-| Model | Delete type | Constraint |
-|-------|-------------|-----------|
+> **Global rule:** All deletes in this system MUST use soft delete (`deleted_at`) unless explicitly documented as an exception in this table. Hard deletes are only permitted where listed below with a stated reason. When in doubt, soft-delete.
+
+| Model | Delete type | Constraint / Reason |
+|-------|-------------|---------------------|
 | User | Soft delete (`deleted_at`) | — |
+| Gateway | Soft delete (`deleted_at`) | Preserves `sink_id` counter integrity and command audit trail |
 | Company | Hard delete | 409 if has users |
 | Node Type | Hard delete | 409 if in `network_node_types` |
 | Permission | Hard delete | 409 if in `role_permissions` |
-| Network | Hard delete | 409 future (when Nodes module exists) |
+| Network | Hard delete | 409 future (when Nodes/Gateway modules enforce RESTRICT FK) |
 | Role | Hard delete | 409 if has users (future) |
 
 ---
@@ -346,6 +365,8 @@ src/
 | 2026-03 | `GET /auth/me` now returns `features: FeatureSummary[]` and `networks: NetworkSummary[]` — breaking change to auth response | src/types/auth.ts, useAuthStore, sidebar |
 | 2026-03 | Sidebar now generated dynamically from `user.features` — static nav config for feature-gated pages removed | src/config/nav.ts or equivalent, AppRouter.tsx |
 | 2026-04 | `nodes.node_config_id` changed from non-nullable+restrictOnDelete to nullable+nullOnDelete | `0001_01_01_000014_create_nodes_table.php` |
+| 2026-04 | `GET /api/v1/networks/options` now returns `gateway_prefix: string\|null` per item — additive, non-breaking | `NetworkController::options()`, `src/types/network.ts` `NetworkOption` |
+| 2026-04 | `networks` table has new `gateway_prefix` column (nullable, unique) added by Gateway module migration | `2026_04_06_000001_add_gateway_prefix_to_networks_table.php` |
 
 ---
 
