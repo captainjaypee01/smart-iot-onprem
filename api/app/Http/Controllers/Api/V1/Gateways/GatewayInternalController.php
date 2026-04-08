@@ -39,10 +39,10 @@ class GatewayInternalController extends Controller
 
         return response()->json([
             'data' => [
-                'id'              => $gateway->id,
-                'gateway_id'      => $gateway->gateway_id,
-                'last_seen_at'    => $gateway->last_seen_at?->toIso8601String(),
-                'ip_address'      => $gateway->ip_address,
+                'id' => $gateway->id,
+                'gateway_id' => $gateway->gateway_id,
+                'last_seen_at' => $gateway->last_seen_at?->toIso8601String(),
+                'ip_address' => $gateway->ip_address,
                 'gateway_version' => $gateway->gateway_version,
             ],
         ], 200);

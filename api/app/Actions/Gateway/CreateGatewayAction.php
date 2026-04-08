@@ -37,15 +37,15 @@ final class CreateGatewayAction
             $gatewayId = $prefix.'_'.$sinkId;
 
             $gateway = Gateway::create([
-                'network_id'   => $dto->networkId,
-                'gateway_id'   => $gatewayId,
-                'sink_id'      => $sinkId,
-                'service_id'   => $dto->serviceId,
-                'asset_id'     => $dto->assetId,
-                'device_key'   => $dto->deviceKey,
-                'location'     => $dto->location,
-                'name'         => $dto->name,
-                'description'  => $dto->description,
+                'network_id' => $dto->networkId,
+                'gateway_id' => $gatewayId,
+                'sink_id' => $sinkId,
+                'service_id' => $dto->serviceId,
+                'asset_id' => $dto->assetId,
+                'device_key' => $dto->deviceKey,
+                'location' => $dto->location,
+                'name' => $dto->name,
+                'description' => $dto->description,
                 'is_test_mode' => $dto->isTestMode,
                 'last_seen_at' => null,
             ]);

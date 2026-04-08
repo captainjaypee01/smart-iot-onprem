@@ -47,6 +47,7 @@ const ProvisioningDetailPage = lazy(() => import("@/pages/provisioning/Provision
 const CommandConsolePage = lazy(() => import("@/pages/commands/CommandConsolePage"));
 const GatewayListPage = lazy(() => import("@/pages/gateways/GatewayListPage"));
 const GatewayDetailPage = lazy(() => import("@/pages/gateways/GatewayDetailPage"));
+const NodeDecommissionPage = lazy(() => import("@/pages/node-decommission/NodeDecommissionPage"));
 
 // Minimal fallback shown during lazy load
 const PageLoader = () => (
@@ -184,6 +185,16 @@ const AppRouter = () => (
                                 element={
                                     <FeatureRoute featureKey="gateway_settings">
                                         <GatewayDetailPage />
+                                    </FeatureRoute>
+                                }
+                            />
+                            {/* Node Decommission — role-based (node_decommission.* permissions),
+                                not superadmin-only. FeatureRoute guards by node_decommission feature key. */}
+                            <Route
+                                path="/node-decommission"
+                                element={
+                                    <FeatureRoute featureKey="node_decommission">
+                                        <NodeDecommissionPage />
                                     </FeatureRoute>
                                 }
                             />

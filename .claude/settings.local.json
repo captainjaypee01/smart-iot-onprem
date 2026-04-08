@@ -40,7 +40,16 @@
       "Bash(echo \"TSC_EXIT:$?\")",
       "Bash(echo \"BUILD_EXIT:$?\")",
       "Bash(ls tsconfig*.json)",
-      "Bash(netsh interface:*)"
+      "Bash(netsh interface:*)",
+      "Bash(ls C:/Users/jaype/Documents/lingjack/code/smart-iot-onprem/api/phpstan*)",
+      "Bash(python3 -c ':*)",
+      "Bash(git stash:*)",
+      "Bash(python3 -c \"import json,sys; routes=json.load\\(sys.stdin\\); [print\\(r['method'], r['uri'], '|', r['middleware']\\) for r in routes]\")",
+      "Bash(ls /c/Users/jaype/Documents/lingjack/code/smart-iot-onprem/api/*.neon)",
+      "Bash(make shell-api:*)",
+      "Bash(docker exec:*)",
+      "Bash(ls /c/Users/jaype/Documents/lingjack/code/smart-iot-onprem/api/docker-entrypoint*.sh)",
+      "Bash(ls /c/Users/jaype/Documents/lingjack/code/smart-iot-onprem/docker-compose.*.yml)"
     ]
   }
 }

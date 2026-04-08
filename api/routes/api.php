@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Networks\GenerateAddressController;
 use App\Http\Controllers\Api\V1\Networks\NetworkController;
 use App\Http\Controllers\Api\V1\Networks\ToggleMaintenanceController;
+use App\Http\Controllers\Api\V1\NodeDecommission\NodeDecommissionController;
 use App\Http\Controllers\Api\V1\NodeTypes\NodeTypeController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\Provisioning\ProvisioningController;
@@ -110,6 +111,17 @@ Route::prefix('v1')->group(function () {
         Route::get('/commands/{command}', [SendDataCommandController::class, 'show']);
         Route::post('/commands', [SendDataCommandController::class, 'store']);
         Route::post('/commands/{command}/resend', [SendDataCommandController::class, 'resend']);
+
+        // ─── Node Decommission ────────────────────────────────────────
+        // Specific named routes registered BEFORE the {node} wildcard routes.
+        Route::prefix('node-decommission')->group(function (): void {
+            Route::get('/nodes', [NodeDecommissionController::class, 'nodes']);
+            Route::get('/history', [NodeDecommissionController::class, 'history']);
+            Route::post('/{node}/decommission', [NodeDecommissionController::class, 'decommission']);
+            Route::post('/{node}/resend', [NodeDecommissionController::class, 'resend']);
+            Route::post('/{node}/verify', [NodeDecommissionController::class, 'verify']);
+            Route::post('/{node}/manual', [NodeDecommissionController::class, 'manual']);
+        });
 
         // ─── Provisioning (superadmin only) ───────────────────────────
         Route::get('/provisioning', [ProvisioningController::class, 'index']);

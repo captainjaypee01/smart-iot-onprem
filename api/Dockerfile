@@ -78,6 +78,12 @@ CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
 # ── production: hardened, no Composer, opcache tuned ─────────────────────────
 FROM base AS production
 
+# Copy entrypoint — runs pending migrations only (never fresh, never seed)
+COPY docker-entrypoint.prod.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
 # Opcache tuning for production
 RUN { \
         echo "opcache.enable=1"; \

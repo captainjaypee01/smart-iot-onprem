@@ -141,6 +141,12 @@ class PermissionSeeder extends Seeder
             ['module' => 'gateway', 'key' => 'gateway.update',       'display_name' => 'Update Gateway'],
             ['module' => 'gateway', 'key' => 'gateway.delete',       'display_name' => 'Delete Gateway'],
             ['module' => 'gateway', 'key' => 'gateway.send_command', 'display_name' => 'Send Gateway Command'],
+
+            // ── Node Decommission ─────────────────────────────────────────────
+            ['module' => 'node_decommission', 'key' => 'node_decommission.view',                'display_name' => 'View Node Decommission'],
+            ['module' => 'node_decommission', 'key' => 'node_decommission.decommission',        'display_name' => 'Send Decommission Command'],
+            ['module' => 'node_decommission', 'key' => 'node_decommission.verify',              'display_name' => 'Send Verification Command'],
+            ['module' => 'node_decommission', 'key' => 'node_decommission.manual_decommission', 'display_name' => 'Manual Decommission Node'],
         ];
 
         foreach ($permissions as &$p) {

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             NodeTypeSeeder::class,      // 5. Node types — networks pivot depends on it
             NetworkSeeder::class,       // 6. Networks + node-type pivots + company/role assignments
             UserSeeder::class,          // 7. Users + user_roles (roles must exist first)
+            NodeSeeder::class,          // 8. Demo nodes for node decommission simulation
         ]);
     }
 }

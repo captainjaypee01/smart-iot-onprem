@@ -149,6 +149,14 @@ class FeatureSeeder extends Seeder
                 'sort_order' => 9,
                 'group_order' => 99,
             ],
+            [
+                'key' => 'node_decommission',
+                'name' => 'Node Decommission',
+                'route' => '/node-decommission',
+                'icon' => 'ServerCrash',
+                'sort_order' => 10,
+                'group_order' => 99,
+            ],
         ];
 
         $features = array_merge($standardFeatures, $superadminFeatures);

@@ -703,3 +703,112 @@ export const PROVISIONING_STRINGS = {
     ERROR_RESEND: "Failed to resend node.",
     ERROR_LOAD_DETAIL: "Failed to load provisioning batch.",
 } as const;
+
+// ─── Node Decommission module ─────────────────────────────────────
+export const NODE_DECOMMISSION_STRINGS = {
+    TITLE: 'Node Decommission',
+    SUBTITLE: 'Remove IoT nodes from a network.',
+    NAV_LABEL: 'Node Decommission',
+
+    // Network selector
+    SELECT_NETWORK_LABEL: 'Network',
+    SELECT_NETWORK_PLACEHOLDER: 'Select a network to view nodes',
+
+    // Node list tab
+    NODE_LIST_TITLE: 'Decommissionable Nodes',
+    SEARCH_PLACEHOLDER: 'Search by name or service ID\u2026',
+    FILTER_NODE_TYPE_PLACEHOLDER: 'All Node Types',
+    NO_NODES: 'No nodes available for decommissioning in this network.',
+    COL_NODE_NAME: 'Node Name',
+    COL_NODE_ADDRESS: 'Node Address',
+    COL_SERVICE_ID: 'Service ID',
+    COL_STATUS: 'Status',
+    COL_LAST_ATTEMPT: 'Last Decommission Attempt',
+    COL_ACTIONS: 'Actions',
+
+    // History tab
+    HISTORY_TITLE: 'Decommission History',
+    NO_HISTORY: 'No decommission history for this network.',
+    FILTER_STATUS_PLACEHOLDER: 'All Statuses',
+    COL_HISTORY_NODE: 'Node',
+    COL_HISTORY_NODE_ADDRESS: 'Node Address',
+    COL_HISTORY_INITIATED_BY: 'Initiated By',
+    COL_HISTORY_STATUS: 'Status',
+    COL_HISTORY_VERIFICATION: 'Verification',
+    COL_HISTORY_DECOMMISSIONED_AT: 'Decommissioned At',
+    COL_HISTORY_DATE: 'Date',
+    INITIATED_BY_UNKNOWN: '\u2014',
+    VERIFICATION_TIMED_OUT: 'Timed Out',
+
+    // Node status badge labels
+    NODE_STATUS_NEW: 'New',
+    NODE_STATUS_ACTIVE: 'Active',
+
+    // Log status badge labels
+    LOG_STATUS_PENDING: 'Pending',
+    LOG_STATUS_COMPLETED: 'Completed',
+    LOG_STATUS_FAILED: 'Failed',
+    LOG_STATUS_MANUAL: 'Manual',
+
+    // Row action buttons
+    ACTION_DECOMMISSION: 'Decommission',
+    ACTION_RESEND: 'Resend',
+    ACTION_VERIFY: 'Verify',
+    ACTION_MANUAL: 'Manual',
+    ACTION_VIEW: 'View',
+
+    // Detail dialog
+    DETAIL_DIALOG_TITLE: 'Decommission Log Details',
+    DETAIL_SECTION_NODE: 'Node',
+    DETAIL_SECTION_DECOMMISSION: 'Decommission Command',
+    DETAIL_SECTION_VERIFICATION: 'Verification Command',
+    DETAIL_SECTION_TIMESTAMPS: 'Timestamps',
+    DETAIL_LABEL_NODE_NAME: 'Name',
+    DETAIL_LABEL_SERVICE_ID: 'Service ID',
+    DETAIL_LABEL_NODE_ADDRESS: 'Node Address',
+    DETAIL_LABEL_STATUS: 'Status',
+    DETAIL_LABEL_INITIATED_BY: 'Initiated By',
+    DETAIL_LABEL_PACKET_ID: 'Packet ID',
+    DETAIL_LABEL_PAYLOAD: 'Payload',
+    DETAIL_LABEL_COMMAND_ID: 'Command ID',
+    DETAIL_LABEL_FULL_FRAME: 'Full Frame',
+    DETAIL_LABEL_VERIFY_PACKET_ID: 'Verify Packet ID',
+    DETAIL_LABEL_VERIFY_PAYLOAD: 'Verify Payload',
+    DETAIL_LABEL_VERIFY_COMMAND_ID: 'Verify Command ID',
+    DETAIL_LABEL_VERIFY_SENT_AT: 'Sent At',
+    DETAIL_LABEL_VERIFY_EXPIRES_AT: 'Expires At',
+    DETAIL_LABEL_ERROR: 'Error',
+    DETAIL_LABEL_DECOMMISSIONED_AT: 'Decommissioned At',
+    DETAIL_LABEL_CREATED_AT: 'Created At',
+    DETAIL_LABEL_UPDATED_AT: 'Updated At',
+    DETAIL_NO_VERIFY_SENT: 'No verification command sent yet.',
+
+    // Decommission dialog
+    DECOMMISSION_DIALOG_TITLE: 'Send Decommission Command',
+    DECOMMISSION_DIALOG_BODY: 'This will send the decommission command to the node. If the node does not respond within 2 minutes, a Verify option will appear to check whether it is still online.',
+    COMMAND_PREVIEW_LABEL: 'Command to be sent',
+    COMMAND_PREVIEW_HINT: 'The packet ID is generated automatically. The payload is fixed for all decommission commands.',
+    DECOMMISSION_SUBMIT_LABEL: 'Send Decommission',
+    DECOMMISSION_SUBMITTING_LABEL: 'Sending\u2026',
+
+    // Manual decommission dialog
+    MANUAL_CONFIRM_TITLE: 'Manual Decommission',
+    MANUAL_CONFIRM_BODY: (nodeName: string) =>
+        `Are you sure you want to manually mark "${nodeName}" as decommissioned? No command will be sent to the IoT network. This action cannot be easily undone.`,
+    MANUAL_CONFIRM_SUBMIT: 'Mark as Decommissioned',
+    MANUAL_CONFIRM_SUBMITTING: 'Processing\u2026',
+
+    // Toast messages
+    SUCCESS_DECOMMISSION: 'Decommission command sent.',
+    SUCCESS_RESEND: 'Decommission command resent.',
+    SUCCESS_VERIFY: 'Verification sent. Expires in 2 minutes.',
+    SUCCESS_MANUAL: 'Node manually marked as decommissioned.',
+    ERROR_DECOMMISSION: 'Failed to send decommission command.',
+    ERROR_RESEND: 'Failed to resend decommission command.',
+    ERROR_VERIFY: 'Failed to send verification command.',
+    ERROR_MANUAL: 'Failed to manually decommission node.',
+
+    // Data fetch errors
+    ERROR_LOAD_NODES: 'Failed to load nodes.',
+    ERROR_LOAD_HISTORY: 'Failed to load decommission history.',
+} as const;

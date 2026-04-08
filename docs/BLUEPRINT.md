@@ -17,6 +17,18 @@ It does **not** replace individual module contracts — those are the source of 
 
 ---
 
+## Deployment Status
+
+> **Update this table when any environment is first deployed. It controls the migration rules below.**
+
+| Environment | Status | First deployed |
+|-------------|--------|---------------|
+| Development | 🟢 Active | — |
+| UAT | ⚫ Not yet deployed | — |
+| Production | ⚫ Not yet deployed | — |
+
+---
+
 ## Operating model (current)
 
 The platform is **operator-led**: the deployment owner provisions **companies**, defines **roles** (the bundles of features, permissions, and networks per company), and owns **authorization policy**. **Tenant (company) administrators** may create and manage **users** within their company — typically by assigning people to **roles the operator has already created** — but **creating or editing roles and permission matrices** is handled by the operator, not delegated to tenants in the current product.
@@ -101,9 +113,25 @@ The platform is **operator-led**: the deployment owner provisions **companies**,
                                                │  name   │  deleted_at         │
                                                │  area_  └────────────────────┘
                                                │  id     │
-                                               │  sensor │
-                                               │  1..8   │
-                                               └─────────┘
+                                               │  sensor │ nodes
+                                               │  1..8   ├──────────────────────────────────┐
+                                               └─────────┘ id · network_id · name           │
+                                                           node_address · service_id         │
+                                                           status (new|active|decommissioned)│
+                                                           is_online · last_online_at         │
+                                                           └──────────────────────────────────┘
+                                                                         │ node_decommission_logs.node_id
+                                                           ┌─────────────▼────────────────────┐
+                                                           │ node_decommission_logs            │
+                                                           │  id · node_id · network_id        │
+                                                           │  initiated_by · status            │
+                                                           │  command_id · verification_command_id │
+                                                           │  packet_id · payload · is_manual  │
+                                                           │  verification_packet_id           │
+                                                           │  verification_sent_at             │
+                                                           │  verification_expires_at          │
+                                                           │  error_message · decommissioned_at│
+                                                           └───────────────────────────────────┘
 ```
 
 ---
@@ -193,6 +221,7 @@ Role answers three questions:
 | 13 | **Node Provisioning** | 🔜 Next | `docs/specs/node-provisioning-module-contract.md` | Batch provisioning (max 10 nodes), auto-creates broadcast batch, commands audit trail |
 | 14 | **Command Console** | ✅ Done | `docs/specs/command-module-contract.md` | Send `send_data` to IoT nodes; 7-rule message classification; retry job (max 3); internal status update endpoint; history table with auto-refresh |
 | 15 | **Gateway** | ✅ Done | `docs/specs/gateway-module-contract.md` | Wirepas gateway CRUD; composite `gateway_id` (`{prefix}_{sink_id}`); derived online/offline/unknown status; send command to gateway; internal last-seen endpoint; role-based access (Platform Admin full, Platform Support read-only) |
+| 16 | **Node Decommission** | ✅ Done | `docs/specs/node-decommission-module-contract.md` | Remove nodes from a network; decommission + verify + resend + manual flows; `node_decommission_logs` audit trail; internal ACK endpoint; `nodes.status` column (`new`\|`active`\|`decommissioned`); standalone page with network picker |
 
 **Status key:** ✅ Done · 🔜 Next · 📋 Planned · ⚠️ Has breaking change pending · ❌ Deprecated
 
@@ -217,6 +246,8 @@ Track every migration file so nothing gets created twice.
 | `2026_04_01_000002_create_provisioning_batch_nodes_table.php` | `provisioning_batch_nodes` | 🔜 Node Provisioning |
 | `2026_04_06_000001_add_gateway_prefix_to_networks_table.php` | Alter `networks` — add `gateway_prefix` column | 🔜 Gateway module |
 | `2026_04_06_000002_create_gateways_table.php` | `gateways` | 🔜 Gateway module |
+| `0001_01_01_000014_create_nodes_table.php` *(modified)* | Alter `nodes` — add `status` column (`new`\|`active`\|`decommissioned`, default `new`) + `(status)` index | ✅ Node Decommission |
+| `2026_04_08_000001_create_node_decommission_logs_table.php` | `node_decommission_logs` (includes `command_id` + `verification_command_id` — plain `unsignedBigInteger`, no FK, commands uses composite PK) | ✅ Node Decommission |
 
 ---
 
@@ -242,6 +273,9 @@ Next:
   Node Provisioning module ← needs networks (network_id FK), users (submitted_by FK), commands table
   Gateway module           ← needs networks (network_id FK + gateway_prefix column)
                               needs commands table (gateway command dispatch)
+  Node Decommission module ← needs nodes (node_id FK — nodes migration must have status column)
+                              needs networks (network_id FK)
+                              needs users (initiated_by FK)
 
 Planned:
   Zone module         ← TBD
@@ -266,6 +300,8 @@ Planned:
 | `GET /api/v1/permissions` (grouped) | Permission | Role form (assign permissions) | All auth users |
 
 > **Permission Seeder note (Gateway module):** Add five new entries to `PermissionSeeder.php` under `module = 'gateway'`: `gateway.view`, `gateway.create`, `gateway.update`, `gateway.delete`, `gateway.send_command`. Assign all five to the `Platform Admin` system role. No other system role should receive gateway permissions — this module is superadmin-only by design.
+
+> **Permission Seeder note (Node Decommission module):** Add four new entries to `PermissionSeeder.php` under `module = 'node_decommission'`: `node_decommission.view`, `node_decommission.decommission`, `node_decommission.verify`, `node_decommission.manual_decommission`. Which system roles receive these keys is a pending product decision (see Open Questions in the spec).
 
 ---
 
@@ -297,6 +333,8 @@ These formats are used consistently. Never deviate.
 |-------|-------------|---------------------|
 | User | Soft delete (`deleted_at`) | — |
 | Gateway | Soft delete (`deleted_at`) | Preserves `sink_id` counter integrity and command audit trail |
+| Node | No delete (status update only) | `status = 'decommissioned'` is the decommission mechanism; rows must be retained for reprvisioning |
+| NodeDecommissionLog | Hard delete prohibited (no delete) | Log entries are permanent audit records |
 | Company | Hard delete | 409 if has users |
 | Node Type | Hard delete | 409 if in `network_node_types` |
 | Permission | Hard delete | 409 if in `role_permissions` |
@@ -367,6 +405,7 @@ src/
 | 2026-04 | `nodes.node_config_id` changed from non-nullable+restrictOnDelete to nullable+nullOnDelete | `0001_01_01_000014_create_nodes_table.php` |
 | 2026-04 | `GET /api/v1/networks/options` now returns `gateway_prefix: string\|null` per item — additive, non-breaking | `NetworkController::options()`, `src/types/network.ts` `NetworkOption` |
 | 2026-04 | `networks` table has new `gateway_prefix` column (nullable, unique) added by Gateway module migration | `2026_04_06_000001_add_gateway_prefix_to_networks_table.php` |
+| 2026-04 | `nodes` table gains a `status` column (`new`\|`active`\|`decommissioned`, default `new`) — requires `migrate:fresh`. Existing provisioning module references `NodeStatus` enum which must include `decommissioned`. | `0001_01_01_000014_create_nodes_table.php` (modified) |
 
 ---
 
@@ -378,7 +417,98 @@ src/
 | UAT | `docker compose -f docker-compose.yml -f docker-compose.uat.yml --env-file .env.uat up -d --build` |
 | Prod | `docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build` |
 
-Shortcuts: `make dev` · `make uat` · `make prod` · `make logs SERVICE=api` · `make shell-api`
+**Makefile shortcuts:**
+
+| Command | What it does |
+|---------|-------------|
+| `make dev` | Start (or restart) the dev stack — entrypoint auto-migrates and auto-seeds if DB is empty |
+| `make stop` | **Pause** dev containers without removing them — volumes stay intact, fastest restart |
+| `make down` | Remove dev containers + networks — volumes are **preserved**, data is safe |
+| `make migrate` | Run pending migrations in dev (default). Use `ENV=uat` or `ENV=prod` for other envs |
+| `make migrate-fresh` | Drop all tables + re-migrate + seed. **Dev only** — blocked with a hard error for `ENV=uat/prod` |
+| `make seed` | Run seeders manually (dev only) |
+| `make logs SERVICE=api` | Tail a service's logs |
+| `make shell-api` | Shell into the API container |
+
+> **Prefer `make stop` over `make down` for day-to-day pauses.** `stop` pauses containers (no entrypoint re-run on next `make dev`), while `down` removes and recreates them (entrypoint re-runs, which is safe but slower). Use `down` only when you need a clean container recreate.
+
+---
+
+## Migration Strategy
+
+**Always check the [Deployment Status](#deployment-status) table above before deciding how to handle a migration change.**
+
+---
+
+### Scenario 1 — UAT and Production have never been deployed (current state)
+
+All migration files are freely editable. The standard workflow for any change to any migration file is:
+
+```bash
+# 1. Roll back the migration(s) you need to change
+docker exec iot-api php artisan migrate:rollback
+
+# 2. Edit the migration file in api/database/migrations/
+
+# 3. Re-apply
+make migrate
+```
+
+`migrate:rollback` rolls back the most recent batch. To roll back more than one batch, use `--step=N`.
+
+> This is the current state of this project. Every migration file can be edited freely using rollback → edit → migrate. There is no restriction until UAT or Production is first deployed.
+
+---
+
+### Scenario 2 — UAT/Production is running AND active development continues
+
+Once any environment beyond dev has been deployed, two sub-cases apply:
+
+**Sub-case A — The migration was already deployed to UAT/Production**
+
+That file is **frozen forever**. Never edit it. Any schema change — no matter how minor — requires a new migration file:
+
+```bash
+# Example: you need to resize a column that is already in UAT
+php artisan make:migration change_name_column_length_in_users_table
+# → $table->string('name', 244)->change();
+
+make migrate
+```
+
+**Sub-case B — You are developing a new feature in dev and its migration has NOT been deployed to UAT/Production yet**
+
+You still own that migration file freely. Rollback → edit → re-migrate works exactly the same as Scenario 1. The file only becomes frozen the moment it is deployed to UAT or Production.
+
+**Summary table:**
+
+| Migration file status | What you can do |
+|-----------------------|-----------------|
+| Never deployed to UAT/Production | Rollback → edit → re-migrate freely |
+| Deployed to UAT or Production | **Frozen.** Create a new migration file for any change |
+
+---
+
+### Deployment enforcement
+
+- `make migrate-fresh` is **hard-blocked** for `ENV=uat` and `ENV=prod` — it will exit with an error.
+- `make migrate` (which runs `migrate --force`) is the only command used in UAT/Production.
+- The `docker-entrypoint.prod.sh` runs `migrate --force` automatically on every container start, so new migration files are applied on the next `make uat` / `make prod` without any manual step.
+
+---
+
+### Naming convention for new migration files
+
+```
+YYYY_MM_DD_NNNNNN_<verb>_<subject>.php
+
+Examples:
+  2026_05_01_000001_add_timeout_at_to_commands_table.php
+  2026_05_01_000002_create_alerts_table.php
+  2026_05_01_000003_change_name_length_in_companies_table.php
+```
+
+Use the date of creation. Use a descriptive verb: `create`, `add`, `change`, `drop`, `rename`.
 
 ---
 
@@ -392,7 +522,8 @@ After completing any module:
 4. Record any **breaking changes** in the Breaking Changes Log
 5. Add new **migration files** to the Migration File Registry
 6. Update **Implementation Order** if a new dependency was discovered
-7. Commit this file in the **same PR** as the module implementation
+7. Update the **Data Model** diagram if new tables or columns were added
+8. Commit this file in the **same PR** as the module implementation
 
 After completing the **Feature** module, update entries 1, 2, 3, 4, 5, and 6 above.
 After completing the **Role** module, update entries 1, 3, and 4 above.

@@ -14,6 +14,7 @@ import {
     ServerCog,
     Terminal,
     Router,
+    ServerCrash,
 } from "lucide-react";
 import type { NavGroup } from "@/types/nav";
 import {
@@ -21,6 +22,7 @@ import {
     FEATURE_MODULE_STRINGS,
     GATEWAY_STRINGS,
     NAVBAR_STRINGS,
+    NODE_DECOMMISSION_STRINGS,
     PROVISIONING_STRINGS,
     ROLE_STRINGS,
 } from "@/constants/strings";
@@ -111,6 +113,13 @@ export const NAV_GROUPS: NavGroup[] = [
                 icon: Router,
                 featureKey: "gateway_settings",
                 permission: "gateway.view",
+            },
+            {
+                label: NODE_DECOMMISSION_STRINGS.NAV_LABEL,
+                path: "/node-decommission",
+                icon: ServerCrash,
+                featureKey: "node_decommission",
+                permission: "node_decommission.view",
             },
             {
                 label: "Permissions",

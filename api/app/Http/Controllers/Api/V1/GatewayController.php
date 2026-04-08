@@ -87,15 +87,15 @@ class GatewayController extends Controller
         $this->authorize('create', Gateway::class);
 
         $dto = new CreateGatewayDTO(
-            networkId:     $request->integer('network_id'),
-            name:          $request->string('name')->toString(),
-            description:   $request->input('description'),
-            isTestMode:    $request->boolean('is_test_mode', false),
+            networkId: $request->integer('network_id'),
+            name: $request->string('name')->toString(),
+            description: $request->input('description'),
+            isTestMode: $request->boolean('is_test_mode', false),
             gatewayPrefix: $request->input('gateway_prefix'),
-            serviceId:     $request->string('service_id')->toString(),
-            assetId:       $request->input('asset_id'),
-            deviceKey:     $request->input('device_key'),
-            location:      $request->input('location'),
+            serviceId: $request->string('service_id')->toString(),
+            assetId: $request->input('asset_id'),
+            deviceKey: $request->input('device_key'),
+            location: $request->input('location'),
         );
 
         $gateway = (new CreateGatewayAction)->execute($dto);
@@ -120,13 +120,13 @@ class GatewayController extends Controller
         $validated = $request->validated();
 
         $dto = new UpdateGatewayDTO(
-            name:        $validated['name'] ?? $gateway->name,
+            name: $validated['name'] ?? $gateway->name,
             description: array_key_exists('description', $validated) ? $validated['description'] : $gateway->description,
-            isTestMode:  $validated['is_test_mode'] ?? $gateway->is_test_mode,
-            serviceId:   array_key_exists('service_id', $validated) ? $validated['service_id'] : $gateway->service_id,
-            assetId:     array_key_exists('asset_id', $validated) ? $validated['asset_id'] : $gateway->asset_id,
-            deviceKey:   array_key_exists('device_key', $validated) ? $validated['device_key'] : $gateway->device_key,
-            location:    array_key_exists('location', $validated) ? $validated['location'] : $gateway->location,
+            isTestMode: $validated['is_test_mode'] ?? $gateway->is_test_mode,
+            serviceId: array_key_exists('service_id', $validated) ? $validated['service_id'] : $gateway->service_id,
+            assetId: array_key_exists('asset_id', $validated) ? $validated['asset_id'] : $gateway->asset_id,
+            deviceKey: array_key_exists('device_key', $validated) ? $validated['device_key'] : $gateway->device_key,
+            location: array_key_exists('location', $validated) ? $validated['location'] : $gateway->location,
         );
 
         $updated = (new UpdateGatewayAction)->execute($gateway, $dto);
@@ -159,9 +159,9 @@ class GatewayController extends Controller
         $this->authorize('sendCommand', $gateway);
 
         $dto = new GatewayCommandDTO(
-            type:           $request->validated('type'),
+            type: $request->validated('type'),
             diagnosticType: $request->validated('diagnostic_type'),
-            serviceName:    $request->validated('service_name'),
+            serviceName: $request->validated('service_name'),
         );
 
         $command = (new CreateGatewayCommandAction)->execute($gateway, $dto);

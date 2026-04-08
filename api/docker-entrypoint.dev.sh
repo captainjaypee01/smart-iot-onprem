@@ -39,7 +39,23 @@ echo "▶  Running migrations..."
 php artisan migrate --force
 echo ""
 
-# ── 6. Clear stale caches — non-fatal: if nothing is cached, artisan exits 1 ──
+# ── 6. Auto-seed if database is empty ────────────────────────────────────────
+# Safety net: if the pgdata volume was reset (Docker Desktop on Windows can do
+# this silently), this brings the dev DB back to a usable state automatically.
+echo "▶  Checking database state..."
+USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1 | tr -d ' \n\r\t')
+if [ "$USER_COUNT" = "0" ]; then
+    echo "   Database is empty — running seeders automatically..."
+    php artisan db:seed --no-interaction
+    echo "   ✔  Auto-seeded."
+elif echo "$USER_COUNT" | grep -qE '^[0-9]+$'; then
+    echo "   Database has data (${USER_COUNT} users) — skipping seed."
+else
+    echo "   Could not determine database state — skipping auto-seed."
+fi
+echo ""
+
+# ── 8. Clear stale caches — non-fatal: if nothing is cached, artisan exits 1 ──
 echo "▶  Clearing caches..."
 php artisan config:clear || true
 php artisan route:clear  || true

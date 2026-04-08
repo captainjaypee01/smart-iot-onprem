@@ -43,6 +43,8 @@ return new class extends Migration
             $table->boolean('is_online')->default(false);
             $table->timestamp('last_online_at')->nullable();
             $table->timestamp('provisioned_at')->nullable();
+            $table->string('status')->default('new')
+                ->comment('Enum: new|active|decommissioned');
 
             $table->timestamps();
 
@@ -52,6 +54,7 @@ return new class extends Migration
             $table->index('is_online');
             $table->index('last_online_at');
             $table->index('zone_id');
+            $table->index('status');
         });
     }
 

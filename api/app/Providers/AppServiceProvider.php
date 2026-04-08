@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Contracts\OutboxPublisherContract;
+use App\Models\NodeDecommissionLog;
+use App\Policies\NodeDecommissionPolicy;
 use App\Services\OutboxPublisherService;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +25,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Session lifetime is applied per-company at login (see LoginController, MicrosoftCallbackController, SetPasswordController).
+
+        // Explicit policy registration for models that don't follow the name convention.
+        Gate::policy(NodeDecommissionLog::class, NodeDecommissionPolicy::class);
     }
 }

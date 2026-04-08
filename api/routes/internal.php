@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Commands\InternalCommandController;
 use App\Http\Controllers\Api\V1\Gateways\GatewayInternalController;
+use App\Http\Controllers\Api\V1\NodeDecommission\NodeDecommissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,4 +20,5 @@ Route::prefix('internal')
     ->group(function () {
         Route::patch('/commands/{commandId}/status', [InternalCommandController::class, 'updateStatus']);
         Route::patch('/gateways/{gatewayId}/last-seen', [GatewayInternalController::class, 'updateLastSeen']);
+        Route::patch('/node-decommission/{log}/status', [NodeDecommissionController::class, 'updateStatus']);
     });

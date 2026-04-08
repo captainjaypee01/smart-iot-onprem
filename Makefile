@@ -1,7 +1,7 @@
 # Makefile — IoT Monitoring Stack shortcuts
 # Usage: make dev | make uat | make prod | make down | make logs SERVICE=api
 
-.PHONY: dev uat prod down logs ps restart migrate seed shell-api shell-db
+.PHONY: dev uat prod stop down logs ps restart migrate seed shell-api shell-db test-api
 
 # ── Compose helpers ────────────────────────────────────────────────────────────
 DEV_COMPOSE  = docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.dev
@@ -42,7 +42,10 @@ prod: ## Start production stack
 	$(PROD_COMPOSE) up -d --build
 	@echo "🏭 Production stack up"
 
-down: ## Stop all services (targets current env via ENV=dev|uat|prod)
+stop: ## Pause dev containers without removing them (volumes stay intact, faster restart)
+	$(DEV_COMPOSE) stop
+
+down: ## Remove dev containers + networks (volumes are preserved — data is safe)
 	@case "$(ENV)" in \
 	  uat)  $(UAT_COMPOSE) down ;; \
 	  prod) $(PROD_COMPOSE) down ;; \
@@ -57,14 +60,33 @@ ps: ## Show running containers
 	$(DEV_COMPOSE) ps
 
 # ── Database ───────────────────────────────────────────────────────────────────
-migrate: ## Run Laravel migrations (dev)
-	$(DEV_COMPOSE) exec api php artisan migrate
+migrate: ## Run pending migrations. ENV=dev (default) | uat | prod
+	@case "$(ENV)" in \
+	  uat)  $(UAT_COMPOSE)  exec api php artisan migrate --force ;; \
+	  prod) $(PROD_COMPOSE) exec api php artisan migrate --force ;; \
+	  *)    $(DEV_COMPOSE)  exec api php artisan migrate ;; \
+	esac
 
-migrate-fresh: ## Fresh migration + seed (dev only!)
+migrate-fresh: ## Drop all tables + re-migrate + seed. DEV ONLY — never run against UAT or prod.
+	@if [ "$(ENV)" = "uat" ] || [ "$(ENV)" = "prod" ]; then \
+	  echo ""; \
+	  echo "  ERROR: migrate-fresh is blocked for ENV=$(ENV)."; \
+	  echo "  It drops every table. Use 'make migrate' to apply pending migrations safely."; \
+	  echo ""; \
+	  exit 1; \
+	fi
+	@echo ""
+	@echo "  WARNING: This will DROP ALL TABLES and re-seed the dev database."
+	@echo "  Press Ctrl+C to cancel, or Enter to continue."
+	@read _CONFIRM
 	$(DEV_COMPOSE) exec api php artisan migrate:fresh --seed
 
 seed: ## Run database seeders (dev)
 	$(DEV_COMPOSE) exec api php artisan db:seed
+
+# ── Testing ────────────────────────────────────────────────────────────────────
+test-api: ## Run API test suite (uses in-memory SQLite — never touches dev DB)
+	$(DEV_COMPOSE) exec api composer test
 
 # ── Shell access ───────────────────────────────────────────────────────────────
 shell-api: ## Shell into API container
