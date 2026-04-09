@@ -49,7 +49,8 @@
       "Bash(make shell-api:*)",
       "Bash(docker exec:*)",
       "Bash(ls /c/Users/jaype/Documents/lingjack/code/smart-iot-onprem/api/docker-entrypoint*.sh)",
-      "Bash(ls /c/Users/jaype/Documents/lingjack/code/smart-iot-onprem/docker-compose.*.yml)"
+      "Bash(ls /c/Users/jaype/Documents/lingjack/code/smart-iot-onprem/docker-compose.*.yml)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

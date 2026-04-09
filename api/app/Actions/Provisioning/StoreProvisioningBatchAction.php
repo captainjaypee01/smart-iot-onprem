@@ -58,8 +58,8 @@ final class StoreProvisioningBatchAction
             }
 
             return [
-                'primary' => $primaryBatch->load('nodes'),
-                'broadcast' => $broadcastBatch->load('nodes'),
+                'primary' => $primaryBatch->load(['nodes', 'network', 'submittedBy']),
+                'broadcast' => $broadcastBatch->load(['nodes', 'network', 'submittedBy']),
             ];
         });
     }

@@ -51,6 +51,9 @@ class PermissionSeeder extends Seeder
             'user.change_status',
             'user.change_company',
             'role.view',
+            'role.create',
+            'role.update',
+            'role.delete',
             'role.assign_user',
             'company.view',
         ];

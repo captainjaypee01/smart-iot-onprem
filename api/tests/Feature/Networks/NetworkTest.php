@@ -92,7 +92,7 @@ describe('network index', function (): void {
         $response->assertStatus(200);
         $data = $response->json('data');
         expect($data)->toHaveCount(1);
-        expect($data[0]['network_address'])->toBe('0xBBB222');
+        expect($data[0]['network_address'])->toBe('BBB222');
     });
 
     it('filters by is_active flag', function (): void {

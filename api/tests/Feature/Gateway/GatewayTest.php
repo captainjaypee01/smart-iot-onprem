@@ -285,6 +285,7 @@ describe('POST /api/v1/gateways', function (): void {
                 'name' => 'Gateway Floor 1',
                 'description' => 'Lobby area',
                 'gateway_prefix' => 'ABC123',
+                'service_id' => 'SVC001',
             ]);
 
         $response->assertStatus(201)
@@ -310,6 +311,7 @@ describe('POST /api/v1/gateways', function (): void {
             ->postJson('/api/v1/gateways', [
                 'network_id' => $network->id,
                 'name' => 'Gateway Floor 2',
+                'service_id' => 'SVC002',
             ]);
 
         $response->assertStatus(201)
@@ -333,6 +335,7 @@ describe('POST /api/v1/gateways', function (): void {
                 'name' => 'Second Gateway',
                 // Supply a different prefix — should be silently ignored
                 'gateway_prefix' => 'IGNORED',
+                'service_id' => 'SVC003',
             ]);
 
         $response->assertStatus(201)
@@ -410,6 +413,7 @@ describe('POST /api/v1/gateways', function (): void {
                 'name' => 'Gateway Shape Test',
                 'description' => 'Testing response shape',
                 'gateway_prefix' => 'SHAPE1',
+                'service_id' => 'SVC004',
             ]);
 
         $response->assertStatus(201)
@@ -435,6 +439,7 @@ describe('POST /api/v1/gateways', function (): void {
                 'network_id' => $network->id,
                 'name' => 'Gateway A',
                 'gateway_prefix' => 'NOPERM',
+                'service_id' => 'SVC005',
             ])
             ->assertStatus(403);
     });
@@ -615,6 +620,7 @@ describe('DELETE /api/v1/gateways/{id}', function (): void {
             ->postJson('/api/v1/gateways', [
                 'network_id' => $network->id,
                 'name' => 'Gateway After Delete',
+                'service_id' => 'SVC006',
             ]);
 
         $response->assertStatus(201)

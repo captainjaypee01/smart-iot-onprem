@@ -54,13 +54,14 @@ describe('POST /api/v1/gateways/{id}/commands', function (): void {
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/gateways/{$gateway->id}/commands", [
                 'type' => 'diagnostic',
+                'diagnostic_type' => 'check_utilization',
             ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.type', 'diagnostic');
     });
 
-    it('superadmin can send command with hex payload', function (): void {
+    it('get_configs command is created with no_packet_id=true', function (): void {
         $user = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
         $network = Network::factory()->create(['gateway_prefix' => 'CMD003']);
 
@@ -73,14 +74,13 @@ describe('POST /api/v1/gateways/{id}/commands', function (): void {
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/gateways/{$gateway->id}/commands", [
                 'type' => 'get_configs',
-                'payload' => 'DEADBEEF',
             ]);
 
         $response->assertStatus(201);
 
         $command = Command::find($response->json('data.id'));
         expect($command)->not->toBeNull()
-            ->and($command->payload)->toBe('DEADBEEF');
+            ->and($command->no_packet_id)->toBeTrue();
     });
 
     it('invalid command type returns 422', function (): void {
@@ -95,14 +95,14 @@ describe('POST /api/v1/gateways/{id}/commands', function (): void {
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/gateways/{$gateway->id}/commands", [
-                'type' => 'restart_gateway', // not a valid GatewayCommandType
+                'type' => 'not_a_real_command_type',
             ]);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['type']);
     });
 
-    it('invalid payload hex string returns 422', function (): void {
+    it('invalid diagnostic_type returns 422', function (): void {
         $user = User::factory()->create(['is_superadmin' => true, 'company_id' => null, 'role_id' => null]);
         $network = Network::factory()->create(['gateway_prefix' => 'CMD005']);
 
@@ -114,12 +114,12 @@ describe('POST /api/v1/gateways/{id}/commands', function (): void {
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/gateways/{$gateway->id}/commands", [
-                'type' => 'get_configs',
-                'payload' => 'not-hex!@#',
+                'type' => 'diagnostic',
+                'diagnostic_type' => 'not_a_real_diagnostic_type',
             ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['payload']);
+            ->assertJsonValidationErrors(['diagnostic_type']);
     });
 
     it('command creates an outbox event with correct event name', function (): void {
@@ -259,6 +259,7 @@ describe('POST /api/v1/gateways/{id}/commands', function (): void {
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/v1/gateways/{$gateway->id}/commands", [
                 'type' => 'diagnostic',
+                'diagnostic_type' => 'check_utilization',
             ]);
 
         $response->assertStatus(201);

@@ -100,10 +100,9 @@ class GatewayController extends Controller
 
         $gateway = (new CreateGatewayAction)->execute($dto);
 
-        return response()->json(
-            new GatewayResource($gateway),
-            HttpResponse::HTTP_CREATED
-        );
+        return (new GatewayResource($gateway))
+            ->response()
+            ->setStatusCode(HttpResponse::HTTP_CREATED);
     }
 
     /**
